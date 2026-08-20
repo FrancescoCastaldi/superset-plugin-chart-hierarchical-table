@@ -1,6 +1,17 @@
-import { t, ControlPanelConfig, sections, D3_FORMAT_OPTIONS } from '@superset-ui/core';
+const t = (str: string) => str;
 
-const config: ControlPanelConfig = {
+const D3_FORMAT_OPTIONS: [string, string][] = [
+  ['SMART_NUMBER', 'Adaptive formatting (Smart Number)'],
+  [',d', '1,234 (Integer)'],
+  ['.2f', '1234.56 (2 decimals)'],
+  [',.2f', '1,234.56 (2 decimals)'],
+  [',.1f', '1,234.6 (1 decimal)'],
+  ['.2%', '12.34% (Percentage)'],
+  ['.1%', '12.3% (Percentage)'],
+  ['~s', '1.2k (SI prefix)'],
+];
+
+const config: any = {
   controlPanelSections: [
     {
       label: t('Query Configuration'),
@@ -33,7 +44,8 @@ const config: ControlPanelConfig = {
               multi: true,
               freeForm: true,
               canSelectAll: false,
-              visibility: ({ controls }) => controls?.hierarchyType?.value === 'multi_dimension',
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension',
               description: t('Select dimensions from highest to lowest level of hierarchy.'),
             },
           },
@@ -44,7 +56,8 @@ const config: ControlPanelConfig = {
             config: {
               type: 'SelectControl',
               label: t('Node ID Column'),
-              visibility: ({ controls }) => controls?.hierarchyType?.value === 'parent_child',
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'parent_child',
               description: t('Column containing the unique identifier of the node.'),
             },
           },
@@ -55,7 +68,8 @@ const config: ControlPanelConfig = {
             config: {
               type: 'SelectControl',
               label: t('Parent ID Column'),
-              visibility: ({ controls }) => controls?.hierarchyType?.value === 'parent_child',
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'parent_child',
               description: t('Column containing the identifier of the parent node.'),
             },
           },
@@ -66,7 +80,8 @@ const config: ControlPanelConfig = {
             config: {
               type: 'SelectControl',
               label: t('Node Label Column (Optional)'),
-              visibility: ({ controls }) => controls?.hierarchyType?.value === 'parent_child',
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'parent_child',
               description: t('Column containing the display name for the node.'),
             },
           },

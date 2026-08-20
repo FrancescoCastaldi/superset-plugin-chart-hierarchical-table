@@ -1,4 +1,4 @@
-import { getNumberFormatter, NumberFormatter } from '@superset-ui/core';
+import { getNumberFormatter } from '@superset-ui/core';
 
 export function formatMetricValue(
   value: number | null | undefined,

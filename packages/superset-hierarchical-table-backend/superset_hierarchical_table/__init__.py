@@ -2,7 +2,7 @@
 Apache Superset Hierarchical Table - Backend Companion Package
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .processors.tree_aggregator import aggregate_hierarchical_dataframe, rollup_dataframe
 from .processors.parent_child import resolve_parent_child_hierarchy

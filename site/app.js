@@ -7,25 +7,131 @@ const datasets = {
     dimensions: ['region', 'country', 'city', 'store_name'],
     metrics: ['revenue', 'units_sold', 'profit_margin'],
     formatters: {
-      revenue: v => '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+      revenue: v =>
+        '$' +
+        Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
       units_sold: v => Number(v).toLocaleString('en-US'),
       profit_margin: v => Number(v).toFixed(1) + '%',
     },
     records: [
-      { region: 'Americas', country: 'USA', city: 'New York', store_name: '5th Avenue Flagship', revenue: 320000, units_sold: 920, profit_margin: 28.5 },
-      { region: 'Americas', country: 'USA', city: 'San Francisco', store_name: 'Market Street Store', revenue: 280000, units_sold: 810, profit_margin: 28.1 },
-      { region: 'Americas', country: 'USA', city: 'Chicago', store_name: 'Michigan Ave Hub', revenue: 195000, units_sold: 560, profit_margin: 27.9 },
-      { region: 'Americas', country: 'Canada', city: 'Toronto', store_name: 'Downtown Toronto', revenue: 150000, units_sold: 440, profit_margin: 27.5 },
-      { region: 'Americas', country: 'Canada', city: 'Vancouver', store_name: 'Robson Street', revenue: 120000, units_sold: 360, profit_margin: 28.0 },
-      { region: 'EMEA', country: 'Italy', city: 'Milan', store_name: 'Duomo Flagship', revenue: 145000, units_sold: 420, profit_margin: 31.2 },
-      { region: 'EMEA', country: 'Italy', city: 'Rome', store_name: 'Colosseo Store', revenue: 122000, units_sold: 380, profit_margin: 30.5 },
-      { region: 'EMEA', country: 'Germany', city: 'Berlin', store_name: 'Mitte Store', revenue: 165000, units_sold: 490, profit_margin: 29.8 },
-      { region: 'EMEA', country: 'Germany', city: 'Munich', store_name: 'Marienplatz Hub', revenue: 180000, units_sold: 520, profit_margin: 30.1 },
-      { region: 'EMEA', country: 'France', city: 'Paris', store_name: 'Champs-Elysees', revenue: 210000, units_sold: 610, profit_margin: 32.0 },
-      { region: 'APAC', country: 'Japan', city: 'Tokyo', store_name: 'Shibuya Hub', revenue: 240000, units_sold: 750, profit_margin: 33.4 },
-      { region: 'APAC', country: 'Japan', city: 'Osaka', store_name: 'Umeda Center', revenue: 135000, units_sold: 410, profit_margin: 31.8 },
-      { region: 'APAC', country: 'Singapore', city: 'Singapore', store_name: 'Marina Bay Store', revenue: 190000, units_sold: 580, profit_margin: 34.0 },
-    ]
+      {
+        region: 'Americas',
+        country: 'USA',
+        city: 'New York',
+        store_name: '5th Avenue Flagship',
+        revenue: 320000,
+        units_sold: 920,
+        profit_margin: 28.5,
+      },
+      {
+        region: 'Americas',
+        country: 'USA',
+        city: 'San Francisco',
+        store_name: 'Market Street Store',
+        revenue: 280000,
+        units_sold: 810,
+        profit_margin: 28.1,
+      },
+      {
+        region: 'Americas',
+        country: 'USA',
+        city: 'Chicago',
+        store_name: 'Michigan Ave Hub',
+        revenue: 195000,
+        units_sold: 560,
+        profit_margin: 27.9,
+      },
+      {
+        region: 'Americas',
+        country: 'Canada',
+        city: 'Toronto',
+        store_name: 'Downtown Toronto',
+        revenue: 150000,
+        units_sold: 440,
+        profit_margin: 27.5,
+      },
+      {
+        region: 'Americas',
+        country: 'Canada',
+        city: 'Vancouver',
+        store_name: 'Robson Street',
+        revenue: 120000,
+        units_sold: 360,
+        profit_margin: 28.0,
+      },
+      {
+        region: 'EMEA',
+        country: 'Italy',
+        city: 'Milan',
+        store_name: 'Duomo Flagship',
+        revenue: 145000,
+        units_sold: 420,
+        profit_margin: 31.2,
+      },
+      {
+        region: 'EMEA',
+        country: 'Italy',
+        city: 'Rome',
+        store_name: 'Colosseo Store',
+        revenue: 122000,
+        units_sold: 380,
+        profit_margin: 30.5,
+      },
+      {
+        region: 'EMEA',
+        country: 'Germany',
+        city: 'Berlin',
+        store_name: 'Mitte Store',
+        revenue: 165000,
+        units_sold: 490,
+        profit_margin: 29.8,
+      },
+      {
+        region: 'EMEA',
+        country: 'Germany',
+        city: 'Munich',
+        store_name: 'Marienplatz Hub',
+        revenue: 180000,
+        units_sold: 520,
+        profit_margin: 30.1,
+      },
+      {
+        region: 'EMEA',
+        country: 'France',
+        city: 'Paris',
+        store_name: 'Champs-Elysees',
+        revenue: 210000,
+        units_sold: 610,
+        profit_margin: 32.0,
+      },
+      {
+        region: 'APAC',
+        country: 'Japan',
+        city: 'Tokyo',
+        store_name: 'Shibuya Hub',
+        revenue: 240000,
+        units_sold: 750,
+        profit_margin: 33.4,
+      },
+      {
+        region: 'APAC',
+        country: 'Japan',
+        city: 'Osaka',
+        store_name: 'Umeda Center',
+        revenue: 135000,
+        units_sold: 410,
+        profit_margin: 31.8,
+      },
+      {
+        region: 'APAC',
+        country: 'Singapore',
+        city: 'Singapore',
+        store_name: 'Marina Bay Store',
+        revenue: 190000,
+        units_sold: 580,
+        profit_margin: 34.0,
+      },
+    ],
   },
   org: {
     name: 'Organization Chart',
@@ -39,16 +145,70 @@ const datasets = {
       budget_managed: v => '$' + Number(v).toLocaleString('en-US'),
     },
     records: [
-      { employee_id: '1', manager_id: null, name: 'Elena Rossi (Chief Executive Officer)', salary: 220000, budget_managed: 5000000 },
-      { employee_id: '2', manager_id: '1', name: 'Marco Bianchi (Chief Technology Officer)', salary: 160000, budget_managed: 2000000 },
-      { employee_id: '3', manager_id: '1', name: 'Giulia Verdi (Chief Marketing Officer)', salary: 150000, budget_managed: 1500000 },
-      { employee_id: '4', manager_id: '1', name: 'Davide Neri (Chief Financial Officer)', salary: 155000, budget_managed: 1000000 },
-      { employee_id: '5', manager_id: '2', name: 'Luca Ferrari (VP Software Architecture)', salary: 125000, budget_managed: 800000 },
-      { employee_id: '6', manager_id: '2', name: 'Sara Romano (VP Cloud & DevOps)', salary: 120000, budget_managed: 700000 },
-      { employee_id: '7', manager_id: '5', name: 'Alessandro Galli (Staff Data Engineer)', salary: 90000, budget_managed: 150000 },
-      { employee_id: '8', manager_id: '5', name: 'Chiara Costa (Staff Frontend Engineer)', salary: 88000, budget_managed: 120000 },
-      { employee_id: '9', manager_id: '3', name: 'Matteo Fontana (Head of Growth Marketing)', salary: 95000, budget_managed: 600000 },
-    ]
+      {
+        employee_id: '1',
+        manager_id: null,
+        name: 'Elena Rossi (Chief Executive Officer)',
+        salary: 220000,
+        budget_managed: 5000000,
+      },
+      {
+        employee_id: '2',
+        manager_id: '1',
+        name: 'Marco Bianchi (Chief Technology Officer)',
+        salary: 160000,
+        budget_managed: 2000000,
+      },
+      {
+        employee_id: '3',
+        manager_id: '1',
+        name: 'Giulia Verdi (Chief Marketing Officer)',
+        salary: 150000,
+        budget_managed: 1500000,
+      },
+      {
+        employee_id: '4',
+        manager_id: '1',
+        name: 'Davide Neri (Chief Financial Officer)',
+        salary: 155000,
+        budget_managed: 1000000,
+      },
+      {
+        employee_id: '5',
+        manager_id: '2',
+        name: 'Luca Ferrari (VP Software Architecture)',
+        salary: 125000,
+        budget_managed: 800000,
+      },
+      {
+        employee_id: '6',
+        manager_id: '2',
+        name: 'Sara Romano (VP Cloud & DevOps)',
+        salary: 120000,
+        budget_managed: 700000,
+      },
+      {
+        employee_id: '7',
+        manager_id: '5',
+        name: 'Alessandro Galli (Staff Data Engineer)',
+        salary: 90000,
+        budget_managed: 150000,
+      },
+      {
+        employee_id: '8',
+        manager_id: '5',
+        name: 'Chiara Costa (Staff Frontend Engineer)',
+        salary: 88000,
+        budget_managed: 120000,
+      },
+      {
+        employee_id: '9',
+        manager_id: '3',
+        name: 'Matteo Fontana (Head of Growth Marketing)',
+        salary: 95000,
+        budget_managed: 600000,
+      },
+    ],
   },
   pnl: {
     name: 'Financial P&L',
@@ -63,16 +223,72 @@ const datasets = {
       full_year_budget: v => '€' + Number(v).toLocaleString('it-IT'),
     },
     records: [
-      { account_code: '1000', parent_account_code: null, account_name: 'Ricavi Totali', q1_actual: 750000, q2_actual: 820000, full_year_budget: 3200000 },
-      { account_code: '1100', parent_account_code: '1000', account_name: 'Ricavi Abbonamenti SaaS', q1_actual: 500000, q2_actual: 560000, full_year_budget: 2200000 },
-      { account_code: '1200', parent_account_code: '1000', account_name: 'Servizi Professionali & Consulenza', q1_actual: 250000, q2_actual: 260000, full_year_budget: 1000000 },
-      { account_code: '2000', parent_account_code: null, account_name: 'Costi Operativi (OPEX)', q1_actual: 420000, q2_actual: 450000, full_year_budget: 1800000 },
-      { account_code: '2100', parent_account_code: '2000', account_name: 'Personale & Salari', q1_actual: 280000, q2_actual: 295000, full_year_budget: 1200000 },
-      { account_code: '2200', parent_account_code: '2000', account_name: 'Infrastruttura Cloud AWS/GCP', q1_actual: 85000, q2_actual: 92000, full_year_budget: 360000 },
-      { account_code: '2300', parent_account_code: '2000', account_name: 'Marketing & Digital Acquisition', q1_actual: 55000, q2_actual: 63000, full_year_budget: 240000 },
-      { account_code: '3000', parent_account_code: null, account_name: 'Margine Operativo Lordo (EBITDA)', q1_actual: 330000, q2_actual: 370000, full_year_budget: 1400000 },
-    ]
-  }
+      {
+        account_code: '1000',
+        parent_account_code: null,
+        account_name: 'Ricavi Totali',
+        q1_actual: 750000,
+        q2_actual: 820000,
+        full_year_budget: 3200000,
+      },
+      {
+        account_code: '1100',
+        parent_account_code: '1000',
+        account_name: 'Ricavi Abbonamenti SaaS',
+        q1_actual: 500000,
+        q2_actual: 560000,
+        full_year_budget: 2200000,
+      },
+      {
+        account_code: '1200',
+        parent_account_code: '1000',
+        account_name: 'Servizi Professionali & Consulenza',
+        q1_actual: 250000,
+        q2_actual: 260000,
+        full_year_budget: 1000000,
+      },
+      {
+        account_code: '2000',
+        parent_account_code: null,
+        account_name: 'Costi Operativi (OPEX)',
+        q1_actual: 420000,
+        q2_actual: 450000,
+        full_year_budget: 1800000,
+      },
+      {
+        account_code: '2100',
+        parent_account_code: '2000',
+        account_name: 'Personale & Salari',
+        q1_actual: 280000,
+        q2_actual: 295000,
+        full_year_budget: 1200000,
+      },
+      {
+        account_code: '2200',
+        parent_account_code: '2000',
+        account_name: 'Infrastruttura Cloud AWS/GCP',
+        q1_actual: 85000,
+        q2_actual: 92000,
+        full_year_budget: 360000,
+      },
+      {
+        account_code: '2300',
+        parent_account_code: '2000',
+        account_name: 'Marketing & Digital Acquisition',
+        q1_actual: 55000,
+        q2_actual: 63000,
+        full_year_budget: 240000,
+      },
+      {
+        account_code: '3000',
+        parent_account_code: null,
+        account_name: 'Margine Operativo Lordo (EBITDA)',
+        q1_actual: 330000,
+        q2_actual: 370000,
+        full_year_budget: 1400000,
+      },
+    ],
+  },
 };
 
 let currentDatasetKey = 'sales';
@@ -102,10 +318,10 @@ function buildMultiDimensionTree(records, dimensions, metrics) {
           path: [...currentPath],
           isLeaf,
           metrics: {},
-          childrenMap: isLeaf ? null : new Map()
+          childrenMap: isLeaf ? null : new Map(),
         };
         if (isLeaf) {
-          metrics.forEach(m => node.metrics[m] = Number(record[m]) || 0);
+          metrics.forEach(m => (node.metrics[m] = Number(record[m]) || 0));
         }
         currentMap.set(val, node);
       }
@@ -153,7 +369,7 @@ function buildParentChildTree(records, idCol, parentIdCol, labelCol, metrics) {
     allIds.add(id);
 
     const mValues = {};
-    metrics.forEach(m => mValues[m] = Number(r[m]) || 0);
+    metrics.forEach(m => (mValues[m] = Number(r[m]) || 0));
 
     nodeMap.set(id, {
       key: id,
@@ -161,7 +377,7 @@ function buildParentChildTree(records, idCol, parentIdCol, labelCol, metrics) {
       depth: 0,
       path: [name],
       isLeaf: true,
-      metrics: mValues
+      metrics: mValues,
     });
 
     const pKey = pId ?? '__ROOT__';
@@ -227,7 +443,7 @@ function computeGrandTotal(roots, metrics) {
     key: '__grand_total__',
     name: 'Grand Total (All Records)',
     depth: 0,
-    metrics: gMetrics
+    metrics: gMetrics,
   };
 }
 
@@ -244,7 +460,7 @@ function filterTree(nodes, term) {
     if (matches || matchingChildren.length > 0) {
       return {
         ...n,
-        children: matchingChildren.length > 0 ? matchingChildren : n.children
+        children: matchingChildren.length > 0 ? matchingChildren : n.children,
       };
     }
     return null;
@@ -334,15 +550,17 @@ function renderTable() {
   // Multi-Filter badges update
   if (filterIndicatorEl) {
     if (activeFilterMap.size > 0) {
-      const chipsHTML = Array.from(activeFilterMap.values()).map(f => {
-        const encKey = encodeURIComponent(f.key);
-        return `
+      const chipsHTML = Array.from(activeFilterMap.values())
+        .map(f => {
+          const encKey = encodeURIComponent(f.key);
+          return `
           <div class="active-filter-chip">
             <span>⚡ ${f.val}</span>
             <button type="button" class="filter-chip-clear" onclick="removeSingleFilter('${encKey}')" title="Remove filter">✕</button>
           </div>
         `;
-      }).join('');
+        })
+        .join('');
 
       filterIndicatorEl.innerHTML = `
         <div class="active-filter-container">
@@ -394,9 +612,13 @@ function renderTable() {
               onclick="event.stopPropagation(); triggerCrossFilter('${encKey}')"
               title="${isFilterSelected ? 'Deselect' : 'Select'} ${n.name}"
             />
-            ${hasChildren ? `
+            ${
+              hasChildren
+                ? `
               <span class="node-btn" onclick="toggleNode('${encKey}')">${isExpanded ? '−' : '+'}</span>
-            ` : '<span style="display:inline-block; width:18px;"></span>'}
+            `
+                : '<span style="display:inline-block; width:18px;"></span>'
+            }
             <span
               class="node-name-link ${hasChildren ? 'node-parent' : ''} ${isFilterSelected ? 'node-filter-active' : ''}"
               onclick="triggerCrossFilter('${encKey}')"
@@ -496,7 +718,11 @@ function updateCompanionCharts() {
     } else if (selectedItems.length === 1) {
       kpiLabelEl.innerText = `${selectedItems[0].val} (${primaryMetric.replace(/_/g, ' ')}) • ${filteredRecords.length} records`;
     } else {
-      const names = selectedItems.map(it => it.val).slice(0, 3).join(', ') + (selectedItems.length > 3 ? ` +${selectedItems.length - 3} more` : '');
+      const names =
+        selectedItems
+          .map(it => it.val)
+          .slice(0, 3)
+          .join(', ') + (selectedItems.length > 3 ? ` +${selectedItems.length - 3} more` : '');
       kpiLabelEl.innerText = `${selectedItems.length} Filters (${names}) • ${filteredRecords.length} records`;
     }
 
@@ -508,16 +734,18 @@ function updateCompanionCharts() {
         combinedVal * 0.91,
         combinedVal * 1.04,
         combinedVal * 1.12,
-        combinedVal
+        combinedVal,
       ];
       const maxP = Math.max(...points) || 1;
       const minP = Math.min(...points) * 0.85;
       const range = maxP - minP || 1;
-      const coords = points.map((p, idx) => {
-        const x = (idx / (points.length - 1)) * 260 + 10;
-        const y = 40 - ((p - minP) / range) * 32 + 4;
-        return `${x},${y}`;
-      }).join(' ');
+      const coords = points
+        .map((p, idx) => {
+          const x = (idx / (points.length - 1)) * 260 + 10;
+          const y = 40 - ((p - minP) / range) * 32 + 4;
+          return `${x},${y}`;
+        })
+        .join(' ');
 
       sparklineEl.innerHTML = `
         <polyline fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" points="${coords}" />
@@ -533,15 +761,17 @@ function updateCompanionCharts() {
         <div class="filter-status-tag">
           <span class="tag-head">⚡ ACTIVE MULTI-FILTER (${selectedItems.length})</span>
           <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
-            ${selectedItems.map(it => {
-              const encKey = encodeURIComponent(it.key);
-              return `
+            ${selectedItems
+              .map(it => {
+                const encKey = encodeURIComponent(it.key);
+                return `
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
                   <span><strong>${it.val}</strong> <small style="color:var(--text-dimmed);">(${it.dim})</small></span>
                   <button type="button" style="background:none; border:none; color:var(--orange-accent); cursor:pointer; font-weight:bold;" onclick="removeSingleFilter('${encKey}')" title="Remove filter">✕</button>
                 </div>
               `;
-            }).join('')}
+              })
+              .join('')}
           </div>
           <button type="button" class="btn-sm" style="margin-top:6px; padding:3px 8px; font-size:10px;" onclick="clearActiveFilter()">Clear All</button>
         </div>
@@ -560,7 +790,7 @@ function updateCompanionCharts() {
     itemsToDisplay = selectedItems.map(it => it.node).filter(Boolean);
   } else if (selectedItems.length === 1 && selectedItems[0].node) {
     const n = selectedItems[0].node;
-    itemsToDisplay = (n.children && n.children.length > 0) ? n.children : [n];
+    itemsToDisplay = n.children && n.children.length > 0 ? n.children : [n];
   } else {
     itemsToDisplay = currentTree;
   }
@@ -590,7 +820,8 @@ function updateCompanionCharts() {
 
   // 5. Update Donut / Share Chart
   if (donutSvgEl && donutLegendEl) {
-    const totalVal = itemsToDisplay.reduce((acc, it) => acc + (it.metrics[primaryMetric] || 0), 0) || 1;
+    const totalVal =
+      itemsToDisplay.reduce((acc, it) => acc + (it.metrics[primaryMetric] || 0), 0) || 1;
     const colors = ['#3b82f6', '#ea580c', '#be123c', '#10b981', '#8b5cf6', '#f59e0b'];
     let accumulatedAngle = 0;
     let pathsHTML = '';
@@ -611,14 +842,14 @@ function updateCompanionCharts() {
       const cx = 65;
       const cy = 65;
 
-      const x1 = cx + rOuter * Math.cos(Math.PI * (startAngle - 90) / 180);
-      const y1 = cy + rOuter * Math.sin(Math.PI * (startAngle - 90) / 180);
-      const x2 = cx + rOuter * Math.cos(Math.PI * (endAngle - 90) / 180);
-      const y2 = cy + rOuter * Math.sin(Math.PI * (endAngle - 90) / 180);
-      const x3 = cx + rInner * Math.cos(Math.PI * (endAngle - 90) / 180);
-      const y3 = cy + rInner * Math.sin(Math.PI * (endAngle - 90) / 180);
-      const x4 = cx + rInner * Math.cos(Math.PI * (startAngle - 90) / 180);
-      const y4 = cy + rInner * Math.sin(Math.PI * (startAngle - 90) / 180);
+      const x1 = cx + rOuter * Math.cos((Math.PI * (startAngle - 90)) / 180);
+      const y1 = cy + rOuter * Math.sin((Math.PI * (startAngle - 90)) / 180);
+      const x2 = cx + rOuter * Math.cos((Math.PI * (endAngle - 90)) / 180);
+      const y2 = cy + rOuter * Math.sin((Math.PI * (endAngle - 90)) / 180);
+      const x3 = cx + rInner * Math.cos((Math.PI * (endAngle - 90)) / 180);
+      const y3 = cy + rInner * Math.sin((Math.PI * (endAngle - 90)) / 180);
+      const x4 = cx + rInner * Math.cos((Math.PI * (startAngle - 90)) / 180);
+      const y4 = cy + rInner * Math.sin((Math.PI * (startAngle - 90)) / 180);
 
       const largeArc = angle > 180 ? 1 : 0;
       const pathD = `M ${x1} ${y1} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4} ${y4} Z`;
@@ -686,11 +917,15 @@ function updateCompanionCharts() {
       <path d="${linePath}" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" />
 
       <!-- Data points & labels -->
-      ${pts.map((p, idx) => `
+      ${pts
+        .map(
+          (p, idx) => `
         <circle cx="${p.x}" cy="${p.y}" r="4" fill="#ea580c" stroke="#101218" stroke-width="2" />
         <text x="${p.x}" y="${h - 6}" font-family="'Roboto Mono', monospace" font-size="10" font-weight="600" fill="#8d94a5" text-anchor="middle">${quarters[idx]}</text>
         <text x="${p.x}" y="${p.y - 8}" font-family="'Roboto Mono', monospace" font-size="10" font-weight="bold" fill="#f1f3f8" text-anchor="middle">${config.formatters[primaryMetric](p.v)}</text>
-      `).join('')}
+      `,
+        )
+        .join('')}
     `;
   }
 }
@@ -710,14 +945,15 @@ function triggerCrossFilter(keyOrEncoded) {
         val: node.name,
         key: node.key,
         path: node.path,
-        node
+        node,
       });
     }
   }
 
   const selectedItems = Array.from(activeFilterMap.values());
   if (selectedItems.length === 0) {
-    if (logEl) logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Superset Cross-Filter:</strong> { "filterState": null, "extraFormData": {} }`;
+    if (logEl)
+      logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Superset Cross-Filter:</strong> { "filterState": null, "extraFormData": {} }`;
   } else {
     // Group values by dimension for native Superset payload
     const grouped = {};
@@ -731,8 +967,8 @@ function triggerCrossFilter(keyOrEncoded) {
       filterState: {
         value: selectedItems.map(it => it.val),
         selectedValues: selectedItems.map(it => it.val),
-        label: selectedItems.map(it => `${it.dim}: ${it.val}`).join(', ')
-      }
+        label: selectedItems.map(it => `${it.dim}: ${it.val}`).join(', '),
+      },
     };
     if (logEl) {
       logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> ⚡ <strong>Emitted Superset 6.1.0 Multi Cross-Filter (setDataMask):</strong> <pre style="display:inline; color:#a7f3d0;">${JSON.stringify(payload)}</pre>`;
@@ -773,7 +1009,13 @@ function loadDataset(key) {
   if (cfg.type === 'multi_dimension') {
     currentTree = buildMultiDimensionTree(cfg.records, cfg.dimensions, cfg.metrics);
   } else {
-    currentTree = buildParentChildTree(cfg.records, cfg.idCol, cfg.parentIdCol, cfg.labelCol, cfg.metrics);
+    currentTree = buildParentChildTree(
+      cfg.records,
+      cfg.idCol,
+      cfg.parentIdCol,
+      cfg.labelCol,
+      cfg.metrics,
+    );
   }
   expandedKeys.clear();
   // Expand first level by default
@@ -786,7 +1028,7 @@ function loadDataset(key) {
 const codeSnippets = {
   powershell: `# Install directly into local Superset 6.1.0 on Windows PowerShell\n.\\scripts\\install.ps1 -SupersetPath "C:\\path\\to\\superset"`,
   bash: `# Install directly on Linux / macOS / Git Bash\n./scripts/install.sh --superset-path "/path/to/superset"`,
-  docker: `# Docker Compose Override (docker-compose.override.yml)\nversion: '3.7'\nservices:\n  superset-node:\n    volumes:\n      - ./superset-frontend/plugins/superset-plugin-chart-hierarchical-table:/app/superset-frontend/plugins/superset-plugin-chart-hierarchical-table`
+  docker: `# Docker Compose Override (docker-compose.override.yml)\nversion: '3.7'\nservices:\n  superset-node:\n    volumes:\n      - ./superset-frontend/plugins/superset-plugin-chart-hierarchical-table:/app/superset-frontend/plugins/superset-plugin-chart-hierarchical-table`,
 };
 
 function selectTab(tabKey, btn) {
@@ -800,7 +1042,9 @@ function copyCode() {
   navigator.clipboard.writeText(code).then(() => {
     const btn = document.querySelector('.copy-btn');
     btn.innerText = 'Copied! ✓';
-    setTimeout(() => { btn.innerText = 'Copy'; }, 2000);
+    setTimeout(() => {
+      btn.innerText = 'Copy';
+    }, 2000);
   });
 }
 
@@ -808,4 +1052,3 @@ function copyCode() {
 document.addEventListener('DOMContentLoaded', () => {
   loadDataset('sales');
 });
-

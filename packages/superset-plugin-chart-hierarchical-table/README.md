@@ -19,11 +19,13 @@ new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).regi
 ```
 
 ## Features
+
 - **Dual-Mode Hierarchy**: Multi-Dimension Level Grouping (`Region > Country > City > Store`) and Parent-Child Adjacency (`ID` / `Parent ID` / `Label`).
 - **Multi-Selection Cross-Filtering**: Native Superset 6.1.0 `setDataMask` integration with grouped `IN` filters, checkboxes, multi-row highlighting, and URI-safe key handling.
 - **Automatic Rollups & Grand Total**: Post-order tree aggregation for subtotals (SUM, AVG, MIN, MAX, COUNT) and sticky Grand Total row.
+- **Responsive Scrollbar & Containment**: Dynamic bounding respecting container dimensions, `min-height: 0` Flexbox internal scroll wrapper, and custom scrollbar.
 - **Interactive Navigation**: In-Tree real-time search with path preservation, Expand All, and Collapse All tools.
-- **Modern UI & Theming**: Ant Design v5-inspired dark mode styling, sticky headers, and sticky hierarchy column.
+- **Modern UI & Theming**: Ant Design v5-inspired styling, opaque sticky headers, and sticky hierarchy column.
 
 ## Running Tests
 

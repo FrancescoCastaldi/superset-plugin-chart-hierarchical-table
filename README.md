@@ -31,11 +31,13 @@
 ## 📸 Anteprima Visiva & Animazione Interattiva
 
 ### 🎬 Animazione Dinamica del Cross-Filtering & Interattività Multi-Grafico
+
 L'animazione vettoriale illustra l'interazione ad albero, l'espansione dei rami dimensionali, l'emissione dell'evento `setDataMask` e la reattività dei grafici companion della dashboard:
 
 ![Hierarchical Table Dynamic Animation](docs/images/hierarchical_table_animation.svg)
 
 ### 🖼️ Screenshot UI in Apache Superset 6.1.0
+
 ![Apache Superset Hierarchical Table Preview](docs/images/hierarchical_table_preview.jpg)
 
 ---
@@ -71,10 +73,12 @@ flowchart LR
 ```
 
 ### 1. Elaborazione Gerarchica Dual-Mode
+
 - **Multi-Dimension Level Grouping**: Raggruppamento per serie ordinata di dimensioni (es. `Region > Country > City > Store`).
 - **Parent-Child Adjacency Graph**: Risoluzione ricorsiva di grafi di adiacenza (es. Organigrammi `employee_id -> manager_id`, Piani dei Conti `account_code -> parent_account_code`).
 
 ### 2. Cross-Filtering a Selezione Multipla Nativo Superset 6.1.0 (`setDataMask`)
+
 - **Multi-Selection & Union Evaluation**: Selezione simultanea di più nodi e parametri a livelli diversi della gerarchia con valutazione a livello di record (zero doppio conteggio).
 - **Subtree Graph Traversal**: Per gerarchie Parent-Child, risoluzione automatica dell'intero sottoalbero di ID discendenti per ciascun nodo selezionato.
 - **Grouped `IN` Filters**: Generazione automatica di filtri aggregati per colonna (`{ col: "country", op: "IN", val: ["USA", "Germany"] }`).
@@ -83,11 +87,20 @@ flowchart LR
 - **Active Filter Management**: Badge interattivi con eliminazione del singolo filtro `✕`, pulsante `Clear All (N)` ed evidenziazione visiva `.selected-filter-row`.
 
 ### 3. Calcolo Automatico di Roll-up & Subtotali
+
 - Algoritmo di attraversamento post-order per il calcolo di subtotali su tutti i nodi non-foglia (Somma, Media, Min, Max, Conteggio).
 - Generazione automatica della riga di riepilogo complessivo (**Grand Total**).
 
 ### 4. Companion Engine Backend (Python)
+
 - Pacchetto `superset_hierarchical_table` per elaborazioni pesanti lato server su grandi DataFrame Pandas e generazione di query SQL con CTE ricorsive.
+
+### 5. Responsive Scrollbar & Contenimento Grafico
+
+- **Dynamic Bounding**: Integrazione diretta con le proprietà `width` e `height` fornite dal motore di rendering di Apache Superset.
+- **Scroll Interno Bidirezionale**: Contenitore `.table-scroll-wrapper` con `min-height: 0` e `min-width: 0` in Flexbox, garantendo lo scorrimento fluido verticale/orizzontale ed evitando tagli grafici o overflow.
+- **Sticky Headers & Columns Opache**: Intestazioni di colonna (`th`) e colonna gerarchica ad albero (`td.hierarchy-cell`) fisse con sfondo opaco e ombreggiatura per evitare sovrapposizioni visive.
+- **Custom Scrollbar Styling**: Scrollbar personalizzata e sottile coerente sia su browser standard che motori WebKit.
 
 ---
 
@@ -168,28 +181,32 @@ superset-plugin-chart-hierarchical-table/
 Se utilizzi un'istanza locale di Apache Superset 6.1.0 avviata tramite **Docker Compose**, puoi eseguire l'installer automatico che effettua backup, iniezione AST e build in un solo passaggio.
 
 #### Su Windows (PowerShell):
+
 ```powershell
 .\scripts\install.ps1 -SupersetPath "C:\path\to\superset"
 ```
 
 #### Su Linux / macOS / Git Bash:
+
 ```bash
 ./scripts/install.sh --superset-path "/path/to/superset"
 ```
 
-*Per la procedura dettagliata in ambiente Windows con WSL 2 e Docker Desktop, consultare la [Guida all'Installazione su Windows](docs/docker_installation_windows.md).*
+_Per la procedura dettagliata in ambiente Windows con WSL 2 e Docker Desktop, consultare la [Guida all'Installazione su Windows](docs/docker_installation_windows.md)._
 
 ---
 
 ### 2. Installazione Manuale
 
 #### Prerequisiti:
+
 - **Node.js**: `>= 20.x` LTS
 - **npm**: `>= 10.x`
 - **Python**: `>= 3.9`
 - **Apache Superset**: `6.1.0+`
 
 #### Passo A: Registrazione del Plugin Frontend
+
 Posizionarsi all'interno della cartella `superset-frontend/` dell'istanza Superset:
 
 ```bash
@@ -206,6 +223,7 @@ new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).regi
 ```
 
 #### Passo B: Installazione del Backend Companion (Opzionale)
+
 ```bash
 cd packages/superset-hierarchical-table-backend
 pip install -e .
@@ -215,22 +233,22 @@ pip install -e .
 
 ## 🎛️ Parametri Explore (Control Panel)
 
-| Parametro | Tipo | Descrizione |
-|---|---|---|
-| **Hierarchy Mode** | Select | `Multi-Dimension Grouping` o `Parent-Child Adjacency`. |
-| **Hierarchy Dimensions** | Multi-Select | Lista ordinata delle colonne dimensionali (dal livello radice al livello foglia). |
-| **Node ID Column** | Select | Colonna ID univoco (visibile in modalità Parent-Child). |
-| **Parent ID Column** | Select | Colonna Parent ID di riferimento (visibile in modalità Parent-Child). |
-| **Metrics** | Metrics | Metriche numeriche da aggregare ed esporre nella matrice. |
-| **Initial Expand Depth** | Select | Livello di apertura iniziale (`Collapse All`, `Level 1`, `Level 2`, `Expand All`). |
-| **Show Subtotals / Rollup** | Checkbox | Abilita il calcolo dei totali intermedi sui nodi padre. |
-| **Show Grand Total Row** | Checkbox | Visualizza la riga del Totale Generale in cima alla tabella. |
-| **Emit Dashboard Cross-Filters** | Checkbox | Emette eventi `setDataMask` al click sulle righe per filtrare l'intera dashboard. |
-| **Enable In-Tree Search** | Checkbox | Barra di ricerca in tempo reale con evidenziazione del path. |
-| **Sticky Table Header** | Checkbox | Blocca le intestazioni durante lo scroll verticale. |
-| **Sticky Hierarchy Column** | Checkbox | Blocca la prima colonna durante lo scroll orizzontale. |
+| Parametro                        | Tipo         | Descrizione                                                                        |
+| -------------------------------- | ------------ | ---------------------------------------------------------------------------------- |
+| **Hierarchy Mode**               | Select       | `Multi-Dimension Grouping` o `Parent-Child Adjacency`.                             |
+| **Hierarchy Dimensions**         | Multi-Select | Lista ordinata delle colonne dimensionali (dal livello radice al livello foglia).  |
+| **Node ID Column**               | Select       | Colonna ID univoco (visibile in modalità Parent-Child).                            |
+| **Parent ID Column**             | Select       | Colonna Parent ID di riferimento (visibile in modalità Parent-Child).              |
+| **Metrics**                      | Metrics      | Metriche numeriche da aggregare ed esporre nella matrice.                          |
+| **Initial Expand Depth**         | Select       | Livello di apertura iniziale (`Collapse All`, `Level 1`, `Level 2`, `Expand All`). |
+| **Show Subtotals / Rollup**      | Checkbox     | Abilita il calcolo dei totali intermedi sui nodi padre.                            |
+| **Show Grand Total Row**         | Checkbox     | Visualizza la riga del Totale Generale in cima alla tabella.                       |
+| **Emit Dashboard Cross-Filters** | Checkbox     | Emette eventi `setDataMask` al click sulle righe per filtrare l'intera dashboard.  |
+| **Enable In-Tree Search**        | Checkbox     | Barra di ricerca in tempo reale con evidenziazione del path.                       |
+| **Sticky Table Header**          | Checkbox     | Blocca le intestazioni durante lo scroll verticale.                                |
+| **Sticky Hierarchy Column**      | Checkbox     | Blocca la prima colonna durante lo scroll orizzontale.                             |
 
-*Per il manuale completo di tutti i controlli, consultare il [Riferimento del Control Panel](docs/control_panel_reference.md).*
+_Per il manuale completo di tutti i controlli, consultare il [Riferimento del Control Panel](docs/control_panel_reference.md)._
 
 ---
 

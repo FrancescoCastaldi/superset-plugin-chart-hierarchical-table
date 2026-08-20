@@ -1,38 +1,36 @@
-import {
-  ChartProps,
-  DataRecord,
-  ensureIsArray,
-  getNumberFormatter,
-} from '@superset-ui/core';
+import { DataRecord, ensureIsArray } from '@superset-ui/core';
 import {
   HierarchicalTableChartProps,
-  HierarchicalTableFormData,
   HierarchicalTableTransformedProps,
   TableColumn,
   TreeNode,
 } from '../types';
-import {
-  buildMultiDimensionTree,
-  buildParentChildTree,
-} from '../utils/treeBuilder';
+import { buildMultiDimensionTree, buildParentChildTree } from '../utils/treeBuilder';
 import { computeGrandTotal } from '../utils/aggregations';
 import { formatMetricValue } from '../utils/formatters';
 
 export default function transformProps(
   chartProps: HierarchicalTableChartProps,
 ): HierarchicalTableTransformedProps {
-  const { width, height, formData, queriesData, hooks, filterState } = chartProps;
+  const { width, height, formData = {} as any, rawFormData = {} as any, queriesData, hooks, filterState } = chartProps as any;
   const { onAddFilter, setDataMask } = hooks || {};
 
+  const mergedFormData: any = { ...rawFormData, ...formData };
   const {
     hierarchyType = 'multi_dimension',
     groupby,
+    hierarchy_dimensions,
+    hierarchyDimensions,
     idColumn = '',
     parentIdColumn = '',
     labelColumn = '',
     metrics: rawMetrics = [],
     initialExpandDepth = 1,
+    expand_all_by_default,
+    expandAllByDefault,
     showSubtotals = true,
+    show_rollup_totals,
+    showRollupTotals,
     showGrandTotal = true,
     indentSize = 20,
     stickyHeader = true,
@@ -42,38 +40,47 @@ export default function transformProps(
     stripedRows = true,
     numberFormat = 'SMART_NUMBER',
     currencySymbol = '',
-    emit_filter = true,
-    enableCrossFiltering = true,
-  } = formData as HierarchicalTableFormData;
+    emit_filter,
+    emitFilter,
+    enableCrossFiltering,
+    enable_cross_filtering,
+  } = mergedFormData;
 
   const dataRecords: DataRecord[] = queriesData?.[0]?.data || [];
 
   // Extract metric names
-  const metrics: string[] = ensureIsArray(rawMetrics).map(m =>
-    typeof m === 'string' ? m : m.label,
+  const metrics: string[] = ensureIsArray(rawMetrics).map((m: any) =>
+    typeof m === 'string' ? m : m?.label || String(m),
   );
 
-  const dimensions: string[] = ensureIsArray(groupby);
+  // Backward compat: support groupby, hierarchyDimensions, hierarchy_dimensions
+  const dimensions: string[] = ensureIsArray(groupby || hierarchyDimensions || hierarchy_dimensions);
+
+  // Calculate expand depth
+  let calculatedExpandDepth = initialExpandDepth;
+  if (expandAllByDefault || expand_all_by_default) {
+    calculatedExpandDepth = -1;
+  }
+
+  // Calculate subtotal display
+  const isSubtotals = showSubtotals ?? showRollupTotals ?? show_rollup_totals ?? true;
 
   // Build hierarchical data tree based on mode
   let treeData: TreeNode[] = [];
   if (hierarchyType === 'multi_dimension') {
     treeData = buildMultiDimensionTree(dataRecords, dimensions, metrics);
   } else {
-    treeData = buildParentChildTree(
-      dataRecords,
-      idColumn,
-      parentIdColumn,
-      labelColumn,
-      metrics,
-    );
+    treeData = buildParentChildTree(dataRecords, idColumn, parentIdColumn, labelColumn, metrics);
   }
 
   // Create columns definition
   const columns: TableColumn[] = [
     {
       key: '__hierarchy_tree__',
-      title: hierarchyType === 'multi_dimension' ? dimensions.join(' / ') || 'Hierarchy' : 'Hierarchy Tree',
+      title:
+        hierarchyType === 'multi_dimension'
+          ? dimensions.join(' / ') || 'Hierarchy'
+          : 'Hierarchy Tree',
       dataIndex: 'name',
       isMetric: false,
       isHierarchyDimension: true,
@@ -100,7 +107,9 @@ export default function transformProps(
     grandTotalNode = computeGrandTotal(treeData, metrics);
   }
 
-  const isCrossFilterActive = emit_filter && enableCrossFiltering;
+  const isCrossFilterActive = Boolean(
+    emitFilter ?? emit_filter ?? enableCrossFiltering ?? enable_cross_filtering ?? true,
+  );
 
   // Superset 6.1.0 Cross-Filter handler supporting multi-selection
   const handleCrossFilter = (
@@ -115,10 +124,14 @@ export default function transformProps(
     if (setDataMask) {
       if (allSelectedFilters && allSelectedFilters.length === 0) {
         setDataMask({
-          extraFormData: {},
+          extraFormData: {
+            filters: [],
+          },
           filterState: {
             value: null,
             selectedValues: [],
+            filters: null,
+            selectedFilters: null,
           },
         });
       } else if (allSelectedFilters && allSelectedFilters.length > 0) {
@@ -154,15 +167,20 @@ export default function transformProps(
             value: selectedVals,
             selectedValues: selectedVals,
             label: allSelectedFilters.map(f => `${f.dimension}: ${f.value}`).join(', '),
-            filters,
+            filters: dimValuesMap,
+            selectedFilters: dimValuesMap,
           },
         });
       } else if (isCurrentlySelected) {
         setDataMask({
-          extraFormData: {},
+          extraFormData: {
+            filters: [],
+          },
           filterState: {
             value: null,
             selectedValues: [],
+            filters: null,
+            selectedFilters: null,
           },
         });
       } else {
@@ -183,7 +201,8 @@ export default function transformProps(
             value: valArray,
             selectedValues: valArray,
             label: `${dimension}: ${valArray.join(', ')}`,
-            filters,
+            filters: { [dimension]: valArray },
+            selectedFilters: { [dimension]: valArray },
           },
         });
       }
@@ -195,10 +214,14 @@ export default function transformProps(
   const handleClearFilter = () => {
     if (setDataMask) {
       setDataMask({
-        extraFormData: {},
+        extraFormData: {
+          filters: [],
+        },
         filterState: {
           value: null,
           selectedValues: [],
+          filters: null,
+          selectedFilters: null,
         },
       });
     }
@@ -214,8 +237,8 @@ export default function transformProps(
     hierarchyType,
     dimensions,
     metrics,
-    initialExpandDepth,
-    showSubtotals,
+    initialExpandDepth: calculatedExpandDepth,
+    showSubtotals: isSubtotals,
     showGrandTotal,
     grandTotalNode,
     stickyHeader,

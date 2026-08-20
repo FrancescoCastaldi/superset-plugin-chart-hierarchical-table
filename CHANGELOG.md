@@ -8,13 +8,30 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 ## [Unreleased]
 
 ### Aggiunte pianificate
+
 - Supporto per esportazione Excel multi-livello con gruppi raggruppabili (native Excel grouping).
 - Integrazione drill-through a dashboard secondarie tramite Superset URL parameters.
 - Modalità Pivot dinamica a colonne per metriche temporali (Time Comparison / Period-over-Period).
 
+## [0.1.2] - 2026-08-20
+
+### Added
+
+- **🖥️ Integrated Responsive Scrollbar & Graphic Containment Engine**:
+  - Implementato il calcolo dinamico di `containerStyle` basato su `width`, `height`, `maxHeight` e `maxWidth` passati da Apache Superset, garantendo il perfetto contenimento all'interno della card del chart senza fuoriuscite visive.
+  - Aggiunto `min-height: 0` e `min-width: 0` su `.table-scroll-wrapper` in Flexbox, attivando lo scrolling interno bidirezionale (verticale e orizzontale) ed eliminando il problema delle tabelle tagliate a fondo card.
+  - Scrollbar personalizzata integrata sia con standard CSS (`scrollbar-width: thin`) che per motori WebKit (`::-webkit-scrollbar`).
+  - Intestazioni di colonna (`th.sticky-header`) e colonna gerarchica (`th.hierarchy-col`, `td.hierarchy-cell`) opache con ombreggiatura di elevazione (`box-shadow`), prevenendo trasparenze durante lo scroll.
+
+- **⚡ Full Native Superset 6.x Cross-Filtering Standardization**:
+  - Normalizzazione delle chiavi dimensionali per supportare sia `groupby` che `hierarchyDimensions` (camelCase da `ChartProps`) e `hierarchy_dimensions` (snake_case da `rawFormData`).
+  - Standardizzazione del payload `setDataMask` per Superset 6.x con `extraFormData.filters` (operatori `IN` multi-path), `filterState.filters` e `filterState.selectedFilters` come dizionari `{ [col]: valArray }`.
+  - Reset atomico dei filtri con `extraFormData: { filters: [] }` e `filterState.value = null`.
+
 ## [0.1.1] - 2026-08-20
 
 ### Added
+
 - **⚡ Advanced Multi-Selection Cross-Filtering Engine**:
   - Implementata la selezione multipla simultanea di nodi e dimensioni con valutazione a livello di record atomico (`getFilteredRecords()`), eliminando ogni rischio di doppio conteggio.
   - Risoluzione automatica dei sottoalberi ricorsivi per gerarchie Parent-Child (inclusione di tutti gli ID discendenti).
@@ -26,6 +43,7 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
   - Test suite Jest aggiornata in `treeBuilder.test.ts` con test per aggregazioni multi-nodo e grand total.
 
 ### Changed
+
 - Rimozione globale del simbolo di marchio registrato (`™`) in favore della denominazione pulita **StratumTree**.
 
 ---
@@ -33,6 +51,7 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 ## [0.1.0] - 2026-08-20
 
 ### Added
+
 - **⚡ Native Apache Superset 6.1.0 Cross-Filtering & Dashboard Interactivity**:
   - Implementato il protocollo `setDataMask` in `src/plugin/transformProps.ts` con emissione di filtri SQL `IN` (`extraFormData.filters`).
   - Filtraggio gerarchico multi-livello (Path-Aware) per trasmettere i filtri di tutti i livelli padre all'intera dashboard.
@@ -69,4 +88,3 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 - **Backend Engine (`packages/superset-hierarchical-table-backend`)**:
   - Pacchetto Python `superset_hierarchical_table` con `tree_aggregator.py`, `parent_child.py` e `sql_builder.py` (query SQL CTE ricorsive).
   - Test unitari con `pytest`.
-

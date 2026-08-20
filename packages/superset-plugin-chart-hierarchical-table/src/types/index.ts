@@ -1,9 +1,8 @@
 import {
   ChartProps,
-  ChartDataResponsePayload,
+  ChartDataResponse,
   QueryFormData,
   DataRecord,
-  NumberFormatter,
 } from '@superset-ui/core';
 
 export type HierarchyType = 'multi_dimension' | 'parent_child';
@@ -28,7 +27,7 @@ export interface HierarchicalTableFormData extends QueryFormData {
   idColumn?: string;
   parentIdColumn?: string;
   labelColumn?: string;
-  metrics: Array<string | { label: string; expressionType: string }>;
+  metrics: any;
 
   // Display & Hierarchy Options
   initialExpandDepth: number; // 0 = all collapsed, -1 = all expanded, N = expand up to level N
@@ -123,7 +122,7 @@ export interface SelectedFilterItem {
 
 export type HierarchicalTableChartProps = ChartProps & {
   formData: HierarchicalTableFormData;
-  queriesData: ChartDataResponsePayload[];
+  queriesData: ChartDataResponse[];
   filterState?: any;
   hooks?: {
     setDataMask?: (dataMask: any) => void;
@@ -131,4 +130,3 @@ export type HierarchicalTableChartProps = ChartProps & {
     onContextMenu?: (event: any) => void;
   };
 };
-

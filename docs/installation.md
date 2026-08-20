@@ -21,6 +21,7 @@ Per la guida completa dettagliata su Windows, consulta [Guida Docker su Windows]
 ## 1. Installazione Manuale del Plugin Frontend
 
 ### Opzione A: Installazione tramite npm / yarn
+
 All'interno della cartella `superset-frontend/` della tua installazione di Superset:
 
 ```bash
@@ -29,6 +30,7 @@ npm install --save superset-plugin-chart-hierarchical-table
 ```
 
 ### Opzione B: Link locale per sviluppo
+
 Se stai sviluppando o testando modifiche locali:
 
 ```bash
@@ -54,10 +56,9 @@ Per rendere disponibile il nuovo tipo di chart nella galleria visualizzazioni di
    import { HierarchicalTableChartPlugin } from 'superset-plugin-chart-hierarchical-table';
    ```
 3. Aggiungi il plugin all'interno della configurazione dei plugin registrati:
+
    ```javascript
-   new HierarchicalTableChartPlugin()
-     .configure({ key: 'hierarchical_table' })
-     .register();
+   new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register();
    ```
 
 4. Riavvia il server di sviluppo frontend o ricompila gli asset statici di Superset:
@@ -81,8 +82,9 @@ pip install -e .
 ---
 
 ## 4. Verifica dell'Installazione
+
 1. Accedi ad Apache Superset dal browser.
 2. Crea un nuovo Chart (**+ -> Chart**).
 3. Seleziona il tuo dataset di test (es. Vendite o Organigramma).
-4. Nella galleria grafici cerca **Hierarchical Table & Matrix Grid** (categoria *Table*).
+4. Nella galleria grafici cerca **Hierarchical Table & Matrix Grid** (categoria _Table_).
 5. Seleziona il grafico e clicca su **Create New Chart**.

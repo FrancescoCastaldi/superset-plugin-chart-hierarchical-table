@@ -1,5 +1,5 @@
 import { DataRecord } from '@superset-ui/core';
-import { TreeNode, HierarchyType } from '../types';
+import { TreeNode } from '../types';
 import { rollupTreeMetrics } from './aggregations';
 
 /**
@@ -128,9 +128,8 @@ export function buildParentChildTree(
       parentIdRaw !== null && parentIdRaw !== undefined && String(parentIdRaw).trim() !== ''
         ? String(parentIdRaw)
         : null;
-    const name = labelColumn && record[labelColumn] !== undefined
-      ? String(record[labelColumn])
-      : id;
+    const name =
+      labelColumn && record[labelColumn] !== undefined ? String(record[labelColumn]) : id;
 
     if (!id) continue;
     allIds.add(id);

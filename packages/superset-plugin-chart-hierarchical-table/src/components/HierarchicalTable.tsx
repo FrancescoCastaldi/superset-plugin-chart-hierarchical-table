@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import classNames from 'classnames';
 import { HierarchicalTableTransformedProps, TreeNode } from '../types';
 import { filterTreeBySearch } from '../utils/treeBuilder';
@@ -6,6 +6,8 @@ import './HierarchicalTable.css';
 
 export default function HierarchicalTable(props: HierarchicalTableTransformedProps) {
   const {
+    width,
+    height,
     data = [],
     columns = [],
     metrics = [],
@@ -20,13 +22,44 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     compactMode = false,
     stripedRows = true,
     emitFilter = true,
-    filterState,
+    // filterState is available via props if needed in the future
     onCrossFilter,
     onClearFilter,
   } = props;
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedFilterMap, setSelectedFilterMap] = useState<Map<string, { key: string; dimension: string; value: string; pathMap?: Record<string, string> }>>(new Map());
+  const [selectedFilterMap, setSelectedFilterMap] = useState<
+    Map<string, { key: string; dimension: string; value: string; pathMap?: Record<string, string> }>
+  >(new Map());
+
+  const containerStyle = useMemo(() => {
+    const style: React.CSSProperties = {
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      position: 'relative',
+      boxSizing: 'border-box',
+    };
+    if (typeof width === 'number' && width > 0) {
+      style.width = `${width}px`;
+      style.maxWidth = `${width}px`;
+    } else if (typeof width === 'string' && width) {
+      style.width = width;
+      style.maxWidth = width;
+    } else {
+      style.width = '100%';
+    }
+    if (typeof height === 'number' && height > 0) {
+      style.height = `${height}px`;
+      style.maxHeight = `${height}px`;
+    } else if (typeof height === 'string' && height) {
+      style.height = height;
+      style.maxHeight = height;
+    } else {
+      style.height = '100%';
+    }
+    return style;
+  }, [width, height]);
 
   // Set of expanded node keys
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => {
@@ -127,21 +160,24 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     [dimensions, emitFilter, onCrossFilter, onClearFilter],
   );
 
-  const handleRemoveSingleFilter = useCallback((key: string) => {
-    setSelectedFilterMap(prev => {
-      const next = new Map(prev);
-      next.delete(key);
-      const filterItems = Array.from(next.values());
-      if (filterItems.length === 0) {
-        if (onClearFilter) onClearFilter();
-      } else if (onCrossFilter) {
-        const values = filterItems.map(f => f.value);
-        const pathMaps = filterItems.map(f => f.pathMap || {});
-        onCrossFilter(filterItems[0].dimension, values, pathMaps, false, filterItems);
-      }
-      return next;
-    });
-  }, [onCrossFilter, onClearFilter]);
+  const handleRemoveSingleFilter = useCallback(
+    (key: string) => {
+      setSelectedFilterMap(prev => {
+        const next = new Map(prev);
+        next.delete(key);
+        const filterItems = Array.from(next.values());
+        if (filterItems.length === 0) {
+          if (onClearFilter) onClearFilter();
+        } else if (onCrossFilter) {
+          const values = filterItems.map(f => f.value);
+          const pathMaps = filterItems.map(f => f.pathMap || {});
+          onCrossFilter(filterItems[0].dimension, values, pathMaps, false, filterItems);
+        }
+        return next;
+      });
+    },
+    [onCrossFilter, onClearFilter],
+  );
 
   const handleClearActiveFilter = useCallback(() => {
     setSelectedFilterMap(new Map());
@@ -172,14 +208,14 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
   if (!data || data.length === 0) {
     return (
-      <div className="superset-hierarchical-table-container">
+      <div className="superset-hierarchical-table-container" style={containerStyle}>
         <div className="empty-state">No data available for hierarchical table.</div>
       </div>
     );
   }
 
   return (
-    <div className="superset-hierarchical-table-container">
+    <div className="superset-hierarchical-table-container" style={containerStyle}>
       {/* Toolbar */}
       <div className="superset-hierarchical-table-toolbar">
         <div className="table-toolbar-left">
@@ -280,7 +316,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             )}
 
             {/* Tree Rows */}
-            {visibleRows.map(node => {
+            {visibleRows.map((node: TreeNode) => {
               const hasChildren = node.children && node.children.length > 0;
               const isExpanded = expandedKeys.has(node.key) || searchTerm.trim().length > 0;
               const isFilterSelected = selectedFilterMap.has(node.key);

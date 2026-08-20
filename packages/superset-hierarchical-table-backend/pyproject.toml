@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "superset-hierarchical-table"
-version = "0.1.0"
+version = "0.1.2"
 description = "Backend Companion & Processing Engine for Apache Superset Hierarchical Table Chart Plugin"
 readme = "README.md"
 authors = [{ name = "Francesco Castaldi" }]
@@ -32,7 +32,7 @@ dev = [
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --cov=superset_hierarchical_table"
+addopts = "-ra -q"
 testpaths = ["tests"]
 
 [tool.mypy]
