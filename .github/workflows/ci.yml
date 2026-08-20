@@ -7,8 +7,8 @@ on:
     branches: [ main, master ]
 
 jobs:
-  frontend-build-and-test:
-    name: Frontend (TypeScript & React)
+  frontend-monorepo:
+    name: Frontend Monorepo (TypeScript & React)
     runs-on: ubuntu-latest
 
     steps:
@@ -20,22 +20,19 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: frontend/package.json
+          cache-dependency-path: package.json
 
-      - name: Install dependencies
-        working-directory: frontend
+      - name: Install Monorepo Dependencies
         run: npm ci || npm install
 
-      - name: Typecheck & Lint
-        working-directory: frontend
+      - name: Typecheck & Build Packages
         run: npm run build --if-present
 
       - name: Run Frontend Tests
-        working-directory: frontend
-        run: npm test --if-present
+        run: npm run test --if-present
 
-  backend-test:
-    name: Backend (Python)
+  backend-python:
+    name: Backend Companion Engine (Python)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -51,12 +48,33 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        working-directory: backend
+        working-directory: packages/superset-hierarchical-table-backend
         run: |
           python -m pip install --upgrade pip
           pip install pytest pandas numpy
           pip install -e .
 
       - name: Run Pytest
-        working-directory: backend
+        working-directory: packages/superset-hierarchical-table-backend
         run: pytest tests/ -v
+
+  installer-verification:
+    name: Verify Installer Script
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Test Automated Installer
+        run: |
+          mkdir -p /tmp/mock-superset/superset-frontend/src/visualizations/presets
+          echo '{"name":"superset-frontend","dependencies":{}}' > /tmp/mock-superset/superset-frontend/package.json
+          echo 'import { Preset } from "@superset-ui/core"; export default class MainPreset extends Preset { constructor() { super({ plugins: [] }); } }' > /tmp/mock-superset/superset-frontend/src/visualizations/presets/MainPreset.js
+          python3 scripts/installer.py --superset-path /tmp/mock-superset --no-docker
+          python3 scripts/installer.py --superset-path /tmp/mock-superset --rollback --no-docker

@@ -1,0 +1,29 @@
+{
+  "name": "superset-plugin-chart-hierarchical-table-monorepo",
+  "private": true,
+  "description": "Apache Superset 6.1.0 Hierarchical Table & Matrix Grid Chart Plugin Monorepo",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml}\""
+  },
+  "keywords": [
+    "superset",
+    "apache-superset",
+    "superset-6",
+    "hierarchical-table",
+    "monorepo",
+    "chart-plugin"
+  ],
+  "author": "Francesco Castaldi",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  }
+}

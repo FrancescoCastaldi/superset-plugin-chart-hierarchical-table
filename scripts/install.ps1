@@ -84,7 +84,10 @@ if ($PythonCmd) {
     }
 
     $DestDir = Join-Path $PluginsDir "superset-plugin-chart-hierarchical-table"
-    $SrcFrontend = Join-Path $PluginRoot "frontend"
+    $SrcFrontend = Join-Path $PluginRoot "packages\superset-plugin-chart-hierarchical-table"
+    if (-not (Test-Path $SrcFrontend)) {
+        $SrcFrontend = Join-Path $PluginRoot "frontend"
+    }
 
     # Copia sorgenti
     Write-Color "[INFO] Copia dei file del plugin in $DestDir..." "Green"

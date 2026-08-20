@@ -144,7 +144,11 @@ def copy_plugin_files(plugin_root: Path, frontend_dir: Path) -> str:
     target_plugins_dir.mkdir(parents=True, exist_ok=True)
 
     dest_dir = target_plugins_dir / "superset-plugin-chart-hierarchical-table"
-    src_frontend_dir = plugin_root / "frontend"
+    
+    # Check packages/ directory first (monorepo layout), then legacy frontend/
+    src_frontend_dir = plugin_root / "packages" / "superset-plugin-chart-hierarchical-table"
+    if not src_frontend_dir.is_dir():
+        src_frontend_dir = plugin_root / "frontend"
 
     if not src_frontend_dir.is_dir():
         raise FileNotFoundError(f"Source frontend plugin directory '{src_frontend_dir}' not found.")

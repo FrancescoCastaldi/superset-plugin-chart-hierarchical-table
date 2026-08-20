@@ -31,39 +31,63 @@ Un plugin di visualizzazione avanzato per **Apache Superset 6.1.0+** che impleme
 
 ---
 
-## 📂 Struttura del Repository
+## 📂 Struttura del Repository (Enterprise Monorepo Layout)
 
 ```
 superset-plugin-chart-hierarchical-table/
 ├── .github/
-│   └── workflows/
-│       ├── ci.yml                 # Test automatici e linting (TS + Python)
-│       └── release.yml            # Automazione di rilascio
-├── frontend/                      # Plugin React & TypeScript per Superset
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── src/
-│   │   ├── index.ts               # Registrazione del plugin
-│   │   ├── plugin/                # buildQuery, controlPanel, transformProps
-│   │   ├── components/            # HierarchicalTable UI component & stili
-│   │   ├── types/                 # Interfacce TypeScript
-│   │   └── utils/                 # Algoritmi albero, aggregazioni, formattatori
-│   └── test/                      # Test frontend (Jest / Vitest)
-├── backend/                       # Companion Python per elaborazioni gerarchiche
-│   ├── pyproject.toml
-│   ├── superset_hierarchical_table/
-│   │   ├── processors/            # Tree aggregator, roll-up & parent-child
-│   │   └── queries/               # Helper SQL & CTE ricorsive
-│   └── tests/                     # Test Python (pytest)
+│   ├── workflows/
+│   │   └── ci.yml                 # CI/CD: build & test monorepo
+│   ├── ISSUE_TEMPLATE/            # Template bug report & feature request
+│   └── PULL_REQUEST_TEMPLATE.md
+│
+├── configs/                       # Configurazioni centralizzate
+│   └── tsconfig.base.json         # Base TypeScript config condivisa
+│
+├── packages/                      # Pacchetti modulari
+│   ├── superset-plugin-chart-hierarchical-table/  # Frontend Plugin (React/TypeScript)
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── index.ts           # Registrazione del plugin
+│   │   │   ├── plugin/            # buildQuery, controlPanel, transformProps
+│   │   │   ├── components/        # HierarchicalTable UI component & stili
+│   │   │   ├── types/             # Interfacce TypeScript
+│   │   │   └── utils/             # Algoritmi albero, aggregazioni, formattatori
+│   │   ├── test/                  # Test frontend
+│   │   └── README.md
+│   │
+│   └── superset-hierarchical-table-backend/       # Backend Companion (Python)
+│       ├── pyproject.toml
+│       ├── superset_hierarchical_table/
+│       │   ├── processors/        # Tree aggregator, roll-up & parent-child
+│       │   └── queries/           # Helper SQL & CTE ricorsive
+│       ├── tests/                 # Test Python (pytest)
+│       └── README.md
+│
+├── scripts/                       # Strumenti di installazione & automazione
+│   ├── install.ps1                # Installer automatico per Windows PowerShell
+│   ├── install.sh                 # Installer automatico per Bash / Linux / macOS
+│   ├── installer.py               # Motore Python per iniezione sicura
+│   └── docker-compose.override.example.yml
+│
 ├── docs/                          # Guide e specifiche architetturali
 │   ├── architecture.md            # Dettagli flusso dati backend/frontend
+│   ├── docker_installation_windows.md # Guida dedicata Windows + Docker
 │   ├── installation.md            # Guida all'installazione in Superset 6.1.0
 │   ├── hierarchy_guide.md         # Modellazione gerarchie (Dimensioni vs Parent-Child)
 │   └── control_panel_reference.md # Riferimento a tutti i controlli Explore
+│
 ├── examples/                      # Dataset CSV di esempio per test rapidi
 │   ├── financial_pnl.csv          # Esempio Conto Economico / P&L
 │   ├── org_chart.csv              # Esempio Organigramma Parent-Child
 │   └── sales_hierarchy.csv        # Esempio Vendite multi-dimensione
+│
+├── .editorconfig                  # Consistenza editor tra Windows/Unix
+├── .gitignore                     # Regole ignore complete
+├── .prettierrc                    # Standard di formattazione
+├── Makefile                       # Comandi rapidi di sviluppo (build, test, install)
+├── package.json                   # Root NPM Workspace configuration
 ├── CHANGELOG.md                   # Storico versioni e modifiche
 ├── CONTRIBUTING.md                # Linee guida per i contributori
 ├── LICENSE                        # Apache License 2.0
