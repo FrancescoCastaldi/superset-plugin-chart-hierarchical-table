@@ -59,6 +59,21 @@ make install-superset SUPERSET_PATH=/path/to/superset
 
 ---
 
+## 🌐 Deployment GitHub Pages & Sandbox
+
+Il sito di documentazione, roadmap e simulatore interattivo della dashboard viene pubblicato automaticamente su GitHub Pages ad ogni push su `main` tramite `.github/workflows/deploy-pages.yml`.
+
+Per sincronizzare manualmente o forzare il deploy del branch `gh-pages`:
+```bash
+git subtree split --prefix site -b gh-pages
+git push origin gh-pages -f
+git branch -D gh-pages
+```
+
+URL del sito pubblico: **https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/**
+
+---
+
 ## 📦 Rilascio e Tagging
 
 1. Aggiorna `CHANGELOG.md` con le nuove feature o bug fix.

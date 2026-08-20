@@ -17,30 +17,40 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 ## [0.1.0] - 2026-08-20
 
 ### Added
-- **Core Architecture**:
-  - Inizializzazione della struttura del repository monorepo con cartelle `frontend/`, `backend/`, `docs/`, `examples/`.
-  - Configurazione build e linting per TypeScript 5.x e Python 3.9+.
-  - Pipeline GitHub Actions CI/CD (`.github/workflows/ci.yml`).
+- **⚡ Native Apache Superset 6.1.0 Cross-Filtering & Dashboard Interactivity**:
+  - Implementato il protocollo `setDataMask` in `src/plugin/transformProps.ts` con emissione di filtri SQL `IN` (`extraFormData.filters`).
+  - Filtraggio gerarchico multi-livello (Path-Aware) per trasmettere i filtri di tutti i livelli padre all'intera dashboard.
+  - Aggiunto il controllo Explore `emit_filter` in `src/plugin/controlPanel.tsx`.
+  - Evidenziazione visiva delle righe selezionate (`.selected-filter-row`) e badge attivo nella toolbar con pulsante di reset rapido.
 
-- **Frontend (`frontend/`)**:
-  - Plugin Apache Superset 6.1.0 basato su `@superset-ui/core`.
-  - `HierarchicalTable.tsx`: componente reattivo con supporto ad albero, expand/collapse dinamico e visualizzazione gerarchica.
-  - `treeBuilder.ts`: modulo di trasformazione da record relazionali/tabulari piatti ad albero `TreeNode` con propagazione gerarchica.
-  - `aggregations.ts`: motore di calcolo subtotali e roll-up per dimensioni e metriche.
-  - `controlPanel.tsx`: interfaccia Explore in Superset per configurare dimensioni gerarchiche, metriche, profondità iniziale, subtotali e formattazione condizionale.
-  - `buildQuery.ts`: costruttore query ottimizzato per le API `/api/v1/chart/data` di Superset.
-  - `transformProps.ts`: bridge tra il payload di Superset e il componente React.
+- **🌐 Live GitHub Pages Site & Superset 6.1.0 Dashboard Simulator**:
+  - Applicazione web moderna pubblicata su [GitHub Pages](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/).
+  - Simulatore completo di Dashboard Superset 6.1.0 con Navbar, Native Filter Sidebar e grafici companion reattivi (Card KPI Big Number e Bar Chart) che si aggiornano in tempo reale al click sui nodi gerarchici.
+  - Console live con tracking dei payload emessi da `setDataMask`.
+  - Pipeline di deployment continuo `.github/workflows/deploy-pages.yml` (branch `gh-pages` con file `.nojekyll`).
 
-- **Backend Companion (`backend/`)**:
-  - Modulo Python `superset_hierarchical_table` per elaborazioni complesse sul server.
-  - `tree_aggregator.py`: elaborazione di DataFrame Pandas per calcolo roll-up multi-livello e gerarchie tabulari.
-  - `parent_child.py`: risoluzione di grafi di adiacenza (ID / Parent ID) con calcolo di profondità e percorsi.
-  - `sql_builder.py`: generazione di snippet SQL e query ricorsive (CTE) per database relazionali.
-  - Suite di test unitari con `pytest`.
+- **🎬 Risorse Multimediali & Documentazione Grafica**:
+  - `docs/images/hierarchical_table_preview.jpg`: Screenshot fotorealistico ad alta risoluzione della dashboard Superset 6.1.0.
+  - `docs/images/hierarchical_table_animation.svg`: Animazione vettoriale dinamica dell'interazione multi-grafico e del cross-filtering.
+  - `examples/interactive_preview.html`: Test runner HTML locale e autonomo.
 
-- **Documentation & Examples (`docs/`, `examples/`)**:
-  - `docs/architecture.md`: specifica completa del flusso dati backend-frontend.
-  - `docs/installation.md`: guida all'integrazione e registrazione in Superset 6.1.0.
-  - `docs/hierarchy_guide.md`: guida pratica per utenti e data analyst su come strutturare le query.
-  - `docs/control_panel_reference.md`: manuale d'uso dei parametri Explore.
-  - Tre dataset di esempio: `financial_pnl.csv`, `org_chart.csv`, `sales_hierarchy.csv`.
+- **⚙️ Enterprise Monorepo & Automated Installers**:
+  - Riorganizzazione monorepo in NPM Workspaces (`packages/superset-plugin-chart-hierarchical-table` e `packages/superset-hierarchical-table-backend`).
+  - `scripts/install.ps1`: Installer automatizzato per ambienti Windows e Docker Compose.
+  - `scripts/installer.py`: Motore di iniezione AST/regex con backup e supporto `--rollback`.
+  - `scripts/install.sh`: Wrapper per ambienti Unix/macOS.
+  - `docs/docker_installation_windows.md`: Guida dettagliata all'installazione su Docker Desktop Windows.
+
+- **🛡️ Governance & Ignorati AI**:
+  - Politica di sviluppo solo-maintainer con guida `MAINTAINER.md`.
+  - Aggiornato `.gitignore` per escludere tutti i file e directory legati a tool AI (`.agents/`, `AGENTS.md`, `CLAUDE.md`, `.cursor/`, `.windsurf/`, ecc.).
+
+- **Frontend Core (`packages/superset-plugin-chart-hierarchical-table`)**:
+  - Registrazione del plugin con `@superset-ui/core` e comportamenti `Behavior.INTERACTIVE_CHART` e `Behavior.DRILL_TO_DETAIL`.
+  - Componente `HierarchicalTable.tsx` basato su Ant Design v5.
+  - Algoritmi `treeBuilder.ts` e `aggregations.ts` per calcolo roll-up e subtotali ricorsivi.
+
+- **Backend Engine (`packages/superset-hierarchical-table-backend`)**:
+  - Pacchetto Python `superset_hierarchical_table` con `tree_aggregator.py`, `parent_child.py` e `sql_builder.py` (query SQL CTE ricorsive).
+  - Test unitari con `pytest`.
+

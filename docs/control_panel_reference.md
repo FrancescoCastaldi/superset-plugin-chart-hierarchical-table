@@ -31,6 +31,7 @@ Questo documento descrive tutti i controlli disponibili nel pannello **Explore**
 | **Sticky Hierarchy Column** | Checkbox | `true` | Blocca la prima colonna dell'albero durante lo scroll orizzontale. |
 | **Enable In-Tree Search** | Checkbox | `true` | Mostra la casella di ricerca in tempo reale sopra la tabella. |
 | **Compact Row Padding** | Checkbox | `false` | Riduce l'altezza e il padding delle righe per visualizzazioni ad alta densità. |
+| **Emit Dashboard Cross-Filters** | Checkbox | `true` | Emette eventi di filtro nativi di Superset (`setDataMask`) cliccando sulle righe per filtrare l'intera dashboard. |
 
 ---
 
