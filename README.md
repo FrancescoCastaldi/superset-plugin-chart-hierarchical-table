@@ -89,7 +89,7 @@ superset-plugin-chart-hierarchical-table/
 ├── Makefile                       # Comandi rapidi di sviluppo (build, test, install)
 ├── package.json                   # Root NPM Workspace configuration
 ├── CHANGELOG.md                   # Storico versioni e modifiche
-├── CONTRIBUTING.md                # Linee guida per i contributori
+├── MAINTAINER.md                  # Guida operativa interna per lo sviluppatore
 ├── LICENSE                        # Apache License 2.0
 └── README.md
 ```
@@ -117,8 +117,8 @@ Se hai clonato il repository ufficiale di Apache Superset (tag `6.1.0`) e lo avv
 ## 🛠️ Installazione Manuale
 
 ### Requisiti
-- **Node.js**: `>= 18.x` (consigliato 20.x LTS)
-- **npm** o **yarn**
+- **Node.js**: `>= 20.x` (LTS)
+- **npm**
 - **Python**: `>= 3.9`
 - **Apache Superset**: `6.1.0+`
 
@@ -127,10 +127,10 @@ Clona o installa il pacchetto all'interno dell'ambiente Superset frontend (`supe
 
 ```bash
 cd superset-frontend
-npm install @superset-plugin-chart/hierarchical-table
+npm install superset-plugin-chart-hierarchical-table
 ```
 
-Nel file `superset-frontend/src/visualizations/presets/MainPreset.js` (o nel file di registrazione plugin di Superset 6.1.0):
+Nel file `superset-frontend/src/visualizations/presets/MainPreset.js`:
 
 ```typescript
 import { HierarchicalTableChartPlugin } from 'superset-plugin-chart-hierarchical-table';
@@ -140,7 +140,7 @@ new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).regi
 
 ### 2. Installazione Companion Backend (Opzionale per elaborazioni avanzate)
 ```bash
-cd backend
+cd packages/superset-hierarchical-table-backend
 pip install -e .
 ```
 
@@ -153,22 +153,29 @@ Per maggiori dettagli, consulta la documentazione dedicata nella cartella [`docs
 - [Guida all'Installazione & Configurazione](docs/installation.md)
 - [Guida alla Modellazione delle Gerarchie](docs/hierarchy_guide.md)
 - [Riferimento Controlli del Control Panel Explore](docs/control_panel_reference.md)
+- [Guida di Sviluppo Interna](MAINTAINER.md)
 
 ---
 
 ## 🧪 Esecuzione dei Test
 
-### Test Frontend
+Dalla radice del monorepo:
+
 ```bash
-cd frontend
-npm test
+# Esegue tutti i test (Frontend + Backend)
+make test
+
+# Oppure test frontend separati
+npm run test
 ```
 
-### Test Backend
-```bash
-cd backend
-pytest tests/
-```
+---
+
+## 👤 Maintainer & Proprietà
+
+Questo progetto è sviluppato e mantenuto in modo esclusivo da **[Francesco Castaldi](https://github.com/FrancescoCastaldi)**.
+
+> **Nota**: Trattandosi di un progetto a sviluppo personale, **non vengono accettate Pull Request o contributi esterni da parte di terzi**.
 
 ---
 
