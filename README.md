@@ -2,10 +2,13 @@
 
 [![Apache Superset](https://img.shields.io/badge/Apache%20Superset-6.1.0-blue.svg)](https://superset.apache.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-success.svg)](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11-brightgreen.svg)](https://www.python.org/)
 
 Un plugin di visualizzazione avanzato per **Apache Superset 6.1.0+** che implementa una tabella gerarchica ad albero (**Tree Table / Hierarchical Grid**) con supporto completo alla gestione delle gerarchie sia a **livello backend** (generazione query SQL, post-processing e aggregazioni roll-up) che a **livello frontend** (esplorazione interattiva, expand/collapse, formattazione condizionale, cross-filtering e paginazione virtualizzata).
+
+👉 **[Accedi al Sito Web & Sandbox Interattiva Live su GitHub Pages](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/)**
 
 ---
 
