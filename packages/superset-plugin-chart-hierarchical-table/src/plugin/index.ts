@@ -4,7 +4,7 @@ import controlPanel from './controlPanel';
 import transformProps from './transformProps';
 
 const metadata = new ChartMetadata({
-  name: t('StratumTree™ — Hierarchical Matrix Grid'),
+  name: t('StratumTree — Hierarchical Matrix Grid'),
   description: t(
     'A deep-hierarchy tree table and matrix grid supporting multi-level dimension drill-down, parent-child adjacency graphs, roll-up aggregations, and native Superset 6.1.0 cross-filtering.',
   ),

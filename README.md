@@ -1,14 +1,14 @@
-# StratumTree™ — Hierarchical Matrix Grid & Tree Table for Apache Superset 6.1.0
+# StratumTree — Hierarchical Matrix Grid & Tree Table for Apache Superset 6.1.0
 
 [![Apache Superset](https://img.shields.io/badge/Apache%20Superset-6.1.0-007A87.svg?logo=apache-superset&logoColor=white)](https://superset.apache.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-StratumTree%E2%84%A2%20Sandbox-0ea5e9.svg)](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/)
+[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-StratumTree%20Sandbox-0ea5e9.svg)](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
 [![Ant Design](https://img.shields.io/badge/Ant%20Design-v5-1890FF.svg?logo=antdesign&logoColor=white)](https://ant.design/)
 [![Python](https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 
-**StratumTree™** is an enterprise-grade visualization plugin and companion aggregation engine designed for **Apache Superset 6.1.0+**. It delivers an interactive **Hierarchical Tree Table and Matrix Grid** with dual-mode hierarchy processing (multi-dimensional level grouping and recursive parent-child graph traversal), automated roll-up calculations, native Superset dashboard cross-filtering (`setDataMask`), and automated cross-platform installation tooling.
+**StratumTree** is an enterprise-grade visualization plugin and companion aggregation engine designed for **Apache Superset 6.1.0+**. It delivers an interactive **Hierarchical Tree Table and Matrix Grid** with dual-mode hierarchy processing (multi-dimensional level grouping and recursive parent-child graph traversal), automated roll-up calculations, native Superset dashboard cross-filtering (`setDataMask`), and automated cross-platform installation tooling.
 
 ---
 

@@ -1,6 +1,6 @@
-# Riferimento dei Parametri del Control Panel Explore — StratumTree™
+# Riferimento dei Parametri del Control Panel Explore — StratumTree
 
-Questo documento descrive tutti i controlli disponibili nel pannello **Explore** di Apache Superset 6.1.0 per il chart **StratumTree™ — Hierarchical Matrix Grid & Tree Table**.
+Questo documento descrive tutti i controlli disponibili nel pannello **Explore** di Apache Superset 6.1.0 per il chart **StratumTree — Hierarchical Matrix Grid & Tree Table**.
 
 ---
 

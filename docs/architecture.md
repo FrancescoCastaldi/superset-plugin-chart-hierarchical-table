@@ -1,6 +1,6 @@
-# Architettura del Sistema: StratumTree™ per Apache Superset 6.1.0
+# Architettura del Sistema: StratumTree per Apache Superset 6.1.0
 
-Questo documento descrive in dettaglio l'architettura tecnica del plugin **StratumTree™ — Hierarchical Matrix Grid & Tree Table** per Apache Superset versione 6.1.0.
+Questo documento descrive in dettaglio l'architettura tecnica del plugin **StratumTree — Hierarchical Matrix Grid & Tree Table** per Apache Superset versione 6.1.0.
 
 ---
 

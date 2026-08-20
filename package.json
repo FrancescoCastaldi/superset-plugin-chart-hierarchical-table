@@ -1,7 +1,7 @@
 {
   "name": "superset-plugin-chart-stratumtree-monorepo",
   "private": true,
-  "description": "StratumTree™ — Hierarchical Matrix Grid & Tree Table Chart Plugin for Apache Superset 6.1.0 Monorepo",
+  "description": "StratumTree — Hierarchical Matrix Grid & Tree Table Chart Plugin for Apache Superset 6.1.0 Monorepo",
   "homepage": "https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/",
   "repository": {
     "type": "git",
