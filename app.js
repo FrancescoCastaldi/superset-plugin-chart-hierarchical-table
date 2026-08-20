@@ -253,8 +253,18 @@ function filterTree(nodes, term) {
   return nodes.map(filterNode).filter(Boolean);
 }
 
-let activeFilterKey = null;
-let activeFilterLabel = null;
+const activeFilterMap = new Map(); // key -> { dim, val, key, node }
+
+function findNodeByKey(nodes, key) {
+  for (const n of nodes) {
+    if (n.key === key) return n;
+    if (n.children && n.children.length > 0) {
+      const found = findNodeByKey(n.children, key);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 // --- Table Rendering ---
 function renderTable() {
@@ -263,13 +273,20 @@ function renderTable() {
   const body = document.getElementById('tableBody');
   const filterIndicatorEl = document.getElementById('activeFilterContainer');
 
-  // Active filter badge update
+  // Multi-Filter badges update
   if (filterIndicatorEl) {
-    if (activeFilterLabel) {
+    if (activeFilterMap.size > 0) {
+      const chipsHTML = Array.from(activeFilterMap.values()).map(f => `
+        <div class="active-filter-chip">
+          <span>⚡ ${f.val}</span>
+          <button type="button" class="filter-chip-clear" onclick="removeSingleFilter('${f.key}')" title="Remove filter">✕</button>
+        </div>
+      `).join('');
+
       filterIndicatorEl.innerHTML = `
-        <div class="active-filter-pill">
-          <span>⚡ Filter: <strong>${activeFilterLabel}</strong></span>
-          <button type="button" class="filter-pill-clear" onclick="clearActiveFilter()" title="Clear filter">✕</button>
+        <div class="active-filter-container">
+          ${chipsHTML}
+          ${activeFilterMap.size > 1 ? `<button type="button" class="filter-clear-all-btn" onclick="clearActiveFilter()">Clear All (${activeFilterMap.size})</button>` : ''}
         </div>
       `;
     } else {
@@ -278,7 +295,7 @@ function renderTable() {
   }
 
   // Header
-  let headerHTML = '<tr><th>Hierarchy Level</th>';
+  let headerHTML = `<tr><th>Hierarchy Level ${activeFilterMap.size > 0 ? `<span style="color:var(--orange-accent); font-size:10px;">(${activeFilterMap.size} selected)</span>` : ''}</th>`;
   for (const m of config.metrics) {
     headerHTML += `<th class="num">${m.replace(/_/g, ' ').toUpperCase()}</th>`;
   }
@@ -302,19 +319,26 @@ function renderTable() {
     for (const n of nodes) {
       const hasChildren = n.children && n.children.length > 0;
       const isExpanded = expandedKeys.has(n.key) || currentSearchTerm.length > 0;
-      const isFilterSelected = activeFilterKey === n.key;
+      const isFilterSelected = activeFilterMap.has(n.key);
       const indent = n.depth * 24;
 
       bodyHTML += `
         <tr class="${isFilterSelected ? 'selected-filter-row' : ''}">
           <td style="padding-left: ${indent + 18}px;">
+            <input
+              type="checkbox"
+              class="node-checkbox"
+              ${isFilterSelected ? 'checked' : ''}
+              onclick="event.stopPropagation(); triggerCrossFilter('${n.dimension || 'Hierarchy'}', '${n.name.replace(/'/g, "\\'")}', '${n.key}')"
+              title="${isFilterSelected ? 'Deselect' : 'Select'} ${n.name}"
+            />
             ${hasChildren ? `
               <span class="node-btn" onclick="toggleNode('${n.key}')">${isExpanded ? '−' : '+'}</span>
-            ` : '<span style="display:inline-block; width:28px;"></span>'}
+            ` : '<span style="display:inline-block; width:18px;"></span>'}
             <span
               class="node-name-link ${hasChildren ? 'node-parent' : ''} ${isFilterSelected ? 'node-filter-active' : ''}"
-              onclick="triggerCrossFilter('${n.dimension || 'Hierarchy'}', '${n.name}', '${n.key}')"
-              title="Click to ${isFilterSelected ? 'clear filter' : 'filter entire dashboard by ' + n.name}"
+              onclick="triggerCrossFilter('${n.dimension || 'Hierarchy'}', '${n.name.replace(/'/g, "\\'")}', '${n.key}')"
+              title="Click to ${isFilterSelected ? 'remove from multi-filter' : 'add to multi-filter: ' + n.name}"
             >
               ${n.name}
             </span>
@@ -365,7 +389,7 @@ function handleSearch(val) {
   renderTable();
 }
 
-// Companion Charts Update Logic
+// Companion Charts Update Logic with Multi-Selection Aggregation
 function updateCompanionCharts() {
   const config = datasets[currentDatasetKey];
   const kpiValEl = document.getElementById('kpiBigNumber');
@@ -378,34 +402,20 @@ function updateCompanionCharts() {
   const donutLegendEl = document.getElementById('donutLegend');
   const areaChartEl = document.getElementById('areaChartSvg');
 
-  // Find active node or default to grand total
-  let targetNode = null;
-  if (activeFilterKey) {
-    function findNode(nodes) {
-      for (const n of nodes) {
-        if (n.key === activeFilterKey) return n;
-        if (n.children) {
-          const found = findNode(n.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    }
-    targetNode = findNode(currentTree);
-  }
-
+  const selectedItems = Array.from(activeFilterMap.values());
   const grandTotal = computeGrandTotal(currentTree, config.metrics);
   const primaryMetric = config.metrics[0];
 
   // 1. Update Broadcast Banner
   if (bannerEl) {
-    if (activeFilterLabel) {
+    if (selectedItems.length > 0) {
       bannerEl.style.display = 'flex';
+      const labelText = selectedItems.map(it => it.val).join(', ');
       bannerEl.innerHTML = `
         <div>
-          <span style="color:#38bdf8;">⚡ Cross-Filter Active:</span> Broadcasting <strong>[${activeFilterLabel}]</strong> to 4 dashboard charts (KPI, Breakdown Bar, Quarterly Trend, Share Donut)
+          <span style="color:#38bdf8;">⚡ Multi Cross-Filter Active (${selectedItems.length} selected):</span> Broadcasting <strong>[${labelText}]</strong> to 4 dashboard charts
         </div>
-        <button type="button" class="btn-sm" style="background:#1e293b; color:#38bdf8; border:1px solid #334155; padding:2px 8px; font-size:11px;" onclick="clearActiveFilter()">Clear Filter ✕</button>
+        <button type="button" class="btn-sm" style="background:#1e293b; color:#38bdf8; border:1px solid #334155; padding:2px 8px; font-size:11px;" onclick="clearActiveFilter()">Clear Filters ✕</button>
       `;
     } else {
       bannerEl.style.display = 'none';
@@ -414,17 +424,32 @@ function updateCompanionCharts() {
 
   // 2. Update KPI Big Number & Sparkline
   if (kpiValEl && kpiLabelEl) {
-    const val = targetNode ? targetNode.metrics[primaryMetric] : grandTotal.metrics[primaryMetric];
-    kpiValEl.innerText = config.formatters[primaryMetric](val);
-    kpiLabelEl.innerText = targetNode ? `${targetNode.name} (${primaryMetric.replace(/_/g, ' ')})` : `Grand Total (${primaryMetric.replace(/_/g, ' ')})`;
+    let combinedVal = 0;
+    if (selectedItems.length === 0) {
+      combinedVal = grandTotal.metrics[primaryMetric] || 0;
+      kpiLabelEl.innerText = `Grand Total (${primaryMetric.replace(/_/g, ' ')})`;
+    } else if (selectedItems.length === 1) {
+      combinedVal = selectedItems[0].node ? (selectedItems[0].node.metrics[primaryMetric] || 0) : 0;
+      kpiLabelEl.innerText = `${selectedItems[0].val} (${primaryMetric.replace(/_/g, ' ')})`;
+    } else {
+      combinedVal = selectedItems.reduce((acc, it) => acc + (it.node ? (it.node.metrics[primaryMetric] || 0) : 0), 0);
+      kpiLabelEl.innerText = `${selectedItems.length} Selected Items Combined (${primaryMetric.replace(/_/g, ' ')})`;
+    }
 
-    // Generate dynamic SVG sparkline
+    kpiValEl.innerText = config.formatters[primaryMetric](combinedVal);
+
     if (sparklineEl) {
-      const points = targetNode
-        ? [val * 0.7, val * 0.82, val * 0.78, val * 0.95, val * 1.05, val * 1.15, val]
-        : [val * 0.65, val * 0.75, val * 0.8, val * 0.85, val * 0.9, val * 0.95, val];
-      const maxP = Math.max(...points);
-      const minP = Math.min(...points) * 0.9;
+      const points = [
+        combinedVal * 0.65,
+        combinedVal * 0.78,
+        combinedVal * 0.82,
+        combinedVal * 0.91,
+        combinedVal * 1.04,
+        combinedVal * 1.12,
+        combinedVal
+      ];
+      const maxP = Math.max(...points) || 1;
+      const minP = Math.min(...points) * 0.85;
       const range = maxP - minP || 1;
       const coords = points.map((p, idx) => {
         const x = (idx / (points.length - 1)) * 260 + 10;
@@ -434,34 +459,42 @@ function updateCompanionCharts() {
 
       sparklineEl.innerHTML = `
         <polyline fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" points="${coords}" />
-        <circle cx="${(points.length - 1) / (points.length - 1) * 260 + 10}" cy="${40 - ((points[points.length - 1] - minP) / range) * 32 + 4}" r="4" fill="#ea580c" />
+        <circle cx="${270}" cy="${40 - ((points[points.length - 1] - minP) / range) * 32 + 4}" r="4" fill="#ea580c" />
       `;
     }
   }
 
   // 3. Update Sidebar Filters
   if (sidebarFilterEl) {
-    if (activeFilterLabel) {
+    if (selectedItems.length > 0) {
       sidebarFilterEl.innerHTML = `
         <div class="filter-status-tag">
-          <span class="tag-head">⚡ ACTIVE CROSS-FILTER</span>
-          <strong>${activeFilterLabel}</strong>
-          <button type="button" class="btn-sm" style="margin-top:4px; padding:3px 8px; font-size:10px;" onclick="clearActiveFilter()">Clear Filter</button>
+          <span class="tag-head">⚡ ACTIVE MULTI-FILTER (${selectedItems.length})</span>
+          <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+            ${selectedItems.map(it => `
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
+                <span><strong>${it.val}</strong> <small style="color:var(--text-dimmed);">(${it.dim})</small></span>
+                <button type="button" style="background:none; border:none; color:var(--orange-accent); cursor:pointer; font-weight:bold;" onclick="removeSingleFilter('${it.key}')" title="Remove filter">✕</button>
+              </div>
+            `).join('')}
+          </div>
+          <button type="button" class="btn-sm" style="margin-top:6px; padding:3px 8px; font-size:10px;" onclick="clearActiveFilter()">Clear All</button>
         </div>
       `;
     } else {
       sidebarFilterEl.innerHTML = `
-        <span style="font-size:12px; color: var(--text-dimmed);">No active cross-filters. Click any row in the Hierarchical Table to filter.</span>
+        <span style="font-size:12px; color: var(--text-dimmed);">No active cross-filters. Click checkboxes or rows in the table to multi-select.</span>
       `;
     }
   }
 
   // 4. Update Companion Bar Chart
   let itemsToDisplay = [];
-  if (targetNode && targetNode.children && targetNode.children.length > 0) {
-    itemsToDisplay = targetNode.children;
-  } else if (targetNode) {
-    itemsToDisplay = [targetNode];
+  if (selectedItems.length > 1) {
+    itemsToDisplay = selectedItems.map(it => it.node).filter(Boolean);
+  } else if (selectedItems.length === 1 && selectedItems[0].node) {
+    const n = selectedItems[0].node;
+    itemsToDisplay = (n.children && n.children.length > 0) ? n.children : [n];
   } else {
     itemsToDisplay = currentTree;
   }
@@ -472,10 +505,11 @@ function updateCompanionCharts() {
     for (const item of itemsToDisplay) {
       const val = item.metrics[primaryMetric] || 0;
       const pct = Math.min(100, Math.max(8, (val / maxVal) * 100));
+      const isItemSel = activeFilterMap.has(item.key);
       barsHTML += `
-        <div class="bar-item" onclick="triggerCrossFilter('${item.dimension || 'Sub-level'}', '${item.name}', '${item.key}')" style="cursor:pointer;" title="Click to filter by ${item.name}">
+        <div class="bar-item ${isItemSel ? 'bar-selected' : ''}" onclick="triggerCrossFilter('${item.dimension || 'Sub-level'}', '${item.name.replace(/'/g, "\\'")}', '${item.key}')" style="cursor:pointer;" title="Click to toggle filter by ${item.name}">
           <div class="bar-meta">
-            <span>${item.name}</span>
+            <span>${isItemSel ? '✓ ' : ''}${item.name}</span>
             <span style="color:#cbd5e1; font-family:'Roboto Mono',monospace;">${config.formatters[primaryMetric](val)}</span>
           </div>
           <div class="bar-track">
@@ -490,18 +524,17 @@ function updateCompanionCharts() {
   // 5. Update Donut / Share Chart
   if (donutSvgEl && donutLegendEl) {
     const totalVal = itemsToDisplay.reduce((acc, it) => acc + (it.metrics[primaryMetric] || 0), 0) || 1;
-    const colors = ['#1e3a8a', '#ea580c', '#881337', '#3b82f6', '#9a3412', '#5c0f1e'];
+    const colors = ['#3b82f6', '#ea580c', '#be123c', '#10b981', '#8b5cf6', '#f59e0b'];
     let accumulatedAngle = 0;
     let pathsHTML = '';
     let legendHTML = '';
 
-    itemsToDisplay.slice(0, 5).forEach((item, idx) => {
+    itemsToDisplay.slice(0, 6).forEach((item, idx) => {
       const val = item.metrics[primaryMetric] || 0;
       const slicePct = val / totalVal;
       const angle = slicePct * 360;
       const color = colors[idx % colors.length];
 
-      // Donut slice path
       const startAngle = accumulatedAngle;
       const endAngle = accumulatedAngle + angle;
       accumulatedAngle = endAngle;
@@ -527,7 +560,7 @@ function updateCompanionCharts() {
       legendHTML += `
         <div class="donut-legend-item">
           <span class="legend-dot" style="background:${color};"></span>
-          <span>${item.name.slice(0, 16)}: <strong style="color:var(--text-main); font-family:'Roboto Mono',monospace;">${(slicePct * 100).toFixed(0)}%</strong></span>
+          <span>${item.name.slice(0, 14)}: <strong style="color:var(--text-main); font-family:'Roboto Mono',monospace;">${(slicePct * 100).toFixed(0)}%</strong></span>
         </div>
       `;
     });
@@ -538,10 +571,18 @@ function updateCompanionCharts() {
 
   // 6. Update Quarterly Area / Line Chart
   if (areaChartEl) {
-    const val = targetNode ? targetNode.metrics[primaryMetric] : grandTotal.metrics[primaryMetric];
+    let baseVal = 0;
+    if (selectedItems.length === 0) {
+      baseVal = grandTotal.metrics[primaryMetric] || 0;
+    } else if (selectedItems.length === 1 && selectedItems[0].node) {
+      baseVal = selectedItems[0].node.metrics[primaryMetric] || 0;
+    } else {
+      baseVal = selectedItems.reduce((acc, it) => acc + (it.node ? (it.node.metrics[primaryMetric] || 0) : 0), 0);
+    }
+
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    const qValues = [val * 0.21, val * 0.24, val * 0.27, val * 0.28];
-    const maxQ = Math.max(...qValues) * 1.15;
+    const qValues = [baseVal * 0.21, baseVal * 0.24, baseVal * 0.27, baseVal * 0.28];
+    const maxQ = Math.max(...qValues) * 1.15 || 1;
     const minQ = 0;
 
     const w = 480;
@@ -586,16 +627,47 @@ function triggerCrossFilter(dim, val, key) {
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
 
-  if (activeFilterKey === key) {
-    // Toggle OFF
-    activeFilterKey = null;
-    activeFilterLabel = null;
-    logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Superset Cross-Filter:</strong> { "filterState": null, "extraFormData": {} }`;
+  if (activeFilterMap.has(key)) {
+    activeFilterMap.delete(key);
   } else {
-    // Set Active Filter
-    activeFilterKey = key;
-    activeFilterLabel = `${dim}: ${val}`;
-    logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> ⚡ <strong>Emitted Superset 6.1.0 Cross-Filter (setDataMask):</strong> <pre style="display:inline; color:#a7f3d0;">${JSON.stringify({ [dim]: [val] })}</pre>`;
+    const node = findNodeByKey(currentTree, key);
+    activeFilterMap.set(key, { dim, val, key, node });
+  }
+
+  const selectedItems = Array.from(activeFilterMap.values());
+  if (selectedItems.length === 0) {
+    if (logEl) logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Superset Cross-Filter:</strong> { "filterState": null, "extraFormData": {} }`;
+  } else {
+    // Group values by dimension for native Superset payload
+    const grouped = {};
+    for (const item of selectedItems) {
+      if (!grouped[item.dim]) grouped[item.dim] = [];
+      grouped[item.dim].push(item.val);
+    }
+    const filters = Object.entries(grouped).map(([col, vals]) => ({ col, op: 'IN', val: vals }));
+    const payload = {
+      extraFormData: { filters },
+      filterState: {
+        value: selectedItems.map(it => it.val),
+        selectedValues: selectedItems.map(it => it.val),
+        label: selectedItems.map(it => `${it.dim}: ${it.val}`).join(', ')
+      }
+    };
+    if (logEl) {
+      logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> ⚡ <strong>Emitted Superset 6.1.0 Multi Cross-Filter (setDataMask):</strong> <pre style="display:inline; color:#a7f3d0;">${JSON.stringify(payload)}</pre>`;
+    }
+  }
+
+  renderTable();
+  updateCompanionCharts();
+}
+
+function removeSingleFilter(key) {
+  activeFilterMap.delete(key);
+  const logEl = document.getElementById('consoleLog');
+  const timestamp = new Date().toLocaleTimeString();
+  if (logEl) {
+    logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Removed filter key:</strong> ${key} (${activeFilterMap.size} remaining)`;
   }
   renderTable();
   updateCompanionCharts();
@@ -604,17 +676,17 @@ function triggerCrossFilter(dim, val, key) {
 function clearActiveFilter() {
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
-  activeFilterKey = null;
-  activeFilterLabel = null;
-  logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Superset Cross-Filter</strong>`;
+  activeFilterMap.clear();
+  if (logEl) {
+    logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared All Superset Cross-Filters</strong>`;
+  }
   renderTable();
   updateCompanionCharts();
 }
 
 function loadDataset(key) {
   currentDatasetKey = key;
-  activeFilterKey = null;
-  activeFilterLabel = null;
+  activeFilterMap.clear();
   const cfg = datasets[key];
   if (cfg.type === 'multi_dimension') {
     currentTree = buildMultiDimensionTree(cfg.records, cfg.dimensions, cfg.metrics);

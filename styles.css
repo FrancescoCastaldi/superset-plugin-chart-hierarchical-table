@@ -824,29 +824,88 @@ h1, h2, h3, h4, .brand-font {
   border-color: var(--border-hover);
 }
 
-/* Active Cross-Filter Pill */
-.active-filter-pill {
+/* Active Cross-Filter Multi-Selection Styles */
+.active-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.active-filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: var(--bordeaux-dark);
   border: 1px solid var(--bordeaux-border);
   color: #fecdd3;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-sm);
   font-size: 11px;
   font-family: 'Roboto Mono', monospace;
-  animation: fadeIn 0.2s ease-in;
+  animation: fadeIn 0.15s ease-in;
 }
 
-.filter-pill-clear {
+.filter-chip-clear {
   background: transparent;
   border: none;
   color: var(--orange-accent);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0 2px;
+}
+
+.filter-chip-clear:hover {
+  color: #ffffff;
+}
+
+.filter-clear-all-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Roboto Mono', monospace;
+  transition: all 0.15s;
+}
+
+.filter-clear-all-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-main);
+  border-color: var(--border-hover);
+}
+
+.node-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--border-hover);
+  border-radius: 3px;
+  background: var(--bg-inset);
+  cursor: pointer;
+  vertical-align: middle;
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.node-checkbox:checked {
+  background: var(--orange-accent);
+  border-color: var(--orange-accent);
+}
+
+.node-checkbox:checked::after {
+  content: '✓';
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 900;
 }
 
 .selected-filter-row td {
@@ -858,7 +917,6 @@ h1, h2, h3, h4, .brand-font {
 .node-filter-active {
   color: var(--orange-accent) !important;
   font-weight: 700 !important;
-  text-decoration: underline;
 }
 
 .table-scroll {
