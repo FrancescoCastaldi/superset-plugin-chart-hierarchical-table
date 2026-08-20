@@ -177,7 +177,7 @@
       <div class="section-header">
         <div class="section-tag">Live Superset 6.1.0 Dashboard Simulator</div>
         <h2>Simulatore Dashboard Superset con Cross-Filtering</h2>
-        <p>Interagisci con la tabella gerarchica e osserva come cliccando su un nodo o una riga, <strong>l'intera dashboard si aggiorna all'istante</strong> (card KPI, grafici a barre companion e barra filtri nativa di Superset).</p>
+        <p>Interagisci con la tabella gerarchica e osserva come cliccando su un qualsiasi nodo o riga, <strong>tutti i grafici companion della dashboard si aggiornano e filtrano in tempo reale</strong> tramite il protocollo nativo <code>setDataMask</code>.</p>
       </div>
 
       <!-- Dashboard Simulator Container -->
@@ -185,18 +185,24 @@
         <!-- Superset Navigation Header -->
         <div class="superset-nav-bar">
           <div class="superset-dash-title">
-            <span style="font-size: 18px;">📊</span>
-            <strong style="font-size: 15px; color: #0f172a;">[Draft] Executive Sales &amp; Tree Hierarchy Dashboard</strong>
+            <span style="font-size: 20px;">📊</span>
+            <div>
+              <strong style="font-size: 15px; color: #0f172a;">Executive Multi-Level Sales &amp; Tree Hierarchy Dashboard</strong>
+              <div style="font-size: 11px; color: #64748b;">Draft Mode • Auto-refresh: 30s • 4 charts linked</div>
+            </div>
             <span class="superset-badge-ver">Superset 6.1.0</span>
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <button class="btn-sm" style="color: #475569;">⚙️ Filters</button>
+            <button class="btn-sm" style="color: #475569;">⚙️ Filters (1)</button>
             <button class="btn-sm" style="color: #475569;">✏️ Edit</button>
             <button class="btn-sm" style="background: #2563eb; color: white; border-color: #2563eb;">💾 Save</button>
           </div>
         </div>
 
-        <!-- Dashboard Body Layout (3 Columns: Left Filter Sidebar, Center Tree Table, Right Companion Charts) -->
+        <!-- Cross-Filter Broadcast Alert Banner -->
+        <div id="crossFilterBanner" class="cross-filter-broadcast-banner" style="display: none;"></div>
+
+        <!-- Dashboard Body Layout (Left Filter Sidebar + Right Multi-Chart Canvas) -->
         <div class="dashboard-body-layout">
           
           <!-- Left Sidebar: Native Superset Filter Bar -->
@@ -224,77 +230,123 @@
             </div>
 
             <div class="filter-box-item">
-              <label>TIME RANGE</label>
+              <label>TIME GRAIN / RANGE</label>
               <div style="padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #475569;">
                 Last Calendar Year (2025-2026)
               </div>
             </div>
+
+            <div class="filter-box-item">
+              <label>INTERACTIVE FEATURES</label>
+              <div style="font-size: 11px; color: #64748b; line-height: 1.5;">
+                • Click any node name to cross-filter.<br/>
+                • Click <code>+</code> / <code>−</code> to expand/collapse.<br/>
+                • Click sub-level bars to drill down.
+              </div>
+            </div>
           </div>
 
-          <!-- Center Column: Hierarchical Table & Matrix Grid Chart -->
-          <div class="sandbox-card">
-            <div class="sandbox-header-bar">
-              <div class="sandbox-controls">
-                <strong style="font-size: 13px; color: #0f172a;">Hierarchical Table &amp; Matrix Grid</strong>
-                <button class="btn-sm" onclick="handleExpandAll()">Expand All</button>
-                <button class="btn-sm" onclick="handleCollapseAll()">Collapse All</button>
-                <div id="activeFilterContainer"></div>
+          <!-- Right: Multi-Chart Dashboard Grid -->
+          <div class="dashboard-charts-grid">
+            
+            <!-- Row 1: Main Hierarchical Table + KPI & Donut Column -->
+            <div class="dashboard-row-top">
+              
+              <!-- Main Chart: Hierarchical Table & Matrix Grid -->
+              <div class="sandbox-card">
+                <div class="sandbox-header-bar">
+                  <div class="sandbox-controls">
+                    <strong style="font-size: 13px; color: #0f172a;">Hierarchical Table &amp; Matrix Grid</strong>
+                    <button class="btn-sm" onclick="handleExpandAll()">Expand All</button>
+                    <button class="btn-sm" onclick="handleCollapseAll()">Collapse All</button>
+                    <div id="activeFilterContainer"></div>
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      id="searchBox"
+                      class="search-input"
+                      placeholder="🔍 Search hierarchy..."
+                      oninput="handleSearch(this.value)"
+                    />
+                  </div>
+                </div>
+
+                <div class="table-scroll">
+                  <table class="data-table">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                  </table>
+                </div>
               </div>
 
-              <div>
-                <input
-                  type="text"
-                  id="searchBox"
-                  class="search-input"
-                  placeholder="🔍 Search hierarchy..."
-                  oninput="handleSearch(this.value)"
-                />
+              <!-- Right Companion Column: KPI Card + Donut Chart -->
+              <div class="companion-column">
+                <!-- Companion 1: KPI Big Number with Sparkline -->
+                <div class="companion-card">
+                  <div class="companion-card-header">
+                    <span>KPI METRIC • CROSS-FILTERED</span>
+                    <span>⋮</span>
+                  </div>
+                  <div class="kpi-big-number" id="kpiBigNumber">$2,330,000</div>
+                  <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;" id="kpiSubLabel">Grand Total (Revenue)</div>
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span class="kpi-delta-tag">↑ +18.4% YTD</span>
+                    <span style="font-size: 11px; color: #94a3b8;">vs previous period</span>
+                  </div>
+                  <svg id="kpiSparkline" class="sparkline-svg"></svg>
+                </div>
+
+                <!-- Companion 2: Donut Share Breakdown Chart -->
+                <div class="companion-card">
+                  <div class="companion-card-header">
+                    <span>SHARE COMPOSITION (%)</span>
+                    <span>⋮</span>
+                  </div>
+                  <div class="donut-container">
+                    <svg id="donutSvg" class="donut-svg" viewBox="0 0 130 130"></svg>
+                    <div id="donutLegend" class="donut-legend"></div>
+                  </div>
+                </div>
               </div>
+
             </div>
 
-            <div class="table-scroll">
-              <table class="data-table">
-                <thead id="tableHead"></thead>
-                <tbody id="tableBody"></tbody>
-              </table>
+            <!-- Row 2: Sub-Level Breakdown Bar Chart + Quarterly Performance Area Chart -->
+            <div class="dashboard-row-bottom">
+              
+              <!-- Companion 3: Sub-level Breakdown Bar Chart -->
+              <div class="companion-card">
+                <div class="companion-card-header">
+                  <span>SUB-LEVEL DISTRIBUTION BAR CHART</span>
+                  <span>⋮</span>
+                </div>
+                <div class="bar-chart-list" id="companionBarList">
+                  <!-- Dynamically populated by JS -->
+                </div>
+              </div>
+
+              <!-- Companion 4: Quarterly Trendline Area Chart -->
+              <div class="companion-card">
+                <div class="companion-card-header">
+                  <span>QUARTERLY REVENUE TRAJECTORY (Q1 - Q4)</span>
+                  <span>⋮</span>
+                </div>
+                <svg id="areaChartSvg" class="area-chart-svg" viewBox="0 0 480 130"></svg>
+              </div>
+
             </div>
 
-            <!-- Event Stream Console -->
+            <!-- Row 3: Event Stream Console -->
             <div class="event-console">
               <div class="console-log">
                 <span class="pulse-dot"></span>
                 <span id="consoleLog">Superset Event Console: Click any row name to simulate Cross-Filter emission</span>
               </div>
-              <span style="color:#64748b; font-size:11px;">Apache Superset 6.1.0 Event Protocol</span>
-            </div>
-          </div>
-
-          <!-- Right Column: Interactive Companion Charts (React to Cross-Filtering) -->
-          <div class="companion-column">
-            <!-- Companion 1: KPI Metric Card -->
-            <div class="companion-card">
-              <div class="companion-card-header">
-                <span>KPI METRIC • CROSS-FILTERED</span>
-                <span>⋮</span>
-              </div>
-              <div class="kpi-big-number" id="kpiBigNumber">$2,330,000</div>
-              <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;" id="kpiSubLabel">Grand Total (Revenue)</div>
-              <div>
-                <span class="kpi-delta-tag">↑ +18.4% YTD</span>
-                <span style="font-size: 11px; color: #94a3b8; margin-left: 6px;">vs previous period</span>
-              </div>
+              <span style="color:#64748b; font-size:11px;">Apache Superset 6.1.0 Event Protocol (setDataMask)</span>
             </div>
 
-            <!-- Companion 2: Breakdown Bar Chart -->
-            <div class="companion-card" style="flex: 1;">
-              <div class="companion-card-header">
-                <span>SUB-LEVEL BREAKDOWN</span>
-                <span>⋮</span>
-              </div>
-              <div class="bar-chart-list" id="companionBarList">
-                <!-- Dynamically populated by JS -->
-              </div>
-            </div>
           </div>
 
         </div>

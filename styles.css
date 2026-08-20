@@ -406,6 +406,8 @@ h1, h2, h3, h4, .brand-font {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .superset-nav-bar {
@@ -415,6 +417,8 @@ h1, h2, h3, h4, .brand-font {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .superset-dash-title {
@@ -433,15 +437,28 @@ h1, h2, h3, h4, .brand-font {
   border-radius: 4px;
 }
 
-.dashboard-body-layout {
-  display: grid;
-  grid-template-columns: 220px 1fr 340px;
-  gap: 16px;
-  padding: 16px;
-  min-height: 580px;
+.cross-filter-broadcast-banner {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 8px 20px;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Roboto Mono', monospace;
+  border-bottom: 1px solid #334155;
+  transition: all 0.3s;
 }
 
-@media (max-width: 1100px) {
+.dashboard-body-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: #f1f5f9;
+}
+
+@media (max-width: 1024px) {
   .dashboard-body-layout {
     grid-template-columns: 1fr;
   }
@@ -456,6 +473,7 @@ h1, h2, h3, h4, .brand-font {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: fit-content;
 }
 
 .filter-sidebar-header {
@@ -504,6 +522,30 @@ h1, h2, h3, h4, .brand-font {
   gap: 4px;
 }
 
+.dashboard-charts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-row-top {
+  display: grid;
+  grid-template-columns: 1.35fr 0.9fr;
+  gap: 16px;
+}
+
+.dashboard-row-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-row-top, .dashboard-row-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
 .companion-column {
   display: flex;
   flex-direction: column;
@@ -518,13 +560,14 @@ h1, h2, h3, h4, .brand-font {
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .companion-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -534,7 +577,7 @@ h1, h2, h3, h4, .brand-font {
 
 .kpi-big-number {
   font-family: 'Outfit', sans-serif;
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 800;
   color: var(--bg-dark);
   line-height: 1.1;
@@ -554,10 +597,18 @@ h1, h2, h3, h4, .brand-font {
   border-radius: 4px;
 }
 
+.sparkline-svg {
+  width: 100%;
+  height: 48px;
+  margin-top: 10px;
+}
+
 .bar-chart-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 .bar-item {
@@ -575,7 +626,7 @@ h1, h2, h3, h4, .brand-font {
 }
 
 .bar-track {
-  height: 12px;
+  height: 10px;
   background: #f1f5f9;
   border-radius: 4px;
   overflow: hidden;
@@ -586,6 +637,45 @@ h1, h2, h3, h4, .brand-font {
   background: linear-gradient(90deg, var(--primary), #38bdf8);
   border-radius: 4px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Donut Chart Component */
+.donut-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 16px;
+}
+
+.donut-svg {
+  width: 130px;
+  height: 130px;
+}
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Area Chart Component */
+.area-chart-svg {
+  width: 100%;
+  height: 180px;
 }
 
 /* Sandbox App Table Card */
