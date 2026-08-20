@@ -1,0 +1,58 @@
+{
+  "name": "superset-plugin-chart-hierarchical-table",
+  "version": "0.1.0",
+  "description": "Apache Superset 6.1.0 Hierarchical Table & Matrix Grid Chart Plugin",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "superset",
+    "apache-superset",
+    "superset-plugin",
+    "superset-chart",
+    "superset-6",
+    "hierarchical-table",
+    "tree-table",
+    "pivot-grid",
+    "hierarchy"
+  ],
+  "author": "Francesco Castaldi",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@superset-ui/core": ">=4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.0.0",
+    "antd": "^5.12.0",
+    "classnames": "^2.3.2",
+    "d3-format": "^3.1.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/d3-format": "^3.0.4",
+    "@types/jest": "^29.5.12",
+    "@types/lodash": "^4.14.202",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "jest": "^29.7.0",
+    "rimraf": "^5.0.5",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  }
+}

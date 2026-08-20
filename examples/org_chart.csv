@@ -1,0 +1,11 @@
+employee_id,manager_id,name,role,department,salary,budget_managed
+1,,Elena Rossi,Chief Executive Officer,Executive,220000.0,5000000.0
+2,1,Marco Bianchi,Chief Technology Officer,Engineering,160000.0,2000000.0
+3,1,Giulia Verdi,Chief Marketing Officer,Marketing,150000.0,1500000.0
+4,1,Davide Neri,Chief Financial Officer,Finance,155000.0,1000000.0
+5,2,Luca Ferrari,VP of Software Architecture,Engineering,125000.0,800000.0
+6,2,Sara Romano,VP of Infrastructure & Cloud,Engineering,120000.0,700000.0
+7,5,Alessandro Galli,Staff Data Engineer,Engineering,90000.0,150000.0
+8,5,Chiara Costa,Staff Frontend Engineer,Engineering,88000.0,120000.0
+9,3,Matteo Fontana,Head of Digital Growth,Marketing,95000.0,600000.0
+10,3,Francesca Barbieri,Brand Strategy Lead,Marketing,85000.0,400000.0

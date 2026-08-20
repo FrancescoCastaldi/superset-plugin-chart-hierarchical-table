@@ -1,0 +1,13 @@
+region,country,city,store_name,revenue,units_sold,cost
+EMEA,Italy,Milan,Duomo Flagship,145000.0,420,82000.0
+EMEA,Italy,Milan,Centrale Store,98000.0,310,54000.0
+EMEA,Italy,Rome,Colosseo Store,122000.0,380,68000.0
+EMEA,Germany,Berlin,Mitte Store,165000.0,490,91000.0
+EMEA,Germany,Munich,Marienplatz Store,180000.0,520,99000.0
+EMEA,France,Paris,Champs-Elysees,210000.0,610,115000.0
+APAC,Japan,Tokyo,Shibuya Hub,240000.0,750,130000.0
+APAC,Japan,Osaka,Umeda Store,135000.0,410,75000.0
+APAC,Singapore,Singapore,Marina Bay,190000.0,580,105000.0
+Americas,USA,New York,5th Avenue,320000.0,920,175000.0
+Americas,USA,San Francisco,Market Street,280000.0,810,150000.0
+Americas,Canada,Toronto,Downtown,150000.0,440,82000.0

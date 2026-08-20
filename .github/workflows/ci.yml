@@ -1,0 +1,62 @@
+name: CI / CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  frontend-build-and-test:
+    name: Frontend (TypeScript & React)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci || npm install
+
+      - name: Typecheck & Lint
+        working-directory: frontend
+        run: npm run build --if-present
+
+      - name: Run Frontend Tests
+        working-directory: frontend
+        run: npm test --if-present
+
+  backend-test:
+    name: Backend (Python)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pandas numpy
+          pip install -e .
+
+      - name: Run Pytest
+        working-directory: backend
+        run: pytest tests/ -v

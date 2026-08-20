@@ -1,0 +1,9 @@
+account_code,parent_account_code,account_name,category,q1_actual,q2_actual,full_year_budget
+1000,,Ricavi Totali,Revenue,750000.0,820000.0,3200000.0
+1100,1000,Ricavi Prodotti SaaS,Revenue,500000.0,560000.0,2200000.0
+1200,1000,Servizi Professionali & Consulting,Revenue,250000.0,260000.0,1000000.0
+2000,,Costi Operativi (OPEX),Operating Expense,420000.0,450000.0,1800000.0
+2100,2000,Personale & Payroll,Operating Expense,280000.0,295000.0,1200000.0
+2200,2000,Infrastruttura Cloud & SaaS Tools,Operating Expense,85000.0,92000.0,360000.0
+2300,2000,Marketing & Lead Gen,Operating Expense,55000.0,63000.0,240000.0
+3000,,Margine Operativo Lordo (EBITDA),Profitability,330000.0,370000.0,1400000.0
