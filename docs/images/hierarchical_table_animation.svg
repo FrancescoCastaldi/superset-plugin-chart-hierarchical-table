@@ -1,161 +1,284 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 620" width="100%" height="100%">
   <defs>
     <style>
       @keyframes expandBranch {
-        0%, 20% { opacity: 0; transform: translateY(-10px); }
-        30%, 85% { opacity: 1; transform: translateY(0); }
+        0%, 15% { opacity: 0; transform: translateY(-10px); }
+        25%, 85% { opacity: 1; transform: translateY(0); }
         95%, 100% { opacity: 0; transform: translateY(-10px); }
       }
       @keyframes toggleIcon {
-        0%, 20% { transform: rotate(0deg); }
-        30%, 85% { transform: rotate(90deg); }
+        0%, 15% { transform: rotate(0deg); }
+        25%, 85% { transform: rotate(90deg); }
         95%, 100% { transform: rotate(0deg); }
       }
-      @keyframes highlightRow {
-        0%, 25% { fill: #ffffff; }
-        35%, 55% { fill: #e6f7ff; }
-        65%, 100% { fill: #ffffff; }
+      @keyframes filterRowSelect {
+        0%, 25% { fill: #ffffff; stroke: transparent; }
+        35%, 80% { fill: #e0f2fe; stroke: #38bdf8; }
+        90%, 100% { fill: #ffffff; stroke: transparent; }
+      }
+      @keyframes kpiUpdate {
+        0%, 30% { opacity: 1; transform: scale(1); }
+        35% { opacity: 0.4; transform: scale(0.96); }
+        40%, 80% { opacity: 1; transform: scale(1); }
+        85%, 100% { opacity: 1; }
+      }
+      @keyframes barChartGrow {
+        0%, 30% { transform: scaleY(0.6); }
+        40%, 80% { transform: scaleY(1); }
+        90%, 100% { transform: scaleY(0.6); }
+      }
+      @keyframes filterBadgeAnim {
+        0%, 30% { opacity: 0; transform: translateX(-10px); }
+        35%, 80% { opacity: 1; transform: translateX(0); }
+        90%, 100% { opacity: 0; transform: translateX(-10px); }
       }
       @keyframes toastAnim {
-        0%, 45% { opacity: 0; transform: translateY(20px); }
-        50%, 80% { opacity: 1; transform: translateY(0); }
+        0%, 30% { opacity: 0; transform: translateY(20px); }
+        35%, 80% { opacity: 1; transform: translateY(0); }
         90%, 100% { opacity: 0; transform: translateY(20px); }
       }
-      @keyframes searchType {
-        0%, 60% { width: 0; }
-        70%, 90% { width: 140px; }
-        100% { width: 0; }
-      }
 
-      .header-bg { fill: #f5f7fa; }
-      .border-line { stroke: #e8e8e8; stroke-width: 1; }
-      .text-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; fill: #262626; }
-      .text-cell { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #595959; }
-      .text-metric { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #1f1f1f; text-anchor: end; font-variant-numeric: tabular-nums; }
-      .subtotal-row { fill: #fafafa; font-weight: bold; }
-      .grand-total { fill: #f0f2f5; font-weight: bold; }
-      .accent { fill: #1890ff; font-weight: 600; }
-      .interactive-branch { animation: expandBranch 8s infinite ease-in-out; }
-      .interactive-toggle { animation: toggleIcon 8s infinite ease-in-out; transform-origin: 52px 145px; }
-      .row-hover-anim { animation: highlightRow 8s infinite ease-in-out; }
-      .toast-box { animation: toastAnim 8s infinite ease-in-out; }
+      .text-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; fill: #1e293b; }
+      .text-sub { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; fill: #64748b; }
+      .text-metric { font-family: 'Roboto Mono', -apple-system, monospace; font-size: 12px; fill: #0f172a; text-anchor: end; }
+      .border-line { stroke: #e2e8f0; stroke-width: 1; }
+      
+      .branch-anim { animation: expandBranch 9s infinite ease-in-out; }
+      .toggle-anim { animation: toggleIcon 9s infinite ease-in-out; transform-origin: 226px 242px; }
+      .selected-row-anim { animation: filterRowSelect 9s infinite ease-in-out; }
+      .kpi-anim { animation: kpiUpdate 9s infinite ease-in-out; }
+      .bar-anim { animation: barChartGrow 9s infinite ease-in-out; transform-origin: bottom; }
+      .badge-anim { animation: filterBadgeAnim 9s infinite ease-in-out; }
+      .toast-anim { animation: toastAnim 9s infinite ease-in-out; }
     </style>
 
-    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
-      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
+    <filter id="cardShadow" x="-3%" y="-3%" width="106%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
     </filter>
   </defs>
 
-  <!-- Container Window -->
-  <rect x="10" y="10" width="880" height="500" rx="8" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" filter="url(#shadow)"/>
+  <!-- Background App Window -->
+  <rect x="0" y="0" width="1060" height="620" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
 
-  <!-- Toolbar -->
-  <rect x="10" y="10" width="880" height="55" rx="8" fill="#fafafa"/>
-  <line x1="10" y1="65" x2="890" y2="65" stroke="#e8e8e8" stroke-width="1"/>
+  <!-- Superset 6.1.0 Top Navbar -->
+  <rect x="0" y="0" width="1060" height="52" fill="#ffffff"/>
+  <line x1="0" y1="52" x2="1060" y2="52" stroke="#e2e8f0" stroke-width="1"/>
 
-  <!-- Search Bar -->
-  <rect x="28" y="24" width="240" height="28" rx="5" fill="#ffffff" stroke="#d9d9d9"/>
-  <text x="40" y="43" font-family="-apple-system, sans-serif" font-size="12" fill="#bfbfbf">🔍 Search hierarchy...</text>
-
-  <!-- Action Buttons -->
-  <rect x="680" y="24" width="90" height="28" rx="5" fill="#ffffff" stroke="#d9d9d9"/>
-  <text x="700" y="42" font-family="-apple-system, sans-serif" font-size="12" font-weight="500" fill="#595959">Expand All</text>
-
-  <rect x="780" y="24" width="90" height="28" rx="5" fill="#1890ff"/>
-  <text x="800" y="42" font-family="-apple-system, sans-serif" font-size="12" font-weight="500" fill="#ffffff">Collapse All</text>
-
-  <!-- Table Header -->
-  <rect x="10" y="65" width="880" height="38" fill="#f5f7fa"/>
-  <line x1="10" y1="103" x2="890" y2="103" stroke="#e8e8e8" stroke-width="1"/>
-
-  <text x="35" y="89" class="text-title">Hierarchy (Region &gt; Country &gt; Store)</text>
-  <text x="560" y="89" class="text-title" text-anchor="end">REVENUE ($)</text>
-  <text x="710" y="89" class="text-title" text-anchor="end">UNITS SOLD</text>
-  <text x="860" y="89" class="text-title" text-anchor="end">COST ($)</text>
-
-  <!-- Grand Total Row -->
-  <rect x="11" y="104" width="878" height="34" class="grand-total"/>
-  <line x1="10" y1="138" x2="890" y2="138" stroke="#d9d9d9" stroke-width="1.5"/>
-  <text x="35" y="126" class="text-title">Grand Total (All Regions)</text>
-  <text x="560" y="126" class="text-metric" font-weight="bold">$2,330,000</text>
-  <text x="710" y="126" class="text-metric" font-weight="bold">6,710</text>
-  <text x="860" y="126" class="text-metric" font-weight="bold">$1,234,000</text>
-
-  <!-- Level 0: Americas -->
-  <rect x="11" y="139" width="878" height="34" fill="#ffffff"/>
-  <line x1="10" y1="173" x2="890" y2="173" class="border-line"/>
-  
-  <!-- Toggle Icon Animated -->
-  <g class="interactive-toggle">
-    <rect x="35" y="147" width="16" height="16" rx="3" fill="#ffffff" stroke="#d9d9d9"/>
-    <text x="39" y="159" font-size="11" font-weight="bold" fill="#1890ff">▶</text>
-  </g>
-  <text x="60" y="161" class="text-title accent">Americas</text>
-  <text x="560" y="161" class="text-metric" font-weight="600">$750,000</text>
-  <text x="710" y="161" class="text-metric" font-weight="600">2,170</text>
-  <text x="860" y="161" class="text-metric" font-weight="600">$407,000</text>
-
-  <!-- Expandable Sub-branch (Animated) -->
-  <g class="interactive-branch">
-    <!-- Level 1: USA -->
-    <rect x="11" y="174" width="878" height="32" class="row-hover-anim"/>
-    <line x1="10" y1="206" x2="890" y2="206" class="border-line"/>
-    <rect x="60" y="182" width="14" height="14" rx="2" fill="#ffffff" stroke="#d9d9d9"/>
-    <text x="64" y="193" font-size="10" font-weight="bold" fill="#595959">▼</text>
-    <text x="82" y="195" class="text-title">USA</text>
-    <text x="560" y="195" class="text-metric">$600,000</text>
-    <text x="710" y="195" class="text-metric">1,730</text>
-    <text x="860" y="195" class="text-metric">$325,000</text>
-
-    <!-- Level 2: New York Flagship -->
-    <rect x="11" y="207" width="878" height="30" fill="#fafafa"/>
-    <line x1="10" y1="237" x2="890" y2="237" class="border-line"/>
-    <text x="105" y="227" class="text-cell">📍 New York (5th Avenue)</text>
-    <text x="560" y="227" class="text-metric">$320,000</text>
-    <text x="710" y="227" class="text-metric">920</text>
-    <text x="860" y="227" class="text-metric">$175,000</text>
-
-    <!-- Level 2: San Francisco -->
-    <rect x="11" y="238" width="878" height="30" fill="#ffffff"/>
-    <line x1="10" y1="268" x2="890" y2="268" class="border-line"/>
-    <text x="105" y="258" class="text-cell">📍 San Francisco (Market St)</text>
-    <text x="560" y="258" class="text-metric">$280,000</text>
-    <text x="710" y="258" class="text-metric">810</text>
-    <text x="860" y="258" class="text-metric">$150,000</text>
-
-    <!-- Level 1: Canada -->
-    <rect x="11" y="269" width="878" height="30" fill="#ffffff"/>
-    <line x1="10" y1="299" x2="890" y2="299" class="border-line"/>
-    <text x="82" y="289" class="text-title">Canada (Toronto)</text>
-    <text x="560" y="289" class="text-metric">$150,000</text>
-    <text x="710" y="289" class="text-metric">440</text>
-    <text x="860" y="289" class="text-metric">$82,000</text>
+  <g transform="translate(18, 14)">
+    <circle cx="12" cy="12" r="12" fill="#2563eb"/>
+    <path d="M7 12 L11 16 L17 8" stroke="#ffffff" stroke-width="2.5" fill="none"/>
+    <text x="32" y="17" font-family="'Outfit', -apple-system, sans-serif" font-size="16" font-weight="700" fill="#0f172a">Apache Superset</text>
+    <rect x="165" y="2" width="46" height="20" rx="4" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="173" y="16" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#2563eb">6.1.0</text>
+    <text x="228" y="16" font-family="-apple-system, sans-serif" font-size="14" font-weight="500" fill="#475569">/ Executive Sales &amp; Tree Hierarchy Dashboard</text>
   </g>
 
-  <!-- Level 0: EMEA -->
-  <rect x="11" y="300" width="878" height="34" fill="#ffffff"/>
-  <line x1="10" y1="334" x2="890" y2="334" class="border-line"/>
-  <rect x="35" y="309" width="16" height="16" rx="3" fill="#ffffff" stroke="#d9d9d9"/>
-  <text x="39" y="321" font-size="11" font-weight="bold" fill="#1890ff">▶</text>
-  <text x="60" y="322" class="text-title accent">EMEA</text>
-  <text x="560" y="322" class="text-metric" font-weight="600">$1,020,000</text>
-  <text x="710" y="322" class="text-metric" font-weight="600">2,800</text>
-  <text x="860" y="322" class="text-metric" font-weight="600">$509,000</text>
+  <!-- Top Right Actions -->
+  <g transform="translate(860, 12)">
+    <rect x="0" y="0" width="76" height="28" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="14" y="18" font-family="-apple-system, sans-serif" font-size="12" font-weight="600" fill="#475569">✏️ Edit</text>
+    <rect x="86" y="0" width="94" height="28" rx="5" fill="#2563eb"/>
+    <text x="100" y="18" font-family="-apple-system, sans-serif" font-size="12" font-weight="600" fill="#ffffff">💾 Save</text>
+  </g>
 
-  <!-- Level 0: APAC -->
-  <rect x="11" y="335" width="878" height="34" fill="#ffffff"/>
-  <line x1="10" y1="369" x2="890" y2="369" class="border-line"/>
-  <rect x="35" y="344" width="16" height="16" rx="3" fill="#ffffff" stroke="#d9d9d9"/>
-  <text x="39" y="356" font-size="11" font-weight="bold" fill="#1890ff">▶</text>
-  <text x="60" y="357" class="text-title accent">APAC</text>
-  <text x="560" y="357" class="text-metric" font-weight="600">$565,000</text>
-  <text x="710" y="357" class="text-metric" font-weight="600">1,740</text>
-  <text x="860" y="357" class="text-metric" font-weight="600">$318,000</text>
+  <!-- Left Sidebar: Superset Native Filter Bar -->
+  <rect x="0" y="52" width="190" height="568" fill="#ffffff"/>
+  <line x1="190" y1="52" x2="190" y2="620" stroke="#e2e8f0" stroke-width="1"/>
 
-  <!-- Toast Notification Simulation (Animated) -->
-  <g class="toast-box">
-    <rect x="520" y="440" width="340" height="42" rx="6" fill="#1f1f1f" filter="url(#shadow)"/>
-    <text x="540" y="466" font-family="-apple-system, sans-serif" font-size="12" fill="#52c41a">⚡ [Superset Event]</text>
-    <text x="650" y="466" font-family="-apple-system, sans-serif" font-size="12" fill="#ffffff">Cross-Filter: { "country": ["USA"] }</text>
+  <text x="18" y="80" class="text-title">FILTERS</text>
+  <rect x="140" y="68" width="36" height="18" rx="3" fill="#f1f5f9"/>
+  <text x="146" y="81" font-family="-apple-system, sans-serif" font-size="10" font-weight="600" fill="#64748b">Clear</text>
+
+  <!-- Active Cross Filter Tag (Animated) -->
+  <g class="badge-anim" transform="translate(14, 98)">
+    <rect x="0" y="0" width="162" height="42" rx="6" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="10" y="18" font-family="-apple-system, sans-serif" font-size="10" font-weight="700" fill="#2563eb">⚡ CROSS-FILTER ACTIVE</text>
+    <text x="10" y="32" font-family="-apple-system, sans-serif" font-size="11" font-weight="600" fill="#1e40af">Country: USA (Americas)</text>
+  </g>
+
+  <g transform="translate(14, 155)">
+    <text x="4" y="14" class="text-sub" font-weight="bold">REGION</text>
+    <rect x="4" y="24" width="154" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="14" y="41" class="text-sub">Americas (Filtered)</text>
+
+    <text x="4" y="74" class="text-sub" font-weight="bold">STORE TYPE</text>
+    <rect x="4" y="84" width="154" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="14" y="101" class="text-sub">All Stores (4)</text>
+
+    <text x="4" y="134" class="text-sub" font-weight="bold">CURRENCY</text>
+    <rect x="4" y="144" width="154" height="26" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="14" y="161" class="text-sub">USD ($)</text>
+  </g>
+
+  <!-- ================= MAIN DASHBOARD GRID ================= -->
+
+  <!-- Panel 1: Hierarchical Table & Matrix Grid (Main Plugin) -->
+  <g transform="translate(204, 66)">
+    <rect x="0" y="0" width="530" height="536" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#cardShadow)"/>
+    
+    <!-- Card Header -->
+    <rect x="0" y="0" width="530" height="42" rx="8" fill="#ffffff"/>
+    <line x1="0" y1="42" x2="530" y2="42" stroke="#f1f5f9"/>
+    <text x="16" y="26" class="text-title">Hierarchical Table &amp; Matrix Grid</text>
+    <text x="495" y="26" font-size="14" fill="#94a3b8">⋮</text>
+
+    <!-- Table Toolbar -->
+    <rect x="0" y="42" width="530" height="38" fill="#f8fafc"/>
+    <line x1="0" y1="80" x2="530" y2="80" stroke="#e2e8f0"/>
+    <rect x="12" y="49" width="160" height="24" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="22" y="65" font-family="-apple-system, sans-serif" font-size="11" fill="#94a3b8">🔍 Search hierarchy...</text>
+
+    <!-- Active Filter Badge in Table Toolbar (Animated) -->
+    <g class="badge-anim" transform="translate(180, 50)">
+      <rect x="0" y="0" width="150" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe"/>
+      <text x="8" y="15" font-family="-apple-system, sans-serif" font-size="10" font-weight="600" fill="#2563eb">⚡ Filter: Country: USA ✕</text>
+    </g>
+
+    <rect x="440" y="49" width="78" height="24" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="448" y="65" font-family="-apple-system, sans-serif" font-size="10" font-weight="600" fill="#475569">Expand All</text>
+
+    <!-- Table Header -->
+    <rect x="0" y="80" width="530" height="30" fill="#f1f5f9"/>
+    <line x1="0" y1="110" x2="530" y2="110" stroke="#e2e8f0"/>
+    <text x="16" y="100" class="text-sub" font-weight="bold">HIERARCHY (REGION &gt; COUNTRY)</text>
+    <text x="360" y="100" class="text-sub" font-weight="bold" text-anchor="end">REVENUE ($)</text>
+    <text x="440" y="100" class="text-sub" font-weight="bold" text-anchor="end">UNITS</text>
+    <text x="510" y="100" class="text-sub" font-weight="bold" text-anchor="end">MARGIN</text>
+
+    <!-- Grand Total Row -->
+    <rect x="0" y="110" width="530" height="30" fill="#f8fafc"/>
+    <line x1="0" y1="140" x2="530" y2="140" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="16" y="130" class="text-title">Grand Total (All Regions)</text>
+    <text x="360" y="130" class="text-metric" font-weight="bold">$2,330,000</text>
+    <text x="440" y="130" class="text-metric" font-weight="bold">6,710</text>
+    <text x="510" y="130" class="text-metric" font-weight="bold">30.2%</text>
+
+    <!-- Level 0: Americas -->
+    <rect x="0" y="141" width="530" height="32" fill="#ffffff"/>
+    <line x1="0" y1="173" x2="530" y2="173" class="border-line"/>
+    <g class="toggle-anim">
+      <rect x="16" y="149" width="14" height="14" rx="2" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="19" y="160" font-size="10" font-weight="bold" fill="#2563eb">▶</text>
+    </g>
+    <text x="36" y="162" class="text-title" fill="#2563eb">Americas</text>
+    <text x="360" y="162" class="text-metric" font-weight="600">$750,000</text>
+    <text x="440" y="162" class="text-metric" font-weight="600">2,170</text>
+    <text x="510" y="162" class="text-metric" font-weight="600">28.0%</text>
+
+    <!-- Sub-branch: USA (Animated Expand & Filter Selection) -->
+    <g class="branch-anim">
+      <!-- Level 1: USA (Clicked / Cross-Filtering) -->
+      <rect x="0" y="174" width="530" height="30" class="selected-row-anim"/>
+      <line x1="0" y1="204" x2="530" y2="204" class="border-line"/>
+      <rect x="36" y="181" width="12" height="12" rx="2" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="39" y="190" font-size="9" font-weight="bold" fill="#475569">▼</text>
+      <text x="54" y="194" class="text-title" fill="#0284c7" font-weight="bold">USA (Active Cross-Filter)</text>
+      <text x="360" y="194" class="text-metric" font-weight="bold">$600,000</text>
+      <text x="440" y="194" class="text-metric" font-weight="bold">1,730</text>
+      <text x="510" y="194" class="text-metric" font-weight="bold">28.2%</text>
+
+      <!-- Level 2: New York Flagship -->
+      <rect x="0" y="205" width="530" height="28" fill="#fafafa"/>
+      <line x1="0" y1="233" x2="530" y2="233" class="border-line"/>
+      <text x="68" y="223" class="text-sub">📍 New York (5th Ave)</text>
+      <text x="360" y="223" class="text-metric">$320,000</text>
+      <text x="440" y="223" class="text-metric">920</text>
+      <text x="510" y="223" class="text-metric">28.5%</text>
+
+      <!-- Level 2: San Francisco -->
+      <rect x="0" y="234" width="530" height="28" fill="#ffffff"/>
+      <line x1="0" y1="262" x2="530" y2="262" class="border-line"/>
+      <text x="68" y="252" class="text-sub">📍 San Francisco (Market St)</text>
+      <text x="360" y="252" class="text-metric">$280,000</text>
+      <text x="440" y="252" class="text-metric">810</text>
+      <text x="510" y="252" class="text-metric">28.1%</text>
+
+      <!-- Level 1: Canada -->
+      <rect x="0" y="263" width="530" height="28" fill="#ffffff"/>
+      <line x1="0" y1="291" x2="530" y2="291" class="border-line"/>
+      <text x="54" y="281" class="text-title">Canada (Toronto &amp; Van)</text>
+      <text x="360" y="281" class="text-metric">$150,000</text>
+      <text x="440" y="281" class="text-metric">440</text>
+      <text x="510" y="281" class="text-metric">27.8%</text>
+    </g>
+
+    <!-- Level 0: EMEA -->
+    <rect x="0" y="292" width="530" height="32" fill="#ffffff"/>
+    <line x1="0" y1="324" x2="530" y2="324" class="border-line"/>
+    <rect x="16" y="300" width="14" height="14" rx="2" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="19" y="311" font-size="10" font-weight="bold" fill="#2563eb">▶</text>
+    <text x="36" y="313" class="text-title" fill="#2563eb">EMEA (Europe &amp; ME)</text>
+    <text x="360" y="313" class="text-metric" font-weight="600">$1,020,000</text>
+    <text x="440" y="313" class="text-metric" font-weight="600">2,800</text>
+    <text x="510" y="313" class="text-metric" font-weight="600">30.8%</text>
+
+    <!-- Level 0: APAC -->
+    <rect x="0" y="325" width="530" height="32" fill="#ffffff"/>
+    <line x1="0" y1="357" x2="530" y2="357" class="border-line"/>
+    <rect x="16" y="333" width="14" height="14" rx="2" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="19" y="344" font-size="10" font-weight="bold" fill="#2563eb">▶</text>
+    <text x="36" y="346" class="text-title" fill="#2563eb">APAC (Asia-Pacific)</text>
+    <text x="360" y="346" class="text-metric" font-weight="600">$565,000</text>
+    <text x="440" y="346" class="text-metric" font-weight="600">1,740</text>
+    <text x="510" y="346" class="text-metric" font-weight="600">33.1%</text>
+  </g>
+
+  <!-- ================= COMPANION CHARTS (REACTING TO CROSS-FILTER) ================= -->
+
+  <!-- Panel 2: Big Number / KPI Metric Card -->
+  <g transform="translate(748, 66)">
+    <rect x="0" y="0" width="294" height="180" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#cardShadow)"/>
+    <text x="18" y="28" class="text-sub" font-weight="bold">KPI METRIC • CROSS-FILTERED</text>
+    <text x="268" y="28" font-size="14" fill="#94a3b8">⋮</text>
+
+    <g class="kpi-anim">
+      <text x="18" y="76" font-family="'Outfit', sans-serif" font-size="34" font-weight="800" fill="#0f172a">$600,000</text>
+      <text x="18" y="98" class="text-sub">USA Region Filtered Revenue</text>
+
+      <rect x="18" y="116" width="74" height="22" rx="4" fill="#dcfce7"/>
+      <text x="26" y="131" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#15803d">↑ +18.4%</text>
+      <text x="100" y="131" class="text-sub">vs previous quarter</text>
+    </g>
+  </g>
+
+  <!-- Panel 3: Companion Regional Bar Chart -->
+  <g transform="translate(748, 260)">
+    <rect x="0" y="0" width="294" height="342" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#cardShadow)"/>
+    <text x="18" y="28" class="text-sub" font-weight="bold">STORE BREAKDOWN (CROSS-FILTERED)</text>
+    <text x="268" y="28" font-size="14" fill="#94a3b8">⋮</text>
+
+    <!-- Bar Chart Elements (Animated) -->
+    <g transform="translate(24, 60)">
+      <!-- Store 1: NY -->
+      <text x="0" y="20" class="text-sub" font-weight="600">New York Flagship</text>
+      <text x="246" y="20" class="text-metric" font-weight="bold">$320k</text>
+      <rect x="0" y="28" width="246" height="16" rx="3" fill="#f1f5f9"/>
+      <rect class="bar-anim" x="0" y="28" width="210" height="16" rx="3" fill="#2563eb"/>
+
+      <!-- Store 2: SF -->
+      <text x="0" y="74" class="text-sub" font-weight="600">San Francisco Market</text>
+      <text x="246" y="74" class="text-metric" font-weight="bold">$280k</text>
+      <rect x="0" y="82" width="246" height="16" rx="3" fill="#f1f5f9"/>
+      <rect class="bar-anim" x="0" y="82" width="180" height="16" rx="3" fill="#38bdf8"/>
+
+      <!-- Store 3: Toronto -->
+      <text x="0" y="128" class="text-sub" font-weight="600">Toronto Downtown</text>
+      <text x="246" y="128" class="text-metric" font-weight="bold">$150k</text>
+      <rect x="0" y="136" width="246" height="16" rx="3" fill="#f1f5f9"/>
+      <rect class="bar-anim" x="0" y="136" width="98" height="16" rx="3" fill="#94a3b8"/>
+
+      <!-- Store 4: Vancouver -->
+      <text x="0" y="182" class="text-sub" font-weight="600">Vancouver Robson</text>
+      <text x="246" y="182" class="text-metric" font-weight="bold">$120k</text>
+      <rect x="0" y="190" width="246" height="16" rx="3" fill="#f1f5f9"/>
+      <rect class="bar-anim" x="0" y="190" width="78" height="16" rx="3" fill="#cbd5e1"/>
+    </g>
+  </g>
+
+  <!-- Bottom Event Protocol Banner (Toast Animation) -->
+  <g class="toast-anim" transform="translate(260, 545)">
+    <rect x="0" y="0" width="540" height="42" rx="6" fill="#0f172a" filter="url(#cardShadow)"/>
+    <text x="20" y="26" font-family="'Roboto Mono', monospace" font-size="12" fill="#4ade80">⚡ [Superset 6.1.0 setDataMask]:</text>
+    <text x="260" y="26" font-family="'Roboto Mono', monospace" font-size="12" fill="#e2e8f0">extraFormData.filters = [ { col: "country", op: "IN", val: ["USA"] } ]</text>
   </g>
 </svg>
