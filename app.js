@@ -581,7 +581,6 @@ function updateCompanionCharts() {
     `;
   }
 }
-}
 
 function triggerCrossFilter(dim, val, key) {
   const logEl = document.getElementById('consoleLog');
