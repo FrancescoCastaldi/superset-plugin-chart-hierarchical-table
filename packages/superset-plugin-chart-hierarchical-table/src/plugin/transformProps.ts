@@ -21,8 +21,8 @@ import { formatMetricValue } from '../utils/formatters';
 export default function transformProps(
   chartProps: HierarchicalTableChartProps,
 ): HierarchicalTableTransformedProps {
-  const { width, height, formData, queriesData, hooks } = chartProps;
-  const { onAddFilter } = hooks || {};
+  const { width, height, formData, queriesData, hooks, filterState } = chartProps;
+  const { onAddFilter, setDataMask } = hooks || {};
 
   const {
     hierarchyType = 'multi_dimension',
@@ -42,6 +42,8 @@ export default function transformProps(
     stripedRows = true,
     numberFormat = 'SMART_NUMBER',
     currencySymbol = '',
+    emit_filter = true,
+    enableCrossFiltering = true,
   } = formData as HierarchicalTableFormData;
 
   const dataRecords: DataRecord[] = queriesData?.[0]?.data || [];
@@ -98,9 +100,69 @@ export default function transformProps(
     grandTotalNode = computeGrandTotal(treeData, metrics);
   }
 
-  const handleCrossFilter = (dimension: string, value: string) => {
-    if (onAddFilter && dimension && value) {
+  const isCrossFilterActive = emit_filter && enableCrossFiltering;
+
+  // Superset 6.1.0 Cross-Filter handler
+  const handleCrossFilter = (
+    dimension: string,
+    value: string,
+    pathMap?: Record<string, string>,
+    isCurrentlySelected?: boolean,
+  ) => {
+    if (!isCrossFilterActive) return;
+
+    if (setDataMask) {
+      if (isCurrentlySelected) {
+        // Toggle OFF / Clear filter
+        setDataMask({
+          extraFormData: {},
+          filterState: {
+            value: null,
+            selectedValues: [],
+          },
+        });
+      } else {
+        // Build filters for all ancestor dimensions if available, otherwise single dimension
+        const filters = pathMap && Object.keys(pathMap).length > 0
+          ? Object.entries(pathMap).map(([col, val]) => ({
+              col,
+              op: 'IN' as const,
+              val: [val],
+            }))
+          : [
+              {
+                col: dimension,
+                op: 'IN' as const,
+                val: [value],
+              },
+            ];
+
+        setDataMask({
+          extraFormData: {
+            filters,
+          },
+          filterState: {
+            value: [value],
+            selectedValues: [value],
+            label: `${dimension}: ${value}`,
+            filters,
+          },
+        });
+      }
+    } else if (onAddFilter && dimension && value) {
       onAddFilter({ [dimension]: [value] });
+    }
+  };
+
+  const handleClearFilter = () => {
+    if (setDataMask) {
+      setDataMask({
+        extraFormData: {},
+        filterState: {
+          value: null,
+          selectedValues: [],
+        },
+      });
     }
   };
 
@@ -124,6 +186,9 @@ export default function transformProps(
     indentSize,
     compactMode,
     stripedRows,
+    emitFilter: isCrossFilterActive,
+    filterState,
     onCrossFilter: handleCrossFilter,
+    onClearFilter: handleClearFilter,
   };
 }

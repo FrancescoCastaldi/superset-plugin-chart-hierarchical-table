@@ -47,6 +47,10 @@ export interface HierarchicalTableFormData extends QueryFormData {
   conditionalFormatting?: ConditionalFormattingRule[];
   stripedRows?: boolean;
   compactMode?: boolean;
+
+  // Cross Filtering (Superset 6.1.0)
+  emit_filter?: boolean;
+  enableCrossFiltering?: boolean;
 }
 
 export interface TreeNode {
@@ -94,10 +98,29 @@ export interface HierarchicalTableTransformedProps {
   indentSize: number;
   compactMode: boolean;
   stripedRows: boolean;
-  onCrossFilter?: (dimension: string, value: string) => void;
+  emitFilter: boolean;
+  filterState?: {
+    value?: any;
+    selectedValues?: string[];
+    filters?: any[];
+  };
+  onCrossFilter?: (
+    dimension: string,
+    value: string,
+    pathMap?: Record<string, string>,
+    isCurrentlySelected?: boolean,
+  ) => void;
+  onClearFilter?: () => void;
 }
 
 export type HierarchicalTableChartProps = ChartProps & {
   formData: HierarchicalTableFormData;
   queriesData: ChartDataResponsePayload[];
+  filterState?: any;
+  hooks?: {
+    setDataMask?: (dataMask: any) => void;
+    onAddFilter?: (filter: any) => void;
+    onContextMenu?: (event: any) => void;
+  };
 };
+

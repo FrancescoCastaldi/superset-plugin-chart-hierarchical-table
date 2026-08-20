@@ -219,6 +219,20 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [
+          {
+            name: 'emit_filter',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Emit Dashboard Cross-Filters'),
+              renderTrigger: true,
+              default: true,
+              description: t(
+                'Broadcast interactive cross-filters to other charts in the dashboard when clicking on tree nodes or dimension values.',
+              ),
+            },
+          },
+        ],
       ],
     },
     {

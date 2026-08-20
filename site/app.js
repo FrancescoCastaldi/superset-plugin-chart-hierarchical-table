@@ -253,11 +253,29 @@ function filterTree(nodes, term) {
   return nodes.map(filterNode).filter(Boolean);
 }
 
+let activeFilterKey = null;
+let activeFilterLabel = null;
+
 // --- Table Rendering ---
 function renderTable() {
   const config = datasets[currentDatasetKey];
   const head = document.getElementById('tableHead');
   const body = document.getElementById('tableBody');
+  const filterIndicatorEl = document.getElementById('activeFilterContainer');
+
+  // Active filter badge update
+  if (filterIndicatorEl) {
+    if (activeFilterLabel) {
+      filterIndicatorEl.innerHTML = `
+        <div class="active-filter-pill">
+          <span>⚡ Filter: <strong>${activeFilterLabel}</strong></span>
+          <button type="button" class="filter-pill-clear" onclick="clearActiveFilter()" title="Clear filter">✕</button>
+        </div>
+      `;
+    } else {
+      filterIndicatorEl.innerHTML = '';
+    }
+  }
 
   // Header
   let headerHTML = '<tr><th>Hierarchy Level</th>';
@@ -284,15 +302,20 @@ function renderTable() {
     for (const n of nodes) {
       const hasChildren = n.children && n.children.length > 0;
       const isExpanded = expandedKeys.has(n.key) || currentSearchTerm.length > 0;
+      const isFilterSelected = activeFilterKey === n.key;
       const indent = n.depth * 24;
 
       bodyHTML += `
-        <tr>
+        <tr class="${isFilterSelected ? 'selected-filter-row' : ''}">
           <td style="padding-left: ${indent + 18}px;">
             ${hasChildren ? `
               <span class="node-btn" onclick="toggleNode('${n.key}')">${isExpanded ? '−' : '+'}</span>
             ` : '<span style="display:inline-block; width:28px;"></span>'}
-            <span class="node-name-link ${hasChildren ? 'node-parent' : ''}" onclick="triggerCrossFilter('${n.dimension || 'Node'}', '${n.name}')" title="Click to emit Superset cross-filter">
+            <span
+              class="node-name-link ${hasChildren ? 'node-parent' : ''} ${isFilterSelected ? 'node-filter-active' : ''}"
+              onclick="triggerCrossFilter('${n.dimension || 'Hierarchy'}', '${n.name}', '${n.key}')"
+              title="Click to ${isFilterSelected ? 'clear filter' : 'filter entire dashboard by ' + n.name}"
+            >
               ${n.name}
             </span>
           </td>
@@ -342,14 +365,47 @@ function handleSearch(val) {
   renderTable();
 }
 
-function triggerCrossFilter(dim, val) {
+function triggerCrossFilter(dim, val, key) {
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
-  logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> ⚡ Emitted Superset Native Cross-Filter: <strong>{ "${dim}": ["${val}"] }</strong>`;
+
+  if (activeFilterKey === key) {
+    // Toggle OFF
+    activeFilterKey = null;
+    activeFilterLabel = null;
+    logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Superset Cross-Filter:</strong> { "filterState": null, "extraFormData": {} }`;
+  } else {
+    // Set Active Filter
+    activeFilterKey = key;
+    activeFilterLabel = `${dim}: ${val}`;
+    const payload = JSON.stringify({
+      extraFormData: {
+        filters: [{ col: dim, op: 'IN', val: [val] }]
+      },
+      filterState: {
+        value: [val],
+        label: `${dim}: ${val}`
+      }
+    }, null, 2);
+
+    logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> ⚡ <strong>Emitted Superset 6.1.0 Cross-Filter (setDataMask):</strong> <pre style="display:inline; color:#a7f3d0;">${JSON.stringify({ [dim]: [val] })}</pre>`;
+  }
+  renderTable();
+}
+
+function clearActiveFilter() {
+  const logEl = document.getElementById('consoleLog');
+  const timestamp = new Date().toLocaleTimeString();
+  activeFilterKey = null;
+  activeFilterLabel = null;
+  logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Superset Cross-Filter</strong>`;
+  renderTable();
 }
 
 function loadDataset(key) {
   currentDatasetKey = key;
+  activeFilterKey = null;
+  activeFilterLabel = null;
   const cfg = datasets[key];
   if (cfg.type === 'multi_dimension') {
     currentTree = buildMultiDimensionTree(cfg.records, cfg.dimensions, cfg.metrics);

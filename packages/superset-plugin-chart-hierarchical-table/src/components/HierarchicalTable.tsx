@@ -9,6 +9,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     data = [],
     columns = [],
     metrics = [],
+    dimensions = [],
     initialExpandDepth = 1,
     showGrandTotal = true,
     grandTotalNode,
@@ -18,15 +19,20 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     indentSize = 20,
     compactMode = false,
     stripedRows = true,
+    emitFilter = true,
+    filterState,
     onCrossFilter,
+    onClearFilter,
   } = props;
 
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [activeFilterKey, setActiveFilterKey] = useState<string | null>(null);
+  const [activeFilterLabel, setActiveFilterLabel] = useState<string | null>(null);
+
   // Set of expanded node keys
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => {
     const initialKeys = new Set<string>();
-    
+
     function collectInitialKeys(nodes: TreeNode[]) {
       for (const node of nodes) {
         if (node.children && node.children.length > 0) {
@@ -77,6 +83,48 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     return filterTreeBySearch(data, searchTerm);
   }, [data, searchTerm]);
 
+  // Handle Node Click for Cross-Filtering
+  const handleNodeClick = useCallback(
+    (node: TreeNode) => {
+      if (!emitFilter || !onCrossFilter) return;
+
+      const isCurrentlySelected = activeFilterKey === node.key;
+
+      if (isCurrentlySelected) {
+        setActiveFilterKey(null);
+        setActiveFilterLabel(null);
+        if (onClearFilter) {
+          onClearFilter();
+        } else {
+          onCrossFilter(node.dimension || 'Dimension', node.name, undefined, true);
+        }
+      } else {
+        setActiveFilterKey(node.key);
+        const dimensionName = node.dimension || dimensions[node.depth] || 'Dimension';
+        setActiveFilterLabel(`${dimensionName}: ${node.name}`);
+
+        // Construct path dictionary for multi-dimension hierarchy
+        const pathMap: Record<string, string> = {};
+        if (dimensions.length > 0 && node.path && node.path.length > 0) {
+          for (let i = 0; i <= node.depth && i < dimensions.length; i++) {
+            pathMap[dimensions[i]] = node.path[i];
+          }
+        }
+
+        onCrossFilter(dimensionName, node.name, pathMap, false);
+      }
+    },
+    [activeFilterKey, dimensions, emitFilter, onCrossFilter, onClearFilter],
+  );
+
+  const handleClearActiveFilter = useCallback(() => {
+    setActiveFilterKey(null);
+    setActiveFilterLabel(null);
+    if (onClearFilter) {
+      onClearFilter();
+    }
+  }, [onClearFilter]);
+
   // Flatten visible tree nodes according to expanded state
   const visibleRows = useMemo(() => {
     const rows: TreeNode[] = [];
@@ -119,7 +167,24 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               onChange={e => setSearchTerm(e.target.value)}
             />
           )}
+
+          {/* Active Cross Filter Indicator */}
+          {activeFilterLabel && (
+            <div className="active-cross-filter-badge">
+              <span className="filter-badge-icon">⚡</span>
+              <span className="filter-badge-text">Filter: {activeFilterLabel}</span>
+              <button
+                type="button"
+                className="filter-badge-clear"
+                onClick={handleClearActiveFilter}
+                title="Clear cross filter"
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
+
         <div className="table-toolbar-right">
           <button type="button" className="toolbar-btn" onClick={handleExpandAll}>
             Expand All
@@ -179,10 +244,17 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             {visibleRows.map(node => {
               const hasChildren = node.children && node.children.length > 0;
               const isExpanded = expandedKeys.has(node.key) || searchTerm.trim().length > 0;
+              const isFilterSelected = activeFilterKey === node.key;
               const paddingLeft = node.depth * indentSize + 8;
 
               return (
-                <tr key={node.key} className={classNames({ 'parent-row': hasChildren })}>
+                <tr
+                  key={node.key}
+                  className={classNames({
+                    'parent-row': hasChildren,
+                    'selected-filter-row': isFilterSelected,
+                  })}
+                >
                   {/* Hierarchy Column */}
                   <td className="hierarchy-cell">
                     <div className="tree-cell-content" style={{ paddingLeft: `${paddingLeft}px` }}>
@@ -199,13 +271,12 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                         <span className="tree-spacer" />
                       )}
                       <span
-                        className={classNames('node-name', { 'node-parent': hasChildren })}
-                        onClick={() => {
-                          if (node.dimension && onCrossFilter) {
-                            onCrossFilter(node.dimension, node.name);
-                          }
-                        }}
-                        title={node.path.join(' > ')}
+                        className={classNames('node-name', {
+                          'node-parent': hasChildren,
+                          'node-filter-active': isFilterSelected,
+                        })}
+                        onClick={() => handleNodeClick(node)}
+                        title={`Click to ${isFilterSelected ? 'clear filter' : 'filter entire dashboard by ' + node.name} (${node.path.join(' > ')})`}
                       >
                         {node.name}
                       </span>
