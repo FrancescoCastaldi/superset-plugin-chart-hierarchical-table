@@ -72,7 +72,25 @@ superset-plugin-chart-hierarchical-table/
 
 ---
 
-## 🚀 Quick Start & Installazione
+## 🚀 Quick Start: Installazione Automatica (Docker Compose su Windows / Linux / macOS)
+
+Se hai clonato il repository ufficiale di Apache Superset (tag `6.1.0`) e lo avvii con **Docker Compose**, puoi installare e registrare il chart con un singolo comando!
+
+### Su Windows (PowerShell):
+```powershell
+.\scripts\install.ps1 -SupersetPath "C:\path\to\superset"
+```
+
+### Su Linux / macOS / Git Bash:
+```bash
+./scripts/install.sh --superset-path "/path/to/superset"
+```
+
+👉 Per tutti i dettagli su Windows e Docker Compose, consulta la **[Guida all'Installazione su Windows con Docker](docs/docker_installation_windows.md)**.
+
+---
+
+## 🛠️ Installazione Manuale
 
 ### Requisiti
 - **Node.js**: `>= 18.x` (consigliato 20.x LTS)

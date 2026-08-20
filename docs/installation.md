@@ -1,10 +1,24 @@
-# Guida all'Installazione in Apache Superset 6.1.0
+---
 
-Questa guida illustra come integrare e registrare il plugin **Hierarchical Table & Matrix Grid** all'interno di un'istanza di **Apache Superset 6.1.0**.
+## ⚡ Installazione Automatica (Windows & Docker Compose)
+
+Se utilizzi un'istanza di Superset clonata da Git ed eseguita con **Docker Compose** su **Windows** o Linux/macOS, puoi usare gli script automatici pronti all'uso:
+
+### Su Windows (PowerShell):
+```powershell
+.\scripts\install.ps1 -SupersetPath "C:\path\to\superset"
+```
+
+### Su Linux / macOS / Git Bash:
+```bash
+./scripts/install.sh --superset-path "/path/to/superset"
+```
+
+Per la guida completa dettagliata su Windows, consulta [Guida Docker su Windows](docker_installation_windows.md).
 
 ---
 
-## 1. Installazione del Plugin Frontend
+## 1. Installazione Manuale del Plugin Frontend
 
 ### Opzione A: Installazione tramite npm / yarn
 All'interno della cartella `superset-frontend/` della tua installazione di Superset:

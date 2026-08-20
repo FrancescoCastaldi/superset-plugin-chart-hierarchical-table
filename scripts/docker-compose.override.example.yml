@@ -1,0 +1,18 @@
+# ==============================================================================
+# Docker Compose Override for Apache Superset 6.1.0 with Custom Chart Plugins
+# Usage: Copy this file as 'docker-compose.override.yml' in your superset root.
+# ==============================================================================
+
+version: '3.7'
+
+services:
+  # In Dev Mode (docker compose up)
+  superset-node:
+    volumes:
+      # Mount the custom plugin into plugins directory
+      - ./superset-frontend/plugins/superset-plugin-chart-hierarchical-table:/app/superset-frontend/plugins/superset-plugin-chart-hierarchical-table
+
+  # Backend Companion (Optional: for Python hierarchical rollup engine)
+  superset:
+    volumes:
+      - ./superset-frontend/plugins/superset-plugin-chart-hierarchical-table/backend:/app/custom_plugins/backend
