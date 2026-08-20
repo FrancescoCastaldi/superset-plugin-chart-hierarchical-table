@@ -4,13 +4,14 @@ import controlPanel from './controlPanel';
 import transformProps from './transformProps';
 
 const metadata = new ChartMetadata({
-  name: t('Hierarchical Table & Matrix Grid'),
+  name: t('StratumTree™ — Hierarchical Matrix Grid'),
   description: t(
-    'A tree-structured hierarchical table supporting multi-level dimension drill-down and parent-child adjacency hierarchies with interactive roll-up aggregations.',
+    'A deep-hierarchy tree table and matrix grid supporting multi-level dimension drill-down, parent-child adjacency graphs, roll-up aggregations, and native Superset 6.1.0 cross-filtering.',
   ),
   behaviors: [Behavior.INTERACTIVE_CHART, Behavior.DRILL_TO_DETAIL],
   category: t('Table'),
   tags: [
+    t('StratumTree'),
     t('Table'),
     t('Hierarchy'),
     t('Tree'),
