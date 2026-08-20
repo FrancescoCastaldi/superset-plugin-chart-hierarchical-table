@@ -365,6 +365,94 @@ function handleSearch(val) {
   renderTable();
 }
 
+// Companion Charts Update Logic
+function updateCompanionCharts() {
+  const config = datasets[currentDatasetKey];
+  const kpiValEl = document.getElementById('kpiBigNumber');
+  const kpiLabelEl = document.getElementById('kpiSubLabel');
+  const barListEl = document.getElementById('companionBarList');
+  const sidebarFilterEl = document.getElementById('sidebarFilterStatus');
+
+  // Find active node or default to grand total
+  let targetNode = null;
+  if (activeFilterKey) {
+    function findNode(nodes) {
+      for (const n of nodes) {
+        if (n.key === activeFilterKey) return n;
+        if (n.children) {
+          const found = findNode(n.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    targetNode = findNode(currentTree);
+  }
+
+  const grandTotal = computeGrandTotal(currentTree, config.metrics);
+  const primaryMetric = config.metrics[0];
+
+  // 1. Update KPI Big Number
+  if (kpiValEl && kpiLabelEl) {
+    if (targetNode) {
+      kpiValEl.innerText = config.formatters[primaryMetric](targetNode.metrics[primaryMetric]);
+      kpiLabelEl.innerText = `${targetNode.name} (${primaryMetric.replace(/_/g, ' ')})`;
+    } else {
+      kpiValEl.innerText = config.formatters[primaryMetric](grandTotal.metrics[primaryMetric]);
+      kpiLabelEl.innerText = `Grand Total (${primaryMetric.replace(/_/g, ' ')})`;
+    }
+  }
+
+  // 2. Update Sidebar Filters
+  if (sidebarFilterEl) {
+    if (activeFilterLabel) {
+      sidebarFilterEl.innerHTML = `
+        <div class="filter-status-tag">
+          <span class="tag-head">⚡ ACTIVE CROSS-FILTER</span>
+          <strong>${activeFilterLabel}</strong>
+          <button type="button" class="btn-sm" style="margin-top:4px; padding:4px 8px; font-size:11px;" onclick="clearActiveFilter()">Clear Filter</button>
+        </div>
+      `;
+    } else {
+      sidebarFilterEl.innerHTML = `
+        <span style="font-size:12px; color:#94a3b8;">No active cross-filters. Click any row in the Hierarchical Table to filter.</span>
+      `;
+    }
+  }
+
+  // 3. Update Companion Bar Chart
+  if (barListEl) {
+    let itemsToDisplay = [];
+    if (targetNode && targetNode.children && targetNode.children.length > 0) {
+      itemsToDisplay = targetNode.children;
+    } else if (targetNode) {
+      itemsToDisplay = [targetNode];
+    } else {
+      itemsToDisplay = currentTree;
+    }
+
+    const maxVal = Math.max(...itemsToDisplay.map(it => it.metrics[primaryMetric] || 1), 1);
+
+    let barsHTML = '';
+    for (const item of itemsToDisplay) {
+      const val = item.metrics[primaryMetric] || 0;
+      const pct = Math.min(100, Math.max(10, (val / maxVal) * 100));
+      barsHTML += `
+        <div class="bar-item">
+          <div class="bar-meta">
+            <span>${item.name}</span>
+            <span>${config.formatters[primaryMetric](val)}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-progress" style="width: ${pct}%;"></div>
+          </div>
+        </div>
+      `;
+    }
+    barListEl.innerHTML = barsHTML;
+  }
+}
+
 function triggerCrossFilter(dim, val, key) {
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
@@ -378,19 +466,10 @@ function triggerCrossFilter(dim, val, key) {
     // Set Active Filter
     activeFilterKey = key;
     activeFilterLabel = `${dim}: ${val}`;
-    const payload = JSON.stringify({
-      extraFormData: {
-        filters: [{ col: dim, op: 'IN', val: [val] }]
-      },
-      filterState: {
-        value: [val],
-        label: `${dim}: ${val}`
-      }
-    }, null, 2);
-
     logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> ⚡ <strong>Emitted Superset 6.1.0 Cross-Filter (setDataMask):</strong> <pre style="display:inline; color:#a7f3d0;">${JSON.stringify({ [dim]: [val] })}</pre>`;
   }
   renderTable();
+  updateCompanionCharts();
 }
 
 function clearActiveFilter() {
@@ -400,6 +479,7 @@ function clearActiveFilter() {
   activeFilterLabel = null;
   logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Superset Cross-Filter</strong>`;
   renderTable();
+  updateCompanionCharts();
 }
 
 function loadDataset(key) {
@@ -416,6 +496,7 @@ function loadDataset(key) {
   // Expand first level by default
   currentTree.forEach(n => expandedKeys.add(n.key));
   renderTable();
+  updateCompanionCharts();
 }
 
 // Code Box Tab Switcher

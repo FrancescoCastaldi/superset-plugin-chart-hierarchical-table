@@ -171,55 +171,132 @@
     </div>
   </section>
 
-  <!-- Section 2: Interactive Sandbox Preview -->
+  <!-- Section 2: Interactive Sandbox & Superset 6.1.0 Dashboard Simulator -->
   <section id="sandbox" class="section" style="background: #f1f5f9;">
     <div class="container">
       <div class="section-header">
-        <div class="section-tag">Live Chart Sandbox</div>
-        <h2>Anteprima Interattiva in Tempo Reale</h2>
-        <p>Interagisci direttamente con il motore del chart gerarchico: espandi/collassa i nodi, filtra in tempo reale, cambia dataset e osserva l'emissione degli eventi di Cross-Filtering per Superset.</p>
+        <div class="section-tag">Live Superset 6.1.0 Dashboard Simulator</div>
+        <h2>Simulatore Dashboard Superset con Cross-Filtering</h2>
+        <p>Interagisci con la tabella gerarchica e osserva come cliccando su un nodo o una riga, <strong>l'intera dashboard si aggiorna all'istante</strong> (card KPI, grafici a barre companion e barra filtri nativa di Superset).</p>
       </div>
 
-      <div class="sandbox-card">
-        <div class="sandbox-header-bar">
-          <div class="sandbox-controls">
-            <label for="datasetDropdown"><strong>Dataset:</strong></label>
-            <select id="datasetDropdown" class="select-control" onchange="loadDataset(this.value)">
-              <option value="sales">🌍 Sales Geography (4-Level Dimensions)</option>
-              <option value="org">👥 Organization Chart (Parent-Child)</option>
-              <option value="pnl">📊 Financial P&L Statement (Parent-Child)</option>
-            </select>
-
-            <button class="btn-sm" onclick="handleExpandAll()">Expand All</button>
-            <button class="btn-sm" onclick="handleCollapseAll()">Collapse All</button>
-            <div id="activeFilterContainer"></div>
+      <!-- Dashboard Simulator Container -->
+      <div class="dashboard-simulator">
+        <!-- Superset Navigation Header -->
+        <div class="superset-nav-bar">
+          <div class="superset-dash-title">
+            <span style="font-size: 18px;">📊</span>
+            <strong style="font-size: 15px; color: #0f172a;">[Draft] Executive Sales &amp; Tree Hierarchy Dashboard</strong>
+            <span class="superset-badge-ver">Superset 6.1.0</span>
           </div>
-
-          <div>
-            <input
-              type="text"
-              id="searchBox"
-              class="search-input"
-              placeholder="🔍 Search in hierarchy..."
-              oninput="handleSearch(this.value)"
-            />
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-sm" style="color: #475569;">⚙️ Filters</button>
+            <button class="btn-sm" style="color: #475569;">✏️ Edit</button>
+            <button class="btn-sm" style="background: #2563eb; color: white; border-color: #2563eb;">💾 Save</button>
           </div>
         </div>
 
-        <div class="table-scroll">
-          <table class="data-table">
-            <thead id="tableHead"></thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
+        <!-- Dashboard Body Layout (3 Columns: Left Filter Sidebar, Center Tree Table, Right Companion Charts) -->
+        <div class="dashboard-body-layout">
+          
+          <!-- Left Sidebar: Native Superset Filter Bar -->
+          <div class="superset-sidebar-filters">
+            <div class="filter-sidebar-header">
+              <span>FILTERS</span>
+              <span style="color: #2563eb; cursor: pointer; font-size: 11px;" onclick="clearActiveFilter()">Reset All</span>
+            </div>
 
-        <!-- Event Stream Console -->
-        <div class="event-console">
-          <div class="console-log">
-            <span class="pulse-dot"></span>
-            <span id="consoleLog">Superset Event Console: Click any row name to simulate Cross-Filter emission</span>
+            <!-- Dynamic Active Cross-Filter Status -->
+            <div class="filter-box-item">
+              <label>CROSS-FILTER STATUS</label>
+              <div id="sidebarFilterStatus">
+                <span style="font-size:12px; color:#94a3b8;">No active cross-filters. Click any row in the Hierarchical Table to filter.</span>
+              </div>
+            </div>
+
+            <div class="filter-box-item">
+              <label>DATASET SELECTOR</label>
+              <select id="datasetDropdown" class="select-control" style="width:100%;" onchange="loadDataset(this.value)">
+                <option value="sales">🌍 Sales Geography (4-Level)</option>
+                <option value="org">👥 Organization Chart (P-C)</option>
+                <option value="pnl">📊 Financial P&amp;L (P-C)</option>
+              </select>
+            </div>
+
+            <div class="filter-box-item">
+              <label>TIME RANGE</label>
+              <div style="padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #475569;">
+                Last Calendar Year (2025-2026)
+              </div>
+            </div>
           </div>
-          <span style="color:#64748b; font-size:11px;">Apache Superset 6.1.0 Event Protocol</span>
+
+          <!-- Center Column: Hierarchical Table & Matrix Grid Chart -->
+          <div class="sandbox-card">
+            <div class="sandbox-header-bar">
+              <div class="sandbox-controls">
+                <strong style="font-size: 13px; color: #0f172a;">Hierarchical Table &amp; Matrix Grid</strong>
+                <button class="btn-sm" onclick="handleExpandAll()">Expand All</button>
+                <button class="btn-sm" onclick="handleCollapseAll()">Collapse All</button>
+                <div id="activeFilterContainer"></div>
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  id="searchBox"
+                  class="search-input"
+                  placeholder="🔍 Search hierarchy..."
+                  oninput="handleSearch(this.value)"
+                />
+              </div>
+            </div>
+
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+
+            <!-- Event Stream Console -->
+            <div class="event-console">
+              <div class="console-log">
+                <span class="pulse-dot"></span>
+                <span id="consoleLog">Superset Event Console: Click any row name to simulate Cross-Filter emission</span>
+              </div>
+              <span style="color:#64748b; font-size:11px;">Apache Superset 6.1.0 Event Protocol</span>
+            </div>
+          </div>
+
+          <!-- Right Column: Interactive Companion Charts (React to Cross-Filtering) -->
+          <div class="companion-column">
+            <!-- Companion 1: KPI Metric Card -->
+            <div class="companion-card">
+              <div class="companion-card-header">
+                <span>KPI METRIC • CROSS-FILTERED</span>
+                <span>⋮</span>
+              </div>
+              <div class="kpi-big-number" id="kpiBigNumber">$2,330,000</div>
+              <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;" id="kpiSubLabel">Grand Total (Revenue)</div>
+              <div>
+                <span class="kpi-delta-tag">↑ +18.4% YTD</span>
+                <span style="font-size: 11px; color: #94a3b8; margin-left: 6px;">vs previous period</span>
+              </div>
+            </div>
+
+            <!-- Companion 2: Breakdown Bar Chart -->
+            <div class="companion-card" style="flex: 1;">
+              <div class="companion-card-header">
+                <span>SUB-LEVEL BREAKDOWN</span>
+                <span>⋮</span>
+              </div>
+              <div class="bar-chart-list" id="companionBarList">
+                <!-- Dynamically populated by JS -->
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
