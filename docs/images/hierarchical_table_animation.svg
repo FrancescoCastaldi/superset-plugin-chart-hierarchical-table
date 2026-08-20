@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" width="100%" height="100%">
+  <defs>
+    <style>
+      @keyframes expandBranch {
+        0%, 20% { opacity: 0; transform: translateY(-10px); }
+        30%, 85% { opacity: 1; transform: translateY(0); }
+        95%, 100% { opacity: 0; transform: translateY(-10px); }
+      }
+      @keyframes toggleIcon {
+        0%, 20% { transform: rotate(0deg); }
+        30%, 85% { transform: rotate(90deg); }
+        95%, 100% { transform: rotate(0deg); }
+      }
+      @keyframes highlightRow {
+        0%, 25% { fill: #ffffff; }
+        35%, 55% { fill: #e6f7ff; }
+        65%, 100% { fill: #ffffff; }
+      }
+      @keyframes toastAnim {
+        0%, 45% { opacity: 0; transform: translateY(20px); }
+        50%, 80% { opacity: 1; transform: translateY(0); }
+        90%, 100% { opacity: 0; transform: translateY(20px); }
+      }
+      @keyframes searchType {
+        0%, 60% { width: 0; }
+        70%, 90% { width: 140px; }
+        100% { width: 0; }
+      }
+
+      .header-bg { fill: #f5f7fa; }
+      .border-line { stroke: #e8e8e8; stroke-width: 1; }
+      .text-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; fill: #262626; }
+      .text-cell { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #595959; }
+      .text-metric { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #1f1f1f; text-anchor: end; font-variant-numeric: tabular-nums; }
+      .subtotal-row { fill: #fafafa; font-weight: bold; }
+      .grand-total { fill: #f0f2f5; font-weight: bold; }
+      .accent { fill: #1890ff; font-weight: 600; }
+      .interactive-branch { animation: expandBranch 8s infinite ease-in-out; }
+      .interactive-toggle { animation: toggleIcon 8s infinite ease-in-out; transform-origin: 52px 145px; }
+      .row-hover-anim { animation: highlightRow 8s infinite ease-in-out; }
+      .toast-box { animation: toastAnim 8s infinite ease-in-out; }
+    </style>
+
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- Container Window -->
+  <rect x="10" y="10" width="880" height="500" rx="8" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" filter="url(#shadow)"/>
+
+  <!-- Toolbar -->
+  <rect x="10" y="10" width="880" height="55" rx="8" fill="#fafafa"/>
+  <line x1="10" y1="65" x2="890" y2="65" stroke="#e8e8e8" stroke-width="1"/>
+
+  <!-- Search Bar -->
+  <rect x="28" y="24" width="240" height="28" rx="5" fill="#ffffff" stroke="#d9d9d9"/>
+  <text x="40" y="43" font-family="-apple-system, sans-serif" font-size="12" fill="#bfbfbf">🔍 Search hierarchy...</text>
+
+  <!-- Action Buttons -->
+  <rect x="680" y="24" width="90" height="28" rx="5" fill="#ffffff" stroke="#d9d9d9"/>
+  <text x="700" y="42" font-family="-apple-system, sans-serif" font-size="12" font-weight="500" fill="#595959">Expand All</text>
+
+  <rect x="780" y="24" width="90" height="28" rx="5" fill="#1890ff"/>
+  <text x="800" y="42" font-family="-apple-system, sans-serif" font-size="12" font-weight="500" fill="#ffffff">Collapse All</text>
+
+  <!-- Table Header -->
+  <rect x="10" y="65" width="880" height="38" fill="#f5f7fa"/>
+  <line x1="10" y1="103" x2="890" y2="103" stroke="#e8e8e8" stroke-width="1"/>
+
+  <text x="35" y="89" class="text-title">Hierarchy (Region &gt; Country &gt; Store)</text>
+  <text x="560" y="89" class="text-title" text-anchor="end">REVENUE ($)</text>
+  <text x="710" y="89" class="text-title" text-anchor="end">UNITS SOLD</text>
+  <text x="860" y="89" class="text-title" text-anchor="end">COST ($)</text>
+
+  <!-- Grand Total Row -->
+  <rect x="11" y="104" width="878" height="34" class="grand-total"/>
+  <line x1="10" y1="138" x2="890" y2="138" stroke="#d9d9d9" stroke-width="1.5"/>
+  <text x="35" y="126" class="text-title">Grand Total (All Regions)</text>
+  <text x="560" y="126" class="text-metric" font-weight="bold">$2,330,000</text>
+  <text x="710" y="126" class="text-metric" font-weight="bold">6,710</text>
+  <text x="860" y="126" class="text-metric" font-weight="bold">$1,234,000</text>
+
+  <!-- Level 0: Americas -->
+  <rect x="11" y="139" width="878" height="34" fill="#ffffff"/>
+  <line x1="10" y1="173" x2="890" y2="173" class="border-line"/>
+  
+  <!-- Toggle Icon Animated -->
+  <g class="interactive-toggle">
+    <rect x="35" y="147" width="16" height="16" rx="3" fill="#ffffff" stroke="#d9d9d9"/>
+    <text x="39" y="159" font-size="11" font-weight="bold" fill="#1890ff">▶</text>
+  </g>
+  <text x="60" y="161" class="text-title accent">Americas</text>
+  <text x="560" y="161" class="text-metric" font-weight="600">$750,000</text>
+  <text x="710" y="161" class="text-metric" font-weight="600">2,170</text>
+  <text x="860" y="161" class="text-metric" font-weight="600">$407,000</text>
+
+  <!-- Expandable Sub-branch (Animated) -->
+  <g class="interactive-branch">
+    <!-- Level 1: USA -->
+    <rect x="11" y="174" width="878" height="32" class="row-hover-anim"/>
+    <line x1="10" y1="206" x2="890" y2="206" class="border-line"/>
+    <rect x="60" y="182" width="14" height="14" rx="2" fill="#ffffff" stroke="#d9d9d9"/>
+    <text x="64" y="193" font-size="10" font-weight="bold" fill="#595959">▼</text>
+    <text x="82" y="195" class="text-title">USA</text>
+    <text x="560" y="195" class="text-metric">$600,000</text>
+    <text x="710" y="195" class="text-metric">1,730</text>
+    <text x="860" y="195" class="text-metric">$325,000</text>
+
+    <!-- Level 2: New York Flagship -->
+    <rect x="11" y="207" width="878" height="30" fill="#fafafa"/>
+    <line x1="10" y1="237" x2="890" y2="237" class="border-line"/>
+    <text x="105" y="227" class="text-cell">📍 New York (5th Avenue)</text>
+    <text x="560" y="227" class="text-metric">$320,000</text>
+    <text x="710" y="227" class="text-metric">920</text>
+    <text x="860" y="227" class="text-metric">$175,000</text>
+
+    <!-- Level 2: San Francisco -->
+    <rect x="11" y="238" width="878" height="30" fill="#ffffff"/>
+    <line x1="10" y1="268" x2="890" y2="268" class="border-line"/>
+    <text x="105" y="258" class="text-cell">📍 San Francisco (Market St)</text>
+    <text x="560" y="258" class="text-metric">$280,000</text>
+    <text x="710" y="258" class="text-metric">810</text>
+    <text x="860" y="258" class="text-metric">$150,000</text>
+
+    <!-- Level 1: Canada -->
+    <rect x="11" y="269" width="878" height="30" fill="#ffffff"/>
+    <line x1="10" y1="299" x2="890" y2="299" class="border-line"/>
+    <text x="82" y="289" class="text-title">Canada (Toronto)</text>
+    <text x="560" y="289" class="text-metric">$150,000</text>
+    <text x="710" y="289" class="text-metric">440</text>
+    <text x="860" y="289" class="text-metric">$82,000</text>
+  </g>
+
+  <!-- Level 0: EMEA -->
+  <rect x="11" y="300" width="878" height="34" fill="#ffffff"/>
+  <line x1="10" y1="334" x2="890" y2="334" class="border-line"/>
+  <rect x="35" y="309" width="16" height="16" rx="3" fill="#ffffff" stroke="#d9d9d9"/>
+  <text x="39" y="321" font-size="11" font-weight="bold" fill="#1890ff">▶</text>
+  <text x="60" y="322" class="text-title accent">EMEA</text>
+  <text x="560" y="322" class="text-metric" font-weight="600">$1,020,000</text>
+  <text x="710" y="322" class="text-metric" font-weight="600">2,800</text>
+  <text x="860" y="322" class="text-metric" font-weight="600">$509,000</text>
+
+  <!-- Level 0: APAC -->
+  <rect x="11" y="335" width="878" height="34" fill="#ffffff"/>
+  <line x1="10" y1="369" x2="890" y2="369" class="border-line"/>
+  <rect x="35" y="344" width="16" height="16" rx="3" fill="#ffffff" stroke="#d9d9d9"/>
+  <text x="39" y="356" font-size="11" font-weight="bold" fill="#1890ff">▶</text>
+  <text x="60" y="357" class="text-title accent">APAC</text>
+  <text x="560" y="357" class="text-metric" font-weight="600">$565,000</text>
+  <text x="710" y="357" class="text-metric" font-weight="600">1,740</text>
+  <text x="860" y="357" class="text-metric" font-weight="600">$318,000</text>
+
+  <!-- Toast Notification Simulation (Animated) -->
+  <g class="toast-box">
+    <rect x="520" y="440" width="340" height="42" rx="6" fill="#1f1f1f" filter="url(#shadow)"/>
+    <text x="540" y="466" font-family="-apple-system, sans-serif" font-size="12" fill="#52c41a">⚡ [Superset Event]</text>
+    <text x="650" y="466" font-family="-apple-system, sans-serif" font-size="12" fill="#ffffff">Cross-Filter: { "country": ["USA"] }</text>
+  </g>
+</svg>
