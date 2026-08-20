@@ -456,6 +456,13 @@ h1, h2, h3, h4, .brand-font {
 /* ==========================================================================
    Superset 6.1.0 Dashboard Simulator Layout
    ========================================================================== */
+/* The dashboard simulator needs full viewport width so the chart grid
+   doesn't clip when the filter sidebar is visible. */
+#sandbox > .container {
+  max-width: 100%;
+  padding: 0 24px;
+}
+
 .dashboard-simulator {
   background: var(--bg-inset);
   border-radius: var(--radius-lg);
@@ -463,6 +470,7 @@ h1, h2, h3, h4, .brand-font {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .superset-nav-bar {
@@ -508,7 +516,7 @@ h1, h2, h3, h4, .brand-font {
 
 .dashboard-body-layout {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 240px minmax(0, 1fr);
   gap: 16px;
   padding: 16px;
   background: var(--bg-inset);
@@ -585,17 +593,18 @@ h1, h2, h3, h4, .brand-font {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 .dashboard-row-top {
   display: grid;
-  grid-template-columns: 1.35fr 0.9fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
   gap: 16px;
 }
 
 .dashboard-row-bottom {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -766,6 +775,7 @@ h1, h2, h3, h4, .brand-font {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .sandbox-header-bar {
