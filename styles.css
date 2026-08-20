@@ -706,6 +706,16 @@ h1, h2, h3, h4, .brand-font {
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.bar-selected .bar-meta span:first-child {
+  color: var(--orange-accent);
+  font-weight: 700;
+}
+
+.bar-selected .bar-progress {
+  background: linear-gradient(90deg, #ea580c, #f97316);
+  box-shadow: 0 0 8px rgba(234, 88, 12, 0.4);
+}
+
 /* Donut Chart Component */
 .donut-container {
   display: flex;
