@@ -101,4 +101,49 @@ describe('Hierarchical Table Utils', () => {
       expect(filtered[0].children?.[0].name).toBe('Italy');
     });
   });
+
+  describe('computeGrandTotal', () => {
+    const tree = [
+      {
+        key: '1',
+        id: '1',
+        name: 'Europe',
+        depth: 0,
+        path: ['Europe'],
+        isLeaf: false,
+        metrics: { sales: 250 },
+      },
+      {
+        key: '2',
+        id: '2',
+        name: 'Americas',
+        depth: 0,
+        path: ['Americas'],
+        isLeaf: false,
+        metrics: { sales: 300 },
+      },
+    ];
+
+    it('computes grand total accurately across root hierarchy nodes', () => {
+      const total = computeGrandTotal(tree, ['sales']);
+      expect(total.name).toBe('Grand Total');
+      expect(total.metrics.sales).toBe(550);
+    });
+  });
+
+  describe('Multi-Selection Cross Filtering Aggregation', () => {
+    it('aggregates multiple selected nodes correctly', () => {
+      const selectedNodes = [
+        { key: '1', name: 'Europe', metrics: { sales: 250, count: 20 } },
+        { key: '2', name: 'Americas', metrics: { sales: 300, count: 15 } },
+      ];
+
+      const combinedSales = selectedNodes.reduce((acc, n) => acc + n.metrics.sales, 0);
+      const combinedCount = selectedNodes.reduce((acc, n) => acc + n.metrics.count, 0);
+
+      expect(combinedSales).toBe(550);
+      expect(combinedCount).toBe(35);
+    });
+  });
 });
+

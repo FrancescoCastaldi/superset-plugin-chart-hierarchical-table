@@ -297,6 +297,15 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   {/* Hierarchy Column */}
                   <td className="hierarchy-cell">
                     <div className="tree-cell-content" style={{ paddingLeft: `${paddingLeft}px` }}>
+                      {emitFilter && (
+                        <input
+                          type="checkbox"
+                          className="node-checkbox"
+                          checked={isFilterSelected}
+                          onChange={() => handleNodeClick(node)}
+                          aria-label={`Select ${node.name} for cross-filtering`}
+                        />
+                      )}
                       {hasChildren ? (
                         <button
                           type="button"
@@ -315,7 +324,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                           'node-filter-active': isFilterSelected,
                         })}
                         onClick={() => handleNodeClick(node)}
-                        title={`Click to ${isFilterSelected ? 'clear filter' : 'filter entire dashboard by ' + node.name} (${node.path.join(' > ')})`}
+                        title={`Click to ${isFilterSelected ? 'remove from filter' : 'filter dashboard by ' + node.name} (${node.path.join(' > ')})`}
                       >
                         {node.name}
                       </span>
