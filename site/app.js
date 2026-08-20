@@ -433,8 +433,8 @@ function updateCompanionCharts() {
       }).join(' ');
 
       sparklineEl.innerHTML = `
-        <polyline fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" points="${coords}" />
-        <circle cx="${(points.length - 1) / (points.length - 1) * 260 + 10}" cy="${40 - ((points[points.length - 1] - minP) / range) * 32 + 4}" r="4" fill="#2563eb" />
+        <polyline fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" points="${coords}" />
+        <circle cx="${(points.length - 1) / (points.length - 1) * 260 + 10}" cy="${40 - ((points[points.length - 1] - minP) / range) * 32 + 4}" r="4" fill="#ea580c" />
       `;
     }
   }
@@ -446,12 +446,12 @@ function updateCompanionCharts() {
         <div class="filter-status-tag">
           <span class="tag-head">⚡ ACTIVE CROSS-FILTER</span>
           <strong>${activeFilterLabel}</strong>
-          <button type="button" class="btn-sm" style="margin-top:4px; padding:4px 8px; font-size:11px;" onclick="clearActiveFilter()">Clear Filter</button>
+          <button type="button" class="btn-sm" style="margin-top:4px; padding:3px 8px; font-size:10px;" onclick="clearActiveFilter()">Clear Filter</button>
         </div>
       `;
     } else {
       sidebarFilterEl.innerHTML = `
-        <span style="font-size:12px; color:#94a3b8;">No active cross-filters. Click any row in the Hierarchical Table to filter.</span>
+        <span style="font-size:12px; color: var(--text-dimmed);">No active cross-filters. Click any row in the Hierarchical Table to filter.</span>
       `;
     }
   }
@@ -476,7 +476,7 @@ function updateCompanionCharts() {
         <div class="bar-item" onclick="triggerCrossFilter('${item.dimension || 'Sub-level'}', '${item.name}', '${item.key}')" style="cursor:pointer;" title="Click to filter by ${item.name}">
           <div class="bar-meta">
             <span>${item.name}</span>
-            <span>${config.formatters[primaryMetric](val)}</span>
+            <span style="color:#cbd5e1; font-family:'Roboto Mono',monospace;">${config.formatters[primaryMetric](val)}</span>
           </div>
           <div class="bar-track">
             <div class="bar-progress" style="width: ${pct}%;"></div>
@@ -490,7 +490,7 @@ function updateCompanionCharts() {
   // 5. Update Donut / Share Chart
   if (donutSvgEl && donutLegendEl) {
     const totalVal = itemsToDisplay.reduce((acc, it) => acc + (it.metrics[primaryMetric] || 0), 0) || 1;
-    const colors = ['#2563eb', '#38bdf8', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+    const colors = ['#1e3a8a', '#ea580c', '#881337', '#3b82f6', '#9a3412', '#5c0f1e'];
     let accumulatedAngle = 0;
     let pathsHTML = '';
     let legendHTML = '';
@@ -523,11 +523,11 @@ function updateCompanionCharts() {
       const largeArc = angle > 180 ? 1 : 0;
       const pathD = `M ${x1} ${y1} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4} ${y4} Z`;
 
-      pathsHTML += `<path d="${pathD}" fill="${color}" stroke="#ffffff" stroke-width="1.5" />`;
+      pathsHTML += `<path d="${pathD}" fill="${color}" stroke="#101218" stroke-width="1.5" />`;
       legendHTML += `
         <div class="donut-legend-item">
           <span class="legend-dot" style="background:${color};"></span>
-          <span>${item.name.slice(0, 18)}: <strong>${(slicePct * 100).toFixed(0)}%</strong></span>
+          <span>${item.name.slice(0, 16)}: <strong style="color:var(--text-main); font-family:'Roboto Mono',monospace;">${(slicePct * 100).toFixed(0)}%</strong></span>
         </div>
       `;
     });
@@ -558,28 +558,29 @@ function updateCompanionCharts() {
     areaChartEl.innerHTML = `
       <defs>
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
-          <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
+          <stop offset="0%" stop-color="#1e3a8a" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#1e3a8a" stop-opacity="0.0"/>
         </linearGradient>
       </defs>
       <!-- Grid lines -->
-      <line x1="40" y1="20" x2="${w - 20}" y2="20" stroke="#f1f5f9" />
-      <line x1="40" y1="60" x2="${w - 20}" y2="60" stroke="#f1f5f9" />
-      <line x1="40" y1="100" x2="${w - 20}" y2="100" stroke="#f1f5f9" />
-      <line x1="40" y1="${h - 20}" x2="${w - 20}" y2="${h - 20}" stroke="#e2e8f0" />
+      <line x1="40" y1="20" x2="${w - 20}" y2="20" stroke="#202430" />
+      <line x1="40" y1="60" x2="${w - 20}" y2="60" stroke="#202430" />
+      <line x1="40" y1="100" x2="${w - 20}" y2="100" stroke="#202430" />
+      <line x1="40" y1="${h - 20}" x2="${w - 20}" y2="${h - 20}" stroke="#32384a" />
 
       <!-- Area and Line -->
       <path d="${areaPath}" fill="url(#areaGrad)" />
-      <path d="${linePath}" fill="none" stroke="#0284c7" stroke-width="3" stroke-linecap="round" />
+      <path d="${linePath}" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" />
 
       <!-- Data points & labels -->
       ${pts.map((p, idx) => `
-        <circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#0284c7" stroke="#ffffff" stroke-width="2" />
-        <text x="${p.x}" y="${h - 6}" font-family="-apple-system, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">${quarters[idx]}</text>
-        <text x="${p.x}" y="${p.y - 8}" font-family="'Roboto Mono', monospace" font-size="10" font-weight="bold" fill="#0f172a" text-anchor="middle">${config.formatters[primaryMetric](p.v)}</text>
+        <circle cx="${p.x}" cy="${p.y}" r="4" fill="#ea580c" stroke="#101218" stroke-width="2" />
+        <text x="${p.x}" y="${h - 6}" font-family="'Roboto Mono', monospace" font-size="10" font-weight="600" fill="#8d94a5" text-anchor="middle">${quarters[idx]}</text>
+        <text x="${p.x}" y="${p.y - 8}" font-family="'Roboto Mono', monospace" font-size="10" font-weight="bold" fill="#f1f3f8" text-anchor="middle">${config.formatters[primaryMetric](p.v)}</text>
       `).join('')}
     `;
   }
+}
 }
 
 function triggerCrossFilter(dim, val, key) {

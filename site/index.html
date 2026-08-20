@@ -172,7 +172,7 @@
   </section>
 
   <!-- Section 2: Interactive Sandbox & Superset 6.1.0 Dashboard Simulator -->
-  <section id="sandbox" class="section" style="background: #f1f5f9;">
+  <section id="sandbox" class="section">
     <div class="container">
       <div class="section-header">
         <div class="section-tag">Live Superset 6.1.0 Dashboard Simulator</div>
@@ -187,15 +187,15 @@
           <div class="superset-dash-title">
             <span style="font-size: 20px;">📊</span>
             <div>
-              <strong style="font-size: 15px; color: #0f172a;">Executive Multi-Level Sales &amp; Tree Hierarchy Dashboard</strong>
-              <div style="font-size: 11px; color: #64748b;">Draft Mode • Auto-refresh: 30s • 4 charts linked</div>
+              <strong style="font-size: 15px; color: var(--text-main);">Executive Multi-Level Sales &amp; Tree Hierarchy Dashboard</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Draft Mode • Auto-refresh: 30s • 4 charts linked</div>
             </div>
             <span class="superset-badge-ver">Superset 6.1.0</span>
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <button class="btn-sm" style="color: #475569;">⚙️ Filters (1)</button>
-            <button class="btn-sm" style="color: #475569;">✏️ Edit</button>
-            <button class="btn-sm" style="background: #2563eb; color: white; border-color: #2563eb;">💾 Save</button>
+            <button class="btn-sm">⚙️ Filters (1)</button>
+            <button class="btn-sm">✏️ Edit</button>
+            <button class="btn-sm" style="background: var(--blue-accent); color: white; border-color: var(--blue-accent);">💾 Save</button>
           </div>
         </div>
 
@@ -209,14 +209,14 @@
           <div class="superset-sidebar-filters">
             <div class="filter-sidebar-header">
               <span>FILTERS</span>
-              <span style="color: #2563eb; cursor: pointer; font-size: 11px;" onclick="clearActiveFilter()">Reset All</span>
+              <span style="color: var(--orange-accent); cursor: pointer; font-size: 11px;" onclick="clearActiveFilter()">Reset All</span>
             </div>
 
             <!-- Dynamic Active Cross-Filter Status -->
             <div class="filter-box-item">
               <label>CROSS-FILTER STATUS</label>
               <div id="sidebarFilterStatus">
-                <span style="font-size:12px; color:#94a3b8;">No active cross-filters. Click any row in the Hierarchical Table to filter.</span>
+                <span style="font-size:12px; color: var(--text-dimmed);">No active cross-filters. Click any row in the Hierarchical Table to filter.</span>
               </div>
             </div>
 
@@ -231,14 +231,14 @@
 
             <div class="filter-box-item">
               <label>TIME GRAIN / RANGE</label>
-              <div style="padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #475569;">
+              <div style="padding: 6px 10px; background: var(--bg-inset); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; color: var(--text-muted); font-family: 'Roboto Mono', monospace;">
                 Last Calendar Year (2025-2026)
               </div>
             </div>
 
             <div class="filter-box-item">
               <label>INTERACTIVE FEATURES</label>
-              <div style="font-size: 11px; color: #64748b; line-height: 1.5;">
+              <div style="font-size: 11px; color: var(--text-dimmed); line-height: 1.6;">
                 • Click any node name to cross-filter.<br/>
                 • Click <code>+</code> / <code>−</code> to expand/collapse.<br/>
                 • Click sub-level bars to drill down.
@@ -256,7 +256,7 @@
               <div class="sandbox-card">
                 <div class="sandbox-header-bar">
                   <div class="sandbox-controls">
-                    <strong style="font-size: 13px; color: #0f172a;">Hierarchical Table &amp; Matrix Grid</strong>
+                    <strong style="font-size: 13px; color: var(--text-main);">Hierarchical Table &amp; Matrix Grid</strong>
                     <button class="btn-sm" onclick="handleExpandAll()">Expand All</button>
                     <button class="btn-sm" onclick="handleCollapseAll()">Collapse All</button>
                     <div id="activeFilterContainer"></div>
@@ -290,10 +290,10 @@
                     <span>⋮</span>
                   </div>
                   <div class="kpi-big-number" id="kpiBigNumber">$2,330,000</div>
-                  <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;" id="kpiSubLabel">Grand Total (Revenue)</div>
+                  <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;" id="kpiSubLabel">Grand Total (Revenue)</div>
                   <div style="display: flex; align-items: center; justify-content: space-between;">
                     <span class="kpi-delta-tag">↑ +18.4% YTD</span>
-                    <span style="font-size: 11px; color: #94a3b8;">vs previous period</span>
+                    <span style="font-size: 11px; color: var(--text-dimmed);">vs previous period</span>
                   </div>
                   <svg id="kpiSparkline" class="sparkline-svg"></svg>
                 </div>
@@ -344,7 +344,7 @@
                 <span class="pulse-dot"></span>
                 <span id="consoleLog">Superset Event Console: Click any row name to simulate Cross-Filter emission</span>
               </div>
-              <span style="color:#64748b; font-size:11px;">Apache Superset 6.1.0 Event Protocol (setDataMask)</span>
+              <span style="color: var(--text-dimmed); font-size:11px;">Apache Superset 6.1.0 Event Protocol (setDataMask)</span>
             </div>
 
           </div>
@@ -363,28 +363,28 @@
         <p>Il plugin supporta due pattern architetturali per gestire strutture gerarchiche complesse.</p>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
-        <div style="background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px;">
-          <h3 style="color: var(--primary); margin-bottom: 12px; font-size: 20px;">1. Multi-Dimension Level Grouping</h3>
-          <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px;">
+        <div class="companion-card" style="padding: 24px;">
+          <h3 style="color: var(--blue-accent); margin-bottom: 12px; font-size: 18px;">1. Multi-Dimension Level Grouping</h3>
+          <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
             Ideale per dati categorici dove ogni riga rappresenta un record con granularità a più livelli (es. <code>Region &gt; Country &gt; City &gt; Store</code>).
           </p>
-          <ul style="font-size: 13px; color: var(--text-muted); line-height: 1.8; padding-left: 20px;">
-            <li>Query SQL con <code>GROUP BY</code> sequenziale</li>
-            <li>Costruzione albero via `buildMultiDimensionTree`</li>
-            <li>Subtotali automatici per ogni livello intermedio</li>
+          <ul class="milestone-list">
+            <li><span class="check-icon">✓</span> Query SQL con <code>GROUP BY</code> sequenziale</li>
+            <li><span class="check-icon">✓</span> Costruzione albero via `buildMultiDimensionTree`</li>
+            <li><span class="check-icon">✓</span> Subtotali automatici per ogni livello intermedio</li>
           </ul>
         </div>
 
-        <div style="background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px;">
-          <h3 style="color: var(--purple); margin-bottom: 12px; font-size: 20px;">2. Parent-Child Adjacency Graph</h3>
-          <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+        <div class="companion-card" style="padding: 24px;">
+          <h3 style="color: var(--bordeaux-accent); margin-bottom: 12px; font-size: 18px;">2. Parent-Child Adjacency Graph</h3>
+          <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
             Ideale per strutture ricorsive ad albero con profondità variabile (es. Organigrammi <code>employee_id &rarr; manager_id</code> o Piani dei Conti P&L).
           </p>
-          <ul style="font-size: 13px; color: var(--text-muted); line-height: 1.8; padding-left: 20px;">
-            <li>Risoluzione grafi di adiacenza con rilevamento cicli</li>
-            <li>Calcolo profondità <code>depth</code> e percorsi <code>path</code></li>
-            <li>Query SQL Recursive CTE per database compatibili</li>
+          <ul class="milestone-list">
+            <li><span class="check-icon">✓</span> Risoluzione grafi di adiacenza con rilevamento cicli</li>
+            <li><span class="check-icon">✓</span> Calcolo profondità <code>depth</code> e percorsi <code>path</code></li>
+            <li><span class="check-icon">✓</span> Query SQL Recursive CTE per database compatibili</li>
           </ul>
         </div>
       </div>
@@ -392,7 +392,7 @@
   </section>
 
   <!-- Section 4: Quick Install -->
-  <section id="install" class="section" style="background: #f8fafc;">
+  <section id="install" class="section">
     <div class="container">
       <div class="section-header">
         <div class="section-tag">Installation & Deployment</div>
