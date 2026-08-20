@@ -80,6 +80,6 @@ URL del sito pubblico: **https://francescocastaldi.github.io/superset-plugin-cha
 2. Incrementa la versione in `packages/superset-plugin-chart-hierarchical-table/package.json` e `packages/superset-hierarchical-table-backend/pyproject.toml`.
 3. Esegui il commit e crea il tag git:
    ```bash
-   git tag -a v0.1.0 -m "Release v0.1.0"
+   git tag -a v0.1.1 -m "Release v0.1.1"
    git push origin main --tags
    ```

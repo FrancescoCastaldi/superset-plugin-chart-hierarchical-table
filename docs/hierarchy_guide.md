@@ -53,3 +53,16 @@ Questo modello è indicato per gerarchie ricorsive con profondità variabile, co
 
 ### Comportamento
 Il plugin individua i nodi radice (dove `parent_account_id IS NULL`) e calcola per ciascun nodo padre la somma aggregata di tutti i suoi nodi discendenti (subtotale).
+
+---
+
+## 3. Cross-Filtering & Selezione Multipla sui Due Modelli
+
+Quando il cross-filtering è abilitato (`emit_filter = true`), il plugin gestisce la selezione multipla in modo differenziato e coerente per entrambi i modelli:
+
+- **Nel modello Multi-Dimension**:
+  - Selezionando un nodo (es. `USA` sotto `Americas`), il filtro cattura tutti i record che hanno `region = 'Americas' AND country = 'USA'`.
+  - Selezionando più nodi (es. `USA` e `Germany`), il filtro applica l'unione dei rami (`(region = 'Americas' AND country = 'USA') OR (region = 'EMEA' AND country = 'Germany')`), emettendo un filtro Superset `IN` ottimizzato.
+- **Nel modello Parent-Child**:
+  - Selezionando un nodo genitore (es. `Marco Bianchi - CTO`), il filtro include automaticamente l'ID selezionato e tutti gli ID dei nodi discendenti (sottoalbero ricorsivo).
+  - Selezionando più persone o conti contabili, il filtro include l'unione di tutti gli ID dei relativi sottoalberi senza duplicare i conteggi.

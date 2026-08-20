@@ -32,8 +32,8 @@ npm install --save superset-plugin-chart-hierarchical-table
 Se stai sviluppando o testando modifiche locali:
 
 ```bash
-# Nella cartella del plugin
-cd /path/to/superset-plugin-chart-hierarchical-table/frontend
+# Nella cartella del plugin frontend
+cd packages/superset-plugin-chart-hierarchical-table
 npm run build
 npm link
 
@@ -74,7 +74,7 @@ Per rendere disponibile il nuovo tipo di chart nella galleria visualizzazioni di
 Se desideri utilizzare i moduli di post-processing Python o le funzioni di supporto SQL per query ricorsive:
 
 ```bash
-cd /path/to/superset-plugin-chart-hierarchical-table/backend
+cd packages/superset-hierarchical-table-backend
 pip install -e .
 ```
 

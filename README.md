@@ -46,12 +46,13 @@ L'animazione vettoriale illustra l'interazione ad albero, l'espansione dei rami 
 
 👉 **[Accedi al Simulatore Live su GitHub Pages](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/)**
 
-- **Tabella Gerarchica Principale**: Espansione/collasso nodi, ricerca in-tree con conservazione del path e selezione attiva.
-- **Card KPI Big Number con Sparkline**: Ricalcolo istantaneo del totale filtrato e variazione percentuale.
-- **Donut Share Composition Chart**: Ripartizione percentuale dinamica della quota del nodo selezionato.
-- **Sub-Level Distribution Bar Chart**: Ripartizione orizzontale dei nodi figli con supporto al drill-down.
-- **Quarterly Performance Area Chart**: Traiettoria temporale (Q1–Q4) del ramo selezionato.
-- **Console Eventi Superset**: Ispezione in tempo reale del payload emesso da `setDataMask`.
+- **Tabella Gerarchica Principale**: Espansione/collasso nodi, ricerca in-tree con conservazione del path, selezione multipla interattiva tramite checkbox e click su riga (`.selected-filter-row`).
+- **Card KPI Big Number con Sparkline**: Ricalcolo istantaneo del totale filtrato sui record atomici e conteggio dei record/store corrispondenti.
+- **Donut Share Composition Chart**: Ripartizione percentuale dinamica e comparativa della quota tra le entità selezionate.
+- **Distribution Bar Chart**: Confronto visivo tra i rami selezionati con indicatore di spunta `✓` e barre evidenziate.
+- **Quarterly Performance Area Chart**: Traiettoria temporale (Q1–Q4) ricalcolata in tempo reale sui soli record filtrati.
+- **Active Filter Chips & Broadcast Banner**: Gestione dei filtri attivi con rimozione selettiva `✕` e pulsante `Clear All`.
+- **Console Eventi Superset**: Ispezione in tempo reale del payload emesso da `setDataMask` con raggruppamento `IN` per colonna.
 
 ---
 
@@ -66,17 +67,20 @@ flowchart LR
     C -->|Companion Post-Processing| E[Python Engine: superset_hierarchical_table]
     E -->|JSON Dataset| F[transformProps.ts]
     F -->|Recursive TreeNode Tree| G[HierarchicalTable.tsx UI Component]
-    G -->|setDataMask Event| A
+    G -->|setDataMask Multi-Filter Event| A
 ```
 
 ### 1. Elaborazione Gerarchica Dual-Mode
 - **Multi-Dimension Level Grouping**: Raggruppamento per serie ordinata di dimensioni (es. `Region > Country > City > Store`).
 - **Parent-Child Adjacency Graph**: Risoluzione ricorsiva di grafi di adiacenza (es. Organigrammi `employee_id -> manager_id`, Piani dei Conti `account_code -> parent_account_code`).
 
-### 2. Cross-Filtering Nativo Superset 6.1.0 (`setDataMask`)
-- Emissione di filtri relazionali `IN` verso l'intera dashboard al click su nodi dimensionali.
+### 2. Cross-Filtering a Selezione Multipla Nativo Superset 6.1.0 (`setDataMask`)
+- **Multi-Selection & Union Evaluation**: Selezione simultanea di più nodi e parametri a livelli diversi della gerarchia con valutazione a livello di record (zero doppio conteggio).
+- **Subtree Graph Traversal**: Per gerarchie Parent-Child, risoluzione automatica dell'intero sottoalbero di ID discendenti per ciascun nodo selezionato.
+- **Grouped `IN` Filters**: Generazione automatica di filtri aggregati per colonna (`{ col: "country", op: "IN", val: ["USA", "Germany"] }`).
 - **Path-Aware Filtering**: Trasmissione automatica di tutti i livelli gerarchici antenati per garantire la corretta contestualizzazione del filtro.
-- Evidenziazione visiva della riga attiva (`.selected-filter-row`) e badge di reset rapido nella toolbar.
+- **URI-Safe Key Handling**: Protezione contro caratteri speciali, spazi o apici nei percorsi gerarchici.
+- **Active Filter Management**: Badge interattivi con eliminazione del singolo filtro `✕`, pulsante `Clear All (N)` ed evidenziazione visiva `.selected-filter-row`.
 
 ### 3. Calcolo Automatico di Roll-up & Subtotali
 - Algoritmo di attraversamento post-order per il calcolo di subtotali su tutti i nodi non-foglia (Somma, Media, Min, Max, Conteggio).

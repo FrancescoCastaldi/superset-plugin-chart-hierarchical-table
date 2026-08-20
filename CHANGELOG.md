@@ -12,6 +12,22 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 - Integrazione drill-through a dashboard secondarie tramite Superset URL parameters.
 - Modalità Pivot dinamica a colonne per metriche temporali (Time Comparison / Period-over-Period).
 
+## [0.1.1] - 2026-08-20
+
+### Added
+- **⚡ Advanced Multi-Selection Cross-Filtering Engine**:
+  - Implementata la selezione multipla simultanea di nodi e dimensioni con valutazione a livello di record atomico (`getFilteredRecords()`), eliminando ogni rischio di doppio conteggio.
+  - Risoluzione automatica dei sottoalberi ricorsivi per gerarchie Parent-Child (inclusione di tutti gli ID discendenti).
+  - Raggruppamento automatico per colonna nei filtri `IN` per l'evento `setDataMask` di Apache Superset.
+  - Checkbox interattive sulle righe con evidenziazione visiva `.selected-filter-row` e `.node-filter-active`.
+  - Contenitore di badge per i filtri attivi con rimozione del singolo filtro `✕` e pulsante `Clear All (N)`.
+  - Sincronizzazione in tempo reale di 4 grafici companion nella dashboard (KPI card, Donut chart, Distribution bar chart con badge `✓`, Quarterly area chart).
+  - Gestione sicura delle chiavi gerarchiche tramite codifica URI (`encodeURIComponent`), garantendo piena compatibilità con percorsi complessi e caratteri speciali.
+  - Test suite Jest aggiornata in `treeBuilder.test.ts` con test per aggregazioni multi-nodo e grand total.
+
+### Changed
+- Rimozione globale del simbolo di marchio registrato (`™`) in favore della denominazione pulita **StratumTree**.
+
 ---
 
 ## [0.1.0] - 2026-08-20
