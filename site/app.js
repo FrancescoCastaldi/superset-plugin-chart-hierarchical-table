@@ -372,6 +372,11 @@ function updateCompanionCharts() {
   const kpiLabelEl = document.getElementById('kpiSubLabel');
   const barListEl = document.getElementById('companionBarList');
   const sidebarFilterEl = document.getElementById('sidebarFilterStatus');
+  const bannerEl = document.getElementById('crossFilterBanner');
+  const sparklineEl = document.getElementById('kpiSparkline');
+  const donutSvgEl = document.getElementById('donutSvg');
+  const donutLegendEl = document.getElementById('donutLegend');
+  const areaChartEl = document.getElementById('areaChartSvg');
 
   // Find active node or default to grand total
   let targetNode = null;
@@ -392,18 +397,49 @@ function updateCompanionCharts() {
   const grandTotal = computeGrandTotal(currentTree, config.metrics);
   const primaryMetric = config.metrics[0];
 
-  // 1. Update KPI Big Number
-  if (kpiValEl && kpiLabelEl) {
-    if (targetNode) {
-      kpiValEl.innerText = config.formatters[primaryMetric](targetNode.metrics[primaryMetric]);
-      kpiLabelEl.innerText = `${targetNode.name} (${primaryMetric.replace(/_/g, ' ')})`;
+  // 1. Update Broadcast Banner
+  if (bannerEl) {
+    if (activeFilterLabel) {
+      bannerEl.style.display = 'flex';
+      bannerEl.innerHTML = `
+        <div>
+          <span style="color:#38bdf8;">⚡ Cross-Filter Active:</span> Broadcasting <strong>[${activeFilterLabel}]</strong> to 4 dashboard charts (KPI, Breakdown Bar, Quarterly Trend, Share Donut)
+        </div>
+        <button type="button" class="btn-sm" style="background:#1e293b; color:#38bdf8; border:1px solid #334155; padding:2px 8px; font-size:11px;" onclick="clearActiveFilter()">Clear Filter ✕</button>
+      `;
     } else {
-      kpiValEl.innerText = config.formatters[primaryMetric](grandTotal.metrics[primaryMetric]);
-      kpiLabelEl.innerText = `Grand Total (${primaryMetric.replace(/_/g, ' ')})`;
+      bannerEl.style.display = 'none';
     }
   }
 
-  // 2. Update Sidebar Filters
+  // 2. Update KPI Big Number & Sparkline
+  if (kpiValEl && kpiLabelEl) {
+    const val = targetNode ? targetNode.metrics[primaryMetric] : grandTotal.metrics[primaryMetric];
+    kpiValEl.innerText = config.formatters[primaryMetric](val);
+    kpiLabelEl.innerText = targetNode ? `${targetNode.name} (${primaryMetric.replace(/_/g, ' ')})` : `Grand Total (${primaryMetric.replace(/_/g, ' ')})`;
+
+    // Generate dynamic SVG sparkline
+    if (sparklineEl) {
+      const points = targetNode
+        ? [val * 0.7, val * 0.82, val * 0.78, val * 0.95, val * 1.05, val * 1.15, val]
+        : [val * 0.65, val * 0.75, val * 0.8, val * 0.85, val * 0.9, val * 0.95, val];
+      const maxP = Math.max(...points);
+      const minP = Math.min(...points) * 0.9;
+      const range = maxP - minP || 1;
+      const coords = points.map((p, idx) => {
+        const x = (idx / (points.length - 1)) * 260 + 10;
+        const y = 40 - ((p - minP) / range) * 32 + 4;
+        return `${x},${y}`;
+      }).join(' ');
+
+      sparklineEl.innerHTML = `
+        <polyline fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" points="${coords}" />
+        <circle cx="${(points.length - 1) / (points.length - 1) * 260 + 10}" cy="${40 - ((points[points.length - 1] - minP) / range) * 32 + 4}" r="4" fill="#2563eb" />
+      `;
+    }
+  }
+
+  // 3. Update Sidebar Filters
   if (sidebarFilterEl) {
     if (activeFilterLabel) {
       sidebarFilterEl.innerHTML = `
@@ -420,25 +456,24 @@ function updateCompanionCharts() {
     }
   }
 
-  // 3. Update Companion Bar Chart
+  // 4. Update Companion Bar Chart
+  let itemsToDisplay = [];
+  if (targetNode && targetNode.children && targetNode.children.length > 0) {
+    itemsToDisplay = targetNode.children;
+  } else if (targetNode) {
+    itemsToDisplay = [targetNode];
+  } else {
+    itemsToDisplay = currentTree;
+  }
+
   if (barListEl) {
-    let itemsToDisplay = [];
-    if (targetNode && targetNode.children && targetNode.children.length > 0) {
-      itemsToDisplay = targetNode.children;
-    } else if (targetNode) {
-      itemsToDisplay = [targetNode];
-    } else {
-      itemsToDisplay = currentTree;
-    }
-
     const maxVal = Math.max(...itemsToDisplay.map(it => it.metrics[primaryMetric] || 1), 1);
-
     let barsHTML = '';
     for (const item of itemsToDisplay) {
       const val = item.metrics[primaryMetric] || 0;
-      const pct = Math.min(100, Math.max(10, (val / maxVal) * 100));
+      const pct = Math.min(100, Math.max(8, (val / maxVal) * 100));
       barsHTML += `
-        <div class="bar-item">
+        <div class="bar-item" onclick="triggerCrossFilter('${item.dimension || 'Sub-level'}', '${item.name}', '${item.key}')" style="cursor:pointer;" title="Click to filter by ${item.name}">
           <div class="bar-meta">
             <span>${item.name}</span>
             <span>${config.formatters[primaryMetric](val)}</span>
@@ -450,6 +485,100 @@ function updateCompanionCharts() {
       `;
     }
     barListEl.innerHTML = barsHTML;
+  }
+
+  // 5. Update Donut / Share Chart
+  if (donutSvgEl && donutLegendEl) {
+    const totalVal = itemsToDisplay.reduce((acc, it) => acc + (it.metrics[primaryMetric] || 0), 0) || 1;
+    const colors = ['#2563eb', '#38bdf8', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+    let accumulatedAngle = 0;
+    let pathsHTML = '';
+    let legendHTML = '';
+
+    itemsToDisplay.slice(0, 5).forEach((item, idx) => {
+      const val = item.metrics[primaryMetric] || 0;
+      const slicePct = val / totalVal;
+      const angle = slicePct * 360;
+      const color = colors[idx % colors.length];
+
+      // Donut slice path
+      const startAngle = accumulatedAngle;
+      const endAngle = accumulatedAngle + angle;
+      accumulatedAngle = endAngle;
+
+      const rOuter = 55;
+      const rInner = 35;
+      const cx = 65;
+      const cy = 65;
+
+      const x1 = cx + rOuter * Math.cos(Math.PI * (startAngle - 90) / 180);
+      const y1 = cy + rOuter * Math.sin(Math.PI * (startAngle - 90) / 180);
+      const x2 = cx + rOuter * Math.cos(Math.PI * (endAngle - 90) / 180);
+      const y2 = cy + rOuter * Math.sin(Math.PI * (endAngle - 90) / 180);
+      const x3 = cx + rInner * Math.cos(Math.PI * (endAngle - 90) / 180);
+      const y3 = cy + rInner * Math.sin(Math.PI * (endAngle - 90) / 180);
+      const x4 = cx + rInner * Math.cos(Math.PI * (startAngle - 90) / 180);
+      const y4 = cy + rInner * Math.sin(Math.PI * (startAngle - 90) / 180);
+
+      const largeArc = angle > 180 ? 1 : 0;
+      const pathD = `M ${x1} ${y1} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4} ${y4} Z`;
+
+      pathsHTML += `<path d="${pathD}" fill="${color}" stroke="#ffffff" stroke-width="1.5" />`;
+      legendHTML += `
+        <div class="donut-legend-item">
+          <span class="legend-dot" style="background:${color};"></span>
+          <span>${item.name.slice(0, 18)}: <strong>${(slicePct * 100).toFixed(0)}%</strong></span>
+        </div>
+      `;
+    });
+
+    donutSvgEl.innerHTML = pathsHTML;
+    donutLegendEl.innerHTML = legendHTML;
+  }
+
+  // 6. Update Quarterly Area / Line Chart
+  if (areaChartEl) {
+    const val = targetNode ? targetNode.metrics[primaryMetric] : grandTotal.metrics[primaryMetric];
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+    const qValues = [val * 0.21, val * 0.24, val * 0.27, val * 0.28];
+    const maxQ = Math.max(...qValues) * 1.15;
+    const minQ = 0;
+
+    const w = 480;
+    const h = 130;
+    const pts = qValues.map((v, i) => {
+      const x = (i / (quarters.length - 1)) * (w - 60) + 40;
+      const y = h - ((v - minQ) / maxQ) * (h - 30) - 20;
+      return { x, y, v };
+    });
+
+    const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const areaPath = `${linePath} L ${pts[pts.length - 1].x} ${h - 20} L ${pts[0].x} ${h - 20} Z`;
+
+    areaChartEl.innerHTML = `
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+      <!-- Grid lines -->
+      <line x1="40" y1="20" x2="${w - 20}" y2="20" stroke="#f1f5f9" />
+      <line x1="40" y1="60" x2="${w - 20}" y2="60" stroke="#f1f5f9" />
+      <line x1="40" y1="100" x2="${w - 20}" y2="100" stroke="#f1f5f9" />
+      <line x1="40" y1="${h - 20}" x2="${w - 20}" y2="${h - 20}" stroke="#e2e8f0" />
+
+      <!-- Area and Line -->
+      <path d="${areaPath}" fill="url(#areaGrad)" />
+      <path d="${linePath}" fill="none" stroke="#0284c7" stroke-width="3" stroke-linecap="round" />
+
+      <!-- Data points & labels -->
+      ${pts.map((p, idx) => `
+        <circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#0284c7" stroke="#ffffff" stroke-width="2" />
+        <text x="${p.x}" y="${h - 6}" font-family="-apple-system, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">${quarters[idx]}</text>
+        <text x="${p.x}" y="${p.y - 8}" font-family="'Roboto Mono', monospace" font-size="10" font-weight="bold" fill="#0f172a" text-anchor="middle">${config.formatters[primaryMetric](p.v)}</text>
+      `).join('')}
+    `;
   }
 }
 
@@ -525,3 +654,4 @@ function copyCode() {
 document.addEventListener('DOMContentLoaded', () => {
   loadDataset('sales');
 });
+
