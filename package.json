@@ -2,6 +2,11 @@
   "name": "superset-plugin-chart-hierarchical-table-monorepo",
   "private": true,
   "description": "Apache Superset 6.1.0 Hierarchical Table & Matrix Grid Chart Plugin Monorepo",
+  "homepage": "https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table.git"
+  },
   "workspaces": [
     "packages/*"
   ],
