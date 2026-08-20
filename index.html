@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apache Superset 6.1.0 - Hierarchical Table Chart Plugin | Live Roadmap & Interactive Sandbox</title>
+  <meta name="description" content="Development roadmap, architecture specs, and live interactive sandbox for the Apache Superset 6.1.0 Hierarchical Table & Matrix Grid visualization plugin.">
+  
+  <!-- Modern Typography (Google Fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="container nav-content">
+      <a href="#" class="logo-group">
+        <span class="logo-badge">SUPERSET 6.1.0</span>
+        <strong class="brand-font" style="font-size: 18px;">Hierarchical Table Plugin</strong>
+      </a>
+
+      <div class="nav-links">
+        <a href="#roadmap">Development Status</a>
+        <a href="#sandbox">Live Sandbox</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#install">Quick Install</a>
+        <a href="https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table" target="_blank" class="github-btn">
+          <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+          GitHub Repo
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="container">
+      <div class="hero-pill">
+        <span>⚡ Apache Superset 6.1.0 Ready</span> • <span>v0.1.0 Release</span>
+      </div>
+      <h1>
+        Interactive <span class="gradient-text">Hierarchical Table</span><br>for Apache Superset
+      </h1>
+      <p class="hero-subtitle">
+        Enterprise-grade tree grid chart plugin with dual-mode hierarchy processing (Backend SQL/Rollup + Frontend React 18 / AntD v5), automated Windows & Docker installer, and live cross-filtering.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#sandbox" class="btn btn-primary">Try Interactive Sandbox ↓</a>
+        <a href="#roadmap" class="btn btn-secondary">View Roadmap & Progress</a>
+      </div>
+
+      <!-- Quick KPI Cards -->
+      <div class="status-grid">
+        <div class="status-card">
+          <div class="status-icon icon-blue">📊</div>
+          <div class="status-info">
+            <h4>Supported Versions</h4>
+            <div class="status-val">Superset 6.1.0+</div>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-icon icon-green">⚡</div>
+          <div class="status-info">
+            <h4>Hierarchy Engines</h4>
+            <div class="status-val">Dual Mode (Lvl / P-C)</div>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-icon icon-purple">⚙️</div>
+          <div class="status-info">
+            <h4>Automated Installer</h4>
+            <div class="status-val">Windows & Docker</div>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-icon icon-amber">🛡️</div>
+          <div class="status-info">
+            <h4>Maintainer</h4>
+            <div class="status-val">Francesco Castaldi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Section 1: Development Status & Roadmap -->
+  <section id="roadmap" class="section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Project Tracking</div>
+        <h2>Stato di Avanzamento Sviluppo</h2>
+        <p>Monitoraggio in tempo reale delle milestone completate, delle feature in corso e della roadmap futura.</p>
+      </div>
+
+      <div class="progress-card">
+        <div class="overall-progress-bar-container">
+          <div class="progress-meta">
+            <span>Overall v0.1.0 Completion</span>
+            <span style="color: var(--primary);">92% Completed</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 92%;"></div>
+          </div>
+        </div>
+
+        <div class="milestones-grid">
+          <!-- Milestone 1 -->
+          <div class="milestone-item">
+            <div class="milestone-header">
+              <span class="milestone-title">1. Core Frontend Plugin</span>
+              <span class="tag-done">COMPLETED ✓</span>
+            </div>
+            <ul class="milestone-list">
+              <li><span class="check-icon">✓</span> `@superset-ui/core` Plugin definition & metadata</li>
+              <li><span class="check-icon">✓</span> `buildQuery.ts` for Superset 6.1.0 data API</li>
+              <li><span class="check-icon">✓</span> `controlPanel.tsx` Explore UI controls</li>
+              <li><span class="check-icon">✓</span> `HierarchicalTable.tsx` Ant Design v5 tree table</li>
+            </ul>
+          </div>
+
+          <!-- Milestone 2 -->
+          <div class="milestone-item">
+            <div class="milestone-header">
+              <span class="milestone-title">2. Hierarchy & Rollup Engine</span>
+              <span class="tag-done">COMPLETED ✓</span>
+            </div>
+            <ul class="milestone-list">
+              <li><span class="check-icon">✓</span> Multi-Dimension Level tree builder algorithm</li>
+              <li><span class="check-icon">✓</span> Parent-Child adjacency graph resolver</li>
+              <li><span class="check-icon">✓</span> Post-Order Traversal subtotal calculations</li>
+              <li><span class="check-icon">✓</span> In-Tree Search with ancestry path preservation</li>
+            </ul>
+          </div>
+
+          <!-- Milestone 3 -->
+          <div class="milestone-item">
+            <div class="milestone-header">
+              <span class="milestone-title">3. Automation & Windows Installer</span>
+              <span class="tag-done">COMPLETED ✓</span>
+            </div>
+            <ul class="milestone-list">
+              <li><span class="check-icon">✓</span> `install.ps1` PowerShell 1-click installer</li>
+              <li><span class="check-icon">✓</span> `installer.py` safe AST injection & rollback</li>
+              <li><span class="check-icon">✓</span> Docker Compose override & container restart</li>
+              <li><span class="check-icon">✓</span> Dedicated Windows installation guide</li>
+            </ul>
+          </div>
+
+          <!-- Milestone 4 -->
+          <div class="milestone-item">
+            <div class="milestone-header">
+              <span class="milestone-title">4. Roadmap v0.2.0 (Planned)</span>
+              <span class="tag-active">IN PROGRESS ⏳</span>
+            </div>
+            <ul class="milestone-list">
+              <li><span style="color:var(--primary);">•</span> Multi-level native Excel grouping export</li>
+              <li><span style="color:var(--primary);">•</span> Time-comparison Period-over-Period pivot columns</li>
+              <li><span style="color:var(--primary);">•</span> Virtualized scrolling for 50,000+ rows</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Interactive Sandbox Preview -->
+  <section id="sandbox" class="section" style="background: #f1f5f9;">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Live Chart Sandbox</div>
+        <h2>Anteprima Interattiva in Tempo Reale</h2>
+        <p>Interagisci direttamente con il motore del chart gerarchico: espandi/collassa i nodi, filtra in tempo reale, cambia dataset e osserva l'emissione degli eventi di Cross-Filtering per Superset.</p>
+      </div>
+
+      <div class="sandbox-card">
+        <div class="sandbox-header-bar">
+          <div class="sandbox-controls">
+            <label for="datasetDropdown"><strong>Dataset:</strong></label>
+            <select id="datasetDropdown" class="select-control" onchange="loadDataset(this.value)">
+              <option value="sales">🌍 Sales Geography (4-Level Dimensions)</option>
+              <option value="org">👥 Organization Chart (Parent-Child)</option>
+              <option value="pnl">📊 Financial P&L Statement (Parent-Child)</option>
+            </select>
+
+            <button class="btn-sm" onclick="handleExpandAll()">Expand All</button>
+            <button class="btn-sm" onclick="handleCollapseAll()">Collapse All</button>
+          </div>
+
+          <div>
+            <input
+              type="text"
+              id="searchBox"
+              class="search-input"
+              placeholder="🔍 Search in hierarchy..."
+              oninput="handleSearch(this.value)"
+            />
+          </div>
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Event Stream Console -->
+        <div class="event-console">
+          <div class="console-log">
+            <span class="pulse-dot"></span>
+            <span id="consoleLog">Superset Event Console: Click any row name to simulate Cross-Filter emission</span>
+          </div>
+          <span style="color:#64748b; font-size:11px;">Apache Superset 6.1.0 Event Protocol</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Architecture Overview -->
+  <section id="architecture" class="section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">System Architecture</div>
+        <h2>Come Funziona il Concetto di Gerarchia</h2>
+        <p>Il plugin supporta due pattern architetturali per gestire strutture gerarchiche complesse.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
+        <div style="background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px;">
+          <h3 style="color: var(--primary); margin-bottom: 12px; font-size: 20px;">1. Multi-Dimension Level Grouping</h3>
+          <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+            Ideale per dati categorici dove ogni riga rappresenta un record con granularità a più livelli (es. <code>Region &gt; Country &gt; City &gt; Store</code>).
+          </p>
+          <ul style="font-size: 13px; color: var(--text-muted); line-height: 1.8; padding-left: 20px;">
+            <li>Query SQL con <code>GROUP BY</code> sequenziale</li>
+            <li>Costruzione albero via `buildMultiDimensionTree`</li>
+            <li>Subtotali automatici per ogni livello intermedio</li>
+          </ul>
+        </div>
+
+        <div style="background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px;">
+          <h3 style="color: var(--purple); margin-bottom: 12px; font-size: 20px;">2. Parent-Child Adjacency Graph</h3>
+          <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+            Ideale per strutture ricorsive ad albero con profondità variabile (es. Organigrammi <code>employee_id &rarr; manager_id</code> o Piani dei Conti P&L).
+          </p>
+          <ul style="font-size: 13px; color: var(--text-muted); line-height: 1.8; padding-left: 20px;">
+            <li>Risoluzione grafi di adiacenza con rilevamento cicli</li>
+            <li>Calcolo profondità <code>depth</code> e percorsi <code>path</code></li>
+            <li>Query SQL Recursive CTE per database compatibili</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Quick Install -->
+  <section id="install" class="section" style="background: #f8fafc;">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Installation & Deployment</div>
+        <h2>Installazione Rapida in 1 Comando</h2>
+        <p>Installa e registra automaticamente il plugin sulla tua istanza locale di Apache Superset 6.1.0.</p>
+      </div>
+
+      <div class="code-box-card" style="max-width: 820px; margin: 0 auto;">
+        <div class="code-box-tabs">
+          <button class="tab-btn active" onclick="selectTab('powershell', this)">Windows PowerShell</button>
+          <button class="tab-btn" onclick="selectTab('bash', this)">Linux / macOS / Git Bash</button>
+          <button class="tab-btn" onclick="selectTab('docker', this)">Docker Compose Override</button>
+        </div>
+        <div class="code-content">
+          <button class="copy-btn" onclick="copyCode()">Copy</button>
+          <pre><code id="codeDisplay"># Install directly into local Superset 6.1.0 on Windows PowerShell
+.\scripts\install.ps1 -SupersetPath "C:\path\to\superset"</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>
+        <strong>Apache Superset Hierarchical Table Chart Plugin</strong> • Developed & Maintained by <a href="https://github.com/FrancescoCastaldi" target="_blank">Francesco Castaldi</a>
+      </p>
+      <p style="margin-top: 8px; font-size: 12px; color: #94a3b8;">
+        Released under the Apache License 2.0. Compatible with Apache Superset 6.1.0+.
+      </p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
