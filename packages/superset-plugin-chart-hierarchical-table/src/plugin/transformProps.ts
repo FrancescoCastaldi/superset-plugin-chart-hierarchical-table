@@ -50,11 +50,20 @@ export default function transformProps(
 
   // Extract metric names
   const metrics: string[] = ensureIsArray(rawMetrics).map((m: any) =>
-    typeof m === 'string' ? m : m?.label || String(m),
+    typeof m === 'string' ? m : m?.label || m?.metric_name || String(m),
   );
 
   // Backward compat: support groupby, hierarchyDimensions, hierarchy_dimensions
-  const dimensions: string[] = ensureIsArray(groupby || hierarchyDimensions || hierarchy_dimensions);
+  const rawDimensions = ensureIsArray(groupby || hierarchyDimensions || hierarchy_dimensions);
+  const dimensions: string[] = rawDimensions.map((d: any) =>
+    typeof d === 'string'
+      ? d
+      : d?.column_name || d?.label || d?.sqlExpression || String(d),
+  );
+
+  const idColStr = typeof idColumn === 'string' ? idColumn : idColumn?.column_name || idColumn?.label || '';
+  const parentIdColStr = typeof parentIdColumn === 'string' ? parentIdColumn : parentIdColumn?.column_name || parentIdColumn?.label || '';
+  const labelColStr = typeof labelColumn === 'string' ? labelColumn : labelColumn?.column_name || labelColumn?.label || '';
 
   // Calculate expand depth
   let calculatedExpandDepth = initialExpandDepth;
@@ -70,7 +79,7 @@ export default function transformProps(
   if (hierarchyType === 'multi_dimension') {
     treeData = buildMultiDimensionTree(dataRecords, dimensions, metrics);
   } else {
-    treeData = buildParentChildTree(dataRecords, idColumn, parentIdColumn, labelColumn, metrics);
+    treeData = buildParentChildTree(dataRecords, idColStr, parentIdColStr, labelColStr, metrics);
   }
 
   // Create columns definition

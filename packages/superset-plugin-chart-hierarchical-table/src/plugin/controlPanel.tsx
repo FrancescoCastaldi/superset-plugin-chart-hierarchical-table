@@ -1,6 +1,12 @@
+import {
+  ControlPanelConfig,
+  sharedControls,
+  D3_FORMAT_OPTIONS,
+} from '@superset-ui/chart-controls';
+
 const t = (str: string) => str;
 
-const D3_FORMAT_OPTIONS: [string, string][] = [
+export const CUSTOM_D3_FORMAT_OPTIONS: [string, string][] = [
   ['SMART_NUMBER', 'Adaptive formatting (Smart Number)'],
   [',d', '1,234 (Integer)'],
   ['.2f', '1234.56 (2 decimals)'],
@@ -11,7 +17,7 @@ const D3_FORMAT_OPTIONS: [string, string][] = [
   ['~s', '1.2k (SI prefix)'],
 ];
 
-const config: any = {
+const config: ControlPanelConfig = {
   controlPanelSections: [
     {
       label: t('Query Configuration'),
@@ -39,14 +45,11 @@ const config: any = {
           {
             name: 'groupby',
             config: {
-              type: 'SelectControl',
+              ...sharedControls.groupby,
               label: t('Hierarchy Dimensions (in order)'),
-              multi: true,
-              freeForm: true,
-              canSelectAll: false,
+              description: t('Select dimensions from highest to lowest level of hierarchy (e.g. Region > Country > City).'),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension',
-              description: t('Select dimensions from highest to lowest level of hierarchy.'),
             },
           },
         ],
@@ -54,11 +57,12 @@ const config: any = {
           {
             name: 'idColumn',
             config: {
-              type: 'SelectControl',
+              ...sharedControls.entity,
               label: t('Node ID Column'),
+              description: t('Column containing the unique identifier of the node.'),
+              validators: [],
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'parent_child',
-              description: t('Column containing the unique identifier of the node.'),
             },
           },
         ],
@@ -66,11 +70,12 @@ const config: any = {
           {
             name: 'parentIdColumn',
             config: {
-              type: 'SelectControl',
+              ...sharedControls.entity,
               label: t('Parent ID Column'),
+              description: t('Column containing the identifier of the parent node.'),
+              validators: [],
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'parent_child',
-              description: t('Column containing the identifier of the parent node.'),
             },
           },
         ],
@@ -78,11 +83,12 @@ const config: any = {
           {
             name: 'labelColumn',
             config: {
-              type: 'SelectControl',
+              ...sharedControls.entity,
               label: t('Node Label Column (Optional)'),
+              description: t('Column containing the display name for the node.'),
+              validators: [],
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'parent_child',
-              description: t('Column containing the display name for the node.'),
             },
           },
         ],
@@ -90,43 +96,14 @@ const config: any = {
           {
             name: 'metrics',
             config: {
-              type: 'MetricsControl',
+              ...sharedControls.metrics,
               label: t('Metrics'),
               description: t('Metrics to calculate and display for each hierarchy level.'),
-              multi: true,
-              validators: [],
             },
           },
         ],
-        [
-          {
-            name: 'adhoc_filters',
-            config: {
-              type: 'AdhocFilterControl',
-              label: t('Filters'),
-              default: [],
-              description: t('Apply filters to dataset before hierarchy aggregation.'),
-            },
-          },
-        ],
-        [
-          {
-            name: 'row_limit',
-            config: {
-              type: 'SelectControl',
-              freeForm: true,
-              label: t('Row limit'),
-              default: 10000,
-              choices: [
-                [100, '100'],
-                [1000, '1,000'],
-                [5000, '5,000'],
-                [10000, '10,000'],
-                [50000, '50,000'],
-              ],
-            },
-          },
-        ],
+        ['adhoc_filters'],
+        ['row_limit'],
       ],
     },
     {
@@ -263,7 +240,7 @@ const config: any = {
               label: t('Number Format'),
               renderTrigger: true,
               default: 'SMART_NUMBER',
-              choices: D3_FORMAT_OPTIONS,
+              choices: CUSTOM_D3_FORMAT_OPTIONS || D3_FORMAT_OPTIONS,
               description: t('D3 format string for numerical metric values.'),
             },
           },
