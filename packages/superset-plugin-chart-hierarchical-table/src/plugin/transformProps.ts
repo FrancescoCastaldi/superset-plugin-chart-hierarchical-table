@@ -102,18 +102,62 @@ export default function transformProps(
 
   const isCrossFilterActive = emit_filter && enableCrossFiltering;
 
-  // Superset 6.1.0 Cross-Filter handler
+  // Superset 6.1.0 Cross-Filter handler supporting multi-selection
   const handleCrossFilter = (
     dimension: string,
-    value: string,
-    pathMap?: Record<string, string>,
+    value: string | string[],
+    pathMap?: Record<string, string> | Record<string, string>[],
     isCurrentlySelected?: boolean,
+    allSelectedFilters?: any[],
   ) => {
     if (!isCrossFilterActive) return;
 
     if (setDataMask) {
-      if (isCurrentlySelected) {
-        // Toggle OFF / Clear filter
+      if (allSelectedFilters && allSelectedFilters.length === 0) {
+        setDataMask({
+          extraFormData: {},
+          filterState: {
+            value: null,
+            selectedValues: [],
+          },
+        });
+      } else if (allSelectedFilters && allSelectedFilters.length > 0) {
+        // Group values by dimension
+        const dimValuesMap: Record<string, string[]> = {};
+        for (const item of allSelectedFilters) {
+          if (item.pathMap && Object.keys(item.pathMap).length > 0) {
+            for (const [col, v] of Object.entries(item.pathMap)) {
+              if (!dimValuesMap[col]) dimValuesMap[col] = [];
+              if (!dimValuesMap[col].includes(v as string)) dimValuesMap[col].push(v as string);
+            }
+          } else {
+            if (!dimValuesMap[item.dimension]) dimValuesMap[item.dimension] = [];
+            if (!dimValuesMap[item.dimension].includes(item.value)) {
+              dimValuesMap[item.dimension].push(item.value);
+            }
+          }
+        }
+
+        const filters = Object.entries(dimValuesMap).map(([col, vals]) => ({
+          col,
+          op: 'IN' as const,
+          val: vals,
+        }));
+
+        const selectedVals = allSelectedFilters.map(f => f.value);
+
+        setDataMask({
+          extraFormData: {
+            filters,
+          },
+          filterState: {
+            value: selectedVals,
+            selectedValues: selectedVals,
+            label: allSelectedFilters.map(f => `${f.dimension}: ${f.value}`).join(', '),
+            filters,
+          },
+        });
+      } else if (isCurrentlySelected) {
         setDataMask({
           extraFormData: {},
           filterState: {
@@ -122,35 +166,29 @@ export default function transformProps(
           },
         });
       } else {
-        // Build filters for all ancestor dimensions if available, otherwise single dimension
-        const filters = pathMap && Object.keys(pathMap).length > 0
-          ? Object.entries(pathMap).map(([col, val]) => ({
-              col,
-              op: 'IN' as const,
-              val: [val],
-            }))
-          : [
-              {
-                col: dimension,
-                op: 'IN' as const,
-                val: [value],
-              },
-            ];
+        const valArray = Array.isArray(value) ? value : [value];
+        const filters = [
+          {
+            col: dimension,
+            op: 'IN' as const,
+            val: valArray,
+          },
+        ];
 
         setDataMask({
           extraFormData: {
             filters,
           },
           filterState: {
-            value: [value],
-            selectedValues: [value],
-            label: `${dimension}: ${value}`,
+            value: valArray,
+            selectedValues: valArray,
+            label: `${dimension}: ${valArray.join(', ')}`,
             filters,
           },
         });
       }
     } else if (onAddFilter && dimension && value) {
-      onAddFilter({ [dimension]: [value] });
+      onAddFilter({ [dimension]: Array.isArray(value) ? value : [value] });
     }
   };
 

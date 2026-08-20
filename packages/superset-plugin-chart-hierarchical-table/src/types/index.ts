@@ -106,11 +106,19 @@ export interface HierarchicalTableTransformedProps {
   };
   onCrossFilter?: (
     dimension: string,
-    value: string,
-    pathMap?: Record<string, string>,
+    value: string | string[],
+    pathMap?: Record<string, string> | Record<string, string>[],
     isCurrentlySelected?: boolean,
+    allSelectedFilters?: SelectedFilterItem[],
   ) => void;
   onClearFilter?: () => void;
+}
+
+export interface SelectedFilterItem {
+  key: string;
+  dimension: string;
+  value: string;
+  pathMap?: Record<string, string>;
 }
 
 export type HierarchicalTableChartProps = ChartProps & {

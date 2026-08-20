@@ -26,8 +26,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   } = props;
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilterKey, setActiveFilterKey] = useState<string | null>(null);
-  const [activeFilterLabel, setActiveFilterLabel] = useState<string | null>(null);
+  const [selectedFilterMap, setSelectedFilterMap] = useState<Map<string, { key: string; dimension: string; value: string; pathMap?: Record<string, string> }>>(new Map());
 
   // Set of expanded node keys
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => {
@@ -83,43 +82,69 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     return filterTreeBySearch(data, searchTerm);
   }, [data, searchTerm]);
 
-  // Handle Node Click for Cross-Filtering
+  // Handle Node Click for Multi-Selection Cross-Filtering
   const handleNodeClick = useCallback(
     (node: TreeNode) => {
       if (!emitFilter || !onCrossFilter) return;
 
-      const isCurrentlySelected = activeFilterKey === node.key;
-
-      if (isCurrentlySelected) {
-        setActiveFilterKey(null);
-        setActiveFilterLabel(null);
-        if (onClearFilter) {
-          onClearFilter();
+      setSelectedFilterMap(prev => {
+        const next = new Map(prev);
+        if (next.has(node.key)) {
+          next.delete(node.key);
         } else {
-          onCrossFilter(node.dimension || 'Dimension', node.name, undefined, true);
-        }
-      } else {
-        setActiveFilterKey(node.key);
-        const dimensionName = node.dimension || dimensions[node.depth] || 'Dimension';
-        setActiveFilterLabel(`${dimensionName}: ${node.name}`);
-
-        // Construct path dictionary for multi-dimension hierarchy
-        const pathMap: Record<string, string> = {};
-        if (dimensions.length > 0 && node.path && node.path.length > 0) {
-          for (let i = 0; i <= node.depth && i < dimensions.length; i++) {
-            pathMap[dimensions[i]] = node.path[i];
+          const dimensionName = node.dimension || dimensions[node.depth] || 'Dimension';
+          const pathMap: Record<string, string> = {};
+          if (dimensions.length > 0 && node.path && node.path.length > 0) {
+            for (let i = 0; i <= node.depth && i < dimensions.length; i++) {
+              pathMap[dimensions[i]] = node.path[i];
+            }
           }
+          next.set(node.key, {
+            key: node.key,
+            dimension: dimensionName,
+            value: node.name,
+            pathMap,
+          });
         }
 
-        onCrossFilter(dimensionName, node.name, pathMap, false);
-      }
+        const filterItems = Array.from(next.values());
+        if (filterItems.length === 0) {
+          if (onClearFilter) {
+            onClearFilter();
+          } else {
+            onCrossFilter(node.dimension || 'Dimension', [], undefined, true, []);
+          }
+        } else {
+          const dimensionName = node.dimension || dimensions[node.depth] || 'Dimension';
+          const values = filterItems.map(f => f.value);
+          const pathMaps = filterItems.map(f => f.pathMap || {});
+          onCrossFilter(dimensionName, values, pathMaps, false, filterItems);
+        }
+
+        return next;
+      });
     },
-    [activeFilterKey, dimensions, emitFilter, onCrossFilter, onClearFilter],
+    [dimensions, emitFilter, onCrossFilter, onClearFilter],
   );
 
+  const handleRemoveSingleFilter = useCallback((key: string) => {
+    setSelectedFilterMap(prev => {
+      const next = new Map(prev);
+      next.delete(key);
+      const filterItems = Array.from(next.values());
+      if (filterItems.length === 0) {
+        if (onClearFilter) onClearFilter();
+      } else if (onCrossFilter) {
+        const values = filterItems.map(f => f.value);
+        const pathMaps = filterItems.map(f => f.pathMap || {});
+        onCrossFilter(filterItems[0].dimension, values, pathMaps, false, filterItems);
+      }
+      return next;
+    });
+  }, [onCrossFilter, onClearFilter]);
+
   const handleClearActiveFilter = useCallback(() => {
-    setActiveFilterKey(null);
-    setActiveFilterLabel(null);
+    setSelectedFilterMap(new Map());
     if (onClearFilter) {
       onClearFilter();
     }
@@ -168,19 +193,33 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             />
           )}
 
-          {/* Active Cross Filter Indicator */}
-          {activeFilterLabel && (
-            <div className="active-cross-filter-badge">
-              <span className="filter-badge-icon">⚡</span>
-              <span className="filter-badge-text">Filter: {activeFilterLabel}</span>
-              <button
-                type="button"
-                className="filter-badge-clear"
-                onClick={handleClearActiveFilter}
-                title="Clear cross filter"
-              >
-                ✕
-              </button>
+          {/* Active Cross Filters Multi-Indicator */}
+          {selectedFilterMap.size > 0 && (
+            <div className="active-cross-filter-container">
+              {Array.from(selectedFilterMap.values()).map(filter => (
+                <div key={filter.key} className="active-cross-filter-badge">
+                  <span className="filter-badge-icon">⚡</span>
+                  <span className="filter-badge-text">{filter.value}</span>
+                  <button
+                    type="button"
+                    className="filter-badge-clear"
+                    onClick={() => handleRemoveSingleFilter(filter.key)}
+                    title={`Remove ${filter.value} filter`}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {selectedFilterMap.size > 1 && (
+                <button
+                  type="button"
+                  className="filter-clear-all-btn"
+                  onClick={handleClearActiveFilter}
+                  title="Clear all filters"
+                >
+                  Clear All ({selectedFilterMap.size})
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -244,7 +283,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             {visibleRows.map(node => {
               const hasChildren = node.children && node.children.length > 0;
               const isExpanded = expandedKeys.has(node.key) || searchTerm.trim().length > 0;
-              const isFilterSelected = activeFilterKey === node.key;
+              const isFilterSelected = selectedFilterMap.has(node.key);
               const paddingLeft = node.depth * indentSize + 8;
 
               return (
