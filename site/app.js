@@ -253,7 +253,7 @@ function filterTree(nodes, term) {
   return nodes.map(filterNode).filter(Boolean);
 }
 
-const activeFilterMap = new Map(); // key -> { dim, val, key, node }
+const activeFilterMap = new Map(); // key -> { dim, val, key, path, node }
 
 function findNodeByKey(nodes, key) {
   for (const n of nodes) {
@@ -266,6 +266,64 @@ function findNodeByKey(nodes, key) {
   return null;
 }
 
+// Evaluates raw records matching the active multi-selection
+function getFilteredRecords() {
+  const config = datasets[currentDatasetKey];
+  const selectedItems = Array.from(activeFilterMap.values());
+  if (!selectedItems || selectedItems.length === 0) {
+    return config.records;
+  }
+
+  if (config.type === 'multi_dimension') {
+    return config.records.filter(record => {
+      // Record matches if it belongs to ANY selected branch
+      return selectedItems.some(item => {
+        if (item.path && item.path.length > 0) {
+          for (let i = 0; i < item.path.length; i++) {
+            const dim = config.dimensions[i];
+            if (String(record[dim] ?? '(Empty)') !== item.path[i]) {
+              return false;
+            }
+          }
+          return true;
+        }
+        return String(record[item.dim]) === String(item.val);
+      });
+    });
+  } else {
+    // Parent-Child mode: collect all matching IDs (including subtree)
+    const allowedIds = new Set();
+    for (const item of selectedItems) {
+      if (item.node) {
+        function collect(n) {
+          allowedIds.add(String(n.id || n.key));
+          if (n.children && n.children.length > 0) {
+            n.children.forEach(collect);
+          }
+        }
+        collect(item.node);
+      } else {
+        allowedIds.add(String(item.key));
+      }
+    }
+    return config.records.filter(r => allowedIds.has(String(r[config.idCol])));
+  }
+}
+
+// Compute aggregate metrics from a filtered list of records
+function computeFilteredMetrics(records, metrics) {
+  const result = {};
+  for (const m of metrics) {
+    if (m === 'profit_margin') {
+      const sum = records.reduce((acc, r) => acc + (Number(r[m]) || 0), 0);
+      result[m] = records.length > 0 ? sum / records.length : 0;
+    } else {
+      result[m] = records.reduce((acc, r) => acc + (Number(r[m]) || 0), 0);
+    }
+  }
+  return result;
+}
+
 // --- Table Rendering ---
 function renderTable() {
   const config = datasets[currentDatasetKey];
@@ -276,12 +334,15 @@ function renderTable() {
   // Multi-Filter badges update
   if (filterIndicatorEl) {
     if (activeFilterMap.size > 0) {
-      const chipsHTML = Array.from(activeFilterMap.values()).map(f => `
-        <div class="active-filter-chip">
-          <span>⚡ ${f.val}</span>
-          <button type="button" class="filter-chip-clear" onclick="removeSingleFilter('${f.key}')" title="Remove filter">✕</button>
-        </div>
-      `).join('');
+      const chipsHTML = Array.from(activeFilterMap.values()).map(f => {
+        const encKey = encodeURIComponent(f.key);
+        return `
+          <div class="active-filter-chip">
+            <span>⚡ ${f.val}</span>
+            <button type="button" class="filter-chip-clear" onclick="removeSingleFilter('${encKey}')" title="Remove filter">✕</button>
+          </div>
+        `;
+      }).join('');
 
       filterIndicatorEl.innerHTML = `
         <div class="active-filter-container">
@@ -321,6 +382,7 @@ function renderTable() {
       const isExpanded = expandedKeys.has(n.key) || currentSearchTerm.length > 0;
       const isFilterSelected = activeFilterMap.has(n.key);
       const indent = n.depth * 24;
+      const encKey = encodeURIComponent(n.key);
 
       bodyHTML += `
         <tr class="${isFilterSelected ? 'selected-filter-row' : ''}">
@@ -329,15 +391,15 @@ function renderTable() {
               type="checkbox"
               class="node-checkbox"
               ${isFilterSelected ? 'checked' : ''}
-              onclick="event.stopPropagation(); triggerCrossFilter('${n.dimension || 'Hierarchy'}', '${n.name.replace(/'/g, "\\'")}', '${n.key}')"
+              onclick="event.stopPropagation(); triggerCrossFilter('${encKey}')"
               title="${isFilterSelected ? 'Deselect' : 'Select'} ${n.name}"
             />
             ${hasChildren ? `
-              <span class="node-btn" onclick="toggleNode('${n.key}')">${isExpanded ? '−' : '+'}</span>
+              <span class="node-btn" onclick="toggleNode('${encKey}')">${isExpanded ? '−' : '+'}</span>
             ` : '<span style="display:inline-block; width:18px;"></span>'}
             <span
               class="node-name-link ${hasChildren ? 'node-parent' : ''} ${isFilterSelected ? 'node-filter-active' : ''}"
-              onclick="triggerCrossFilter('${n.dimension || 'Hierarchy'}', '${n.name.replace(/'/g, "\\'")}', '${n.key}')"
+              onclick="triggerCrossFilter('${encKey}')"
               title="Click to ${isFilterSelected ? 'remove from multi-filter' : 'add to multi-filter: ' + n.name}"
             >
               ${n.name}
@@ -357,7 +419,8 @@ function renderTable() {
   body.innerHTML = bodyHTML;
 }
 
-function toggleNode(key) {
+function toggleNode(keyOrEncoded) {
+  const key = decodeURIComponent(keyOrEncoded);
   if (expandedKeys.has(key)) {
     expandedKeys.delete(key);
   } else {
@@ -389,7 +452,7 @@ function handleSearch(val) {
   renderTable();
 }
 
-// Companion Charts Update Logic with Multi-Selection Aggregation
+// Companion Charts Update Logic with Accurate Multi-Selection Record Evaluation
 function updateCompanionCharts() {
   const config = datasets[currentDatasetKey];
   const kpiValEl = document.getElementById('kpiBigNumber');
@@ -403,8 +466,9 @@ function updateCompanionCharts() {
   const areaChartEl = document.getElementById('areaChartSvg');
 
   const selectedItems = Array.from(activeFilterMap.values());
-  const grandTotal = computeGrandTotal(currentTree, config.metrics);
+  const filteredRecords = getFilteredRecords();
   const primaryMetric = config.metrics[0];
+  const filteredMetrics = computeFilteredMetrics(filteredRecords, config.metrics);
 
   // 1. Update Broadcast Banner
   if (bannerEl) {
@@ -413,7 +477,7 @@ function updateCompanionCharts() {
       const labelText = selectedItems.map(it => it.val).join(', ');
       bannerEl.innerHTML = `
         <div>
-          <span style="color:#38bdf8;">⚡ Multi Cross-Filter Active (${selectedItems.length} selected):</span> Broadcasting <strong>[${labelText}]</strong> to 4 dashboard charts
+          <span style="color:#38bdf8;">⚡ Multi Cross-Filter Active (${selectedItems.length} selected):</span> Broadcasting <strong>[${labelText}]</strong> • Matching ${filteredRecords.length} records
         </div>
         <button type="button" class="btn-sm" style="background:#1e293b; color:#38bdf8; border:1px solid #334155; padding:2px 8px; font-size:11px;" onclick="clearActiveFilter()">Clear Filters ✕</button>
       `;
@@ -424,19 +488,17 @@ function updateCompanionCharts() {
 
   // 2. Update KPI Big Number & Sparkline
   if (kpiValEl && kpiLabelEl) {
-    let combinedVal = 0;
-    if (selectedItems.length === 0) {
-      combinedVal = grandTotal.metrics[primaryMetric] || 0;
-      kpiLabelEl.innerText = `Grand Total (${primaryMetric.replace(/_/g, ' ')})`;
-    } else if (selectedItems.length === 1) {
-      combinedVal = selectedItems[0].node ? (selectedItems[0].node.metrics[primaryMetric] || 0) : 0;
-      kpiLabelEl.innerText = `${selectedItems[0].val} (${primaryMetric.replace(/_/g, ' ')})`;
-    } else {
-      combinedVal = selectedItems.reduce((acc, it) => acc + (it.node ? (it.node.metrics[primaryMetric] || 0) : 0), 0);
-      kpiLabelEl.innerText = `${selectedItems.length} Selected Items Combined (${primaryMetric.replace(/_/g, ' ')})`;
-    }
-
+    const combinedVal = filteredMetrics[primaryMetric] || 0;
     kpiValEl.innerText = config.formatters[primaryMetric](combinedVal);
+
+    if (selectedItems.length === 0) {
+      kpiLabelEl.innerText = `Grand Total (${primaryMetric.replace(/_/g, ' ')}) • ${config.records.length} records`;
+    } else if (selectedItems.length === 1) {
+      kpiLabelEl.innerText = `${selectedItems[0].val} (${primaryMetric.replace(/_/g, ' ')}) • ${filteredRecords.length} records`;
+    } else {
+      const names = selectedItems.map(it => it.val).slice(0, 3).join(', ') + (selectedItems.length > 3 ? ` +${selectedItems.length - 3} more` : '');
+      kpiLabelEl.innerText = `${selectedItems.length} Filters (${names}) • ${filteredRecords.length} records`;
+    }
 
     if (sparklineEl) {
       const points = [
@@ -471,12 +533,15 @@ function updateCompanionCharts() {
         <div class="filter-status-tag">
           <span class="tag-head">⚡ ACTIVE MULTI-FILTER (${selectedItems.length})</span>
           <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
-            ${selectedItems.map(it => `
-              <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
-                <span><strong>${it.val}</strong> <small style="color:var(--text-dimmed);">(${it.dim})</small></span>
-                <button type="button" style="background:none; border:none; color:var(--orange-accent); cursor:pointer; font-weight:bold;" onclick="removeSingleFilter('${it.key}')" title="Remove filter">✕</button>
-              </div>
-            `).join('')}
+            ${selectedItems.map(it => {
+              const encKey = encodeURIComponent(it.key);
+              return `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
+                  <span><strong>${it.val}</strong> <small style="color:var(--text-dimmed);">(${it.dim})</small></span>
+                  <button type="button" style="background:none; border:none; color:var(--orange-accent); cursor:pointer; font-weight:bold;" onclick="removeSingleFilter('${encKey}')" title="Remove filter">✕</button>
+                </div>
+              `;
+            }).join('')}
           </div>
           <button type="button" class="btn-sm" style="margin-top:6px; padding:3px 8px; font-size:10px;" onclick="clearActiveFilter()">Clear All</button>
         </div>
@@ -491,6 +556,7 @@ function updateCompanionCharts() {
   // 4. Update Companion Bar Chart
   let itemsToDisplay = [];
   if (selectedItems.length > 1) {
+    // Show comparison between the selected entities
     itemsToDisplay = selectedItems.map(it => it.node).filter(Boolean);
   } else if (selectedItems.length === 1 && selectedItems[0].node) {
     const n = selectedItems[0].node;
@@ -506,8 +572,9 @@ function updateCompanionCharts() {
       const val = item.metrics[primaryMetric] || 0;
       const pct = Math.min(100, Math.max(8, (val / maxVal) * 100));
       const isItemSel = activeFilterMap.has(item.key);
+      const encKey = encodeURIComponent(item.key);
       barsHTML += `
-        <div class="bar-item ${isItemSel ? 'bar-selected' : ''}" onclick="triggerCrossFilter('${item.dimension || 'Sub-level'}', '${item.name.replace(/'/g, "\\'")}', '${item.key}')" style="cursor:pointer;" title="Click to toggle filter by ${item.name}">
+        <div class="bar-item ${isItemSel ? 'bar-selected' : ''}" onclick="triggerCrossFilter('${encKey}')" style="cursor:pointer;" title="Click to toggle filter by ${item.name}">
           <div class="bar-meta">
             <span>${isItemSel ? '✓ ' : ''}${item.name}</span>
             <span style="color:#cbd5e1; font-family:'Roboto Mono',monospace;">${config.formatters[primaryMetric](val)}</span>
@@ -571,17 +638,22 @@ function updateCompanionCharts() {
 
   // 6. Update Quarterly Area / Line Chart
   if (areaChartEl) {
-    let baseVal = 0;
-    if (selectedItems.length === 0) {
-      baseVal = grandTotal.metrics[primaryMetric] || 0;
-    } else if (selectedItems.length === 1 && selectedItems[0].node) {
-      baseVal = selectedItems[0].node.metrics[primaryMetric] || 0;
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+    let qValues = [];
+
+    if (currentDatasetKey === 'pnl') {
+      // Use exact Q1 / Q2 / Budget metrics from filtered P&L records
+      const q1 = filteredMetrics['q1_actual'] || 0;
+      const q2 = filteredMetrics['q2_actual'] || 0;
+      const budget = filteredMetrics['full_year_budget'] || 1;
+      const q3 = Math.max(0, (budget - q1 - q2) * 0.48);
+      const q4 = Math.max(0, (budget - q1 - q2) * 0.52);
+      qValues = [q1, q2, q3, q4];
     } else {
-      baseVal = selectedItems.reduce((acc, it) => acc + (it.node ? (it.node.metrics[primaryMetric] || 0) : 0), 0);
+      const baseVal = filteredMetrics[primaryMetric] || 0;
+      qValues = [baseVal * 0.21, baseVal * 0.24, baseVal * 0.27, baseVal * 0.28];
     }
 
-    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    const qValues = [baseVal * 0.21, baseVal * 0.24, baseVal * 0.27, baseVal * 0.28];
     const maxQ = Math.max(...qValues) * 1.15 || 1;
     const minQ = 0;
 
@@ -623,7 +695,8 @@ function updateCompanionCharts() {
   }
 }
 
-function triggerCrossFilter(dim, val, key) {
+function triggerCrossFilter(keyOrEncoded) {
+  const key = decodeURIComponent(keyOrEncoded);
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
 
@@ -631,7 +704,15 @@ function triggerCrossFilter(dim, val, key) {
     activeFilterMap.delete(key);
   } else {
     const node = findNodeByKey(currentTree, key);
-    activeFilterMap.set(key, { dim, val, key, node });
+    if (node) {
+      activeFilterMap.set(key, {
+        dim: node.dimension || 'Hierarchy',
+        val: node.name,
+        key: node.key,
+        path: node.path,
+        node
+      });
+    }
   }
 
   const selectedItems = Array.from(activeFilterMap.values());
@@ -662,7 +743,8 @@ function triggerCrossFilter(dim, val, key) {
   updateCompanionCharts();
 }
 
-function removeSingleFilter(key) {
+function removeSingleFilter(keyOrEncoded) {
+  const key = decodeURIComponent(keyOrEncoded);
   activeFilterMap.delete(key);
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
