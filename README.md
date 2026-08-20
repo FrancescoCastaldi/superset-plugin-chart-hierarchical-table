@@ -9,6 +9,17 @@ Un plugin di visualizzazione avanzato per **Apache Superset 6.1.0+** che impleme
 
 ---
 
+## 📸 Anteprima Grafica del Chart
+
+![Apache Superset Hierarchical Table Preview](docs/images/hierarchical_table_preview.jpg)
+
+> 💡 **Nota sull'Anteprima (Generata dalle configurazioni Backend & Frontend)**:  
+> *L'anteprima sopra illustra il rendering visivo del componente in Apache Superset 6.1.0 secondo le specifiche implementate: gerarchia ad albero a più livelli (`Americas > USA > Store...`), pulsanti di expand/collapse `+` / `−`, righe subtotali/roll-up calcolate automaticamente, riga Grand Total, toolbar di ricerca in-tree e formattazione monetaria con stile Ant Design v5.*
+>
+> 🌐 **Test Live Interattivo**: Puoi provare immediatamente il rendering e gli algoritmi di calcolo aprendo il file [`examples/interactive_preview.html`](examples/interactive_preview.html) in qualsiasi browser!
+
+---
+
 ## 🌟 Caratteristiche Principali
 
 ### 1. Gestione Gerarchica Dual-Mode (Backend & Frontend)

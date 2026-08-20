@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apache Superset 6.1.0 - Hierarchical Table Chart Live Interactive Preview</title>
+  <style>
+    :root {
+      --primary: #1890ff;
+      --primary-hover: #40a9ff;
+      --bg-header: #f5f7fa;
+      --border-color: #e8e8e8;
+      --text-main: #262626;
+      --text-secondary: #595959;
+      --row-hover: #e6f7ff;
+      --grand-total-bg: #f0f2f5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+      padding: 24px;
+      color: var(--text-main);
+    }
+
+    .preview-header {
+      background: white;
+      padding: 20px 24px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .preview-title h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f1f1f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      background: #e6f7ff;
+      color: #1890ff;
+      border: 1px solid #91d5ff;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: normal;
+    }
+
+    .badge-preview {
+      background: #f6ffed;
+      color: #52c41a;
+      border-color: #b7eb8f;
+    }
+
+    .control-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    select, input, button {
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    }
+
+    button {
+      background: white;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    button:hover {
+      background: #fafafa;
+      border-color: #b3b3b3;
+    }
+
+    button.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    button.primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-toolbar {
+      padding: 12px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .search-box {
+      width: 260px;
+    }
+
+    .table-wrapper {
+      max-height: 600px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--bg-header);
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    th.numeric {
+      text-align: right;
+    }
+
+    td {
+      padding: 9px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.15s;
+    }
+
+    td.numeric {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    tr:hover td {
+      background: var(--row-hover) !important;
+    }
+
+    .tree-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      background: white;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 8px;
+      user-select: none;
+    }
+
+    .tree-toggle:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .tree-spacer {
+      display: inline-block;
+      width: 18px;
+      margin-right: 8px;
+    }
+
+    .node-title {
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .node-title:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    .parent-node {
+      font-weight: 600;
+      color: #1f1f1f;
+    }
+
+    .grand-total-row {
+      background: var(--grand-total-bg);
+      font-weight: 700;
+      border-top: 2px solid #d9d9d9;
+      border-bottom: 2px solid #d9d9d9;
+    }
+
+    .grand-total-row td {
+      padding: 11px 16px;
+      color: #141414;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #333;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="preview-header">
+    <div class="preview-title">
+      <h1>
+        Hierarchical Table & Matrix Grid
+        <span class="badge">Superset 6.1.0</span>
+        <span class="badge badge-preview">Live Engine Preview</span>
+      </h1>
+    </div>
+
+    <div class="control-bar">
+      <label for="datasetSelect"><strong>Dataset:</strong></label>
+      <select id="datasetSelect" onchange="loadDataset(this.value)">
+        <option value="sales">Sales Geography (Multi-Dimension)</option>
+        <option value="org">Organization Chart (Parent-Child)</option>
+        <option value="pnl">Financial P&L (Parent-Child)</option>
+      </select>
+
+      <button onclick="handleExpandAll()">Expand All</button>
+      <button onclick="handleCollapseAll()">Collapse All</button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <div class="table-toolbar">
+      <input
+        type="text"
+        id="searchInput"
+        class="search-box"
+        placeholder="Search in hierarchy..."
+        oninput="handleSearch(this.value)"
+      />
+      <div style="font-size: 12px; color: #8c8c8c;">
+        Click on node name to trigger Superset Cross-Filter event
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="hierarchicalTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // --- Mock Datasets ---
+    const datasets = {
+      sales: {
+        type: 'multi_dimension',
+        dimensions: ['region', 'country', 'city', 'store_name'],
+        metrics: ['revenue', 'units_sold', 'cost'],
+        formatters: {
+          revenue: v => '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+          units_sold: v => Number(v).toLocaleString('en-US'),
+          cost: v => '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+        },
+        records: [
+          { region: 'EMEA', country: 'Italy', city: 'Milan', store_name: 'Duomo Flagship', revenue: 145000, units_sold: 420, cost: 82000 },
+          { region: 'EMEA', country: 'Italy', city: 'Milan', store_name: 'Centrale Store', revenue: 98000, units_sold: 310, cost: 54000 },
+          { region: 'EMEA', country: 'Italy', city: 'Rome', store_name: 'Colosseo Store', revenue: 122000, units_sold: 380, cost: 68000 },
+          { region: 'EMEA', country: 'Germany', city: 'Berlin', store_name: 'Mitte Store', revenue: 165000, units_sold: 490, cost: 91000 },
+          { region: 'EMEA', country: 'Germany', city: 'Munich', store_name: 'Marienplatz Store', revenue: 180000, units_sold: 520, cost: 99000 },
+          { region: 'EMEA', country: 'France', city: 'Paris', store_name: 'Champs-Elysees', revenue: 210000, units_sold: 610, cost: 115000 },
+          { region: 'APAC', country: 'Japan', city: 'Tokyo', store_name: 'Shibuya Hub', revenue: 240000, units_sold: 750, cost: 130000 },
+          { region: 'APAC', country: 'Japan', city: 'Osaka', store_name: 'Umeda Store', revenue: 135000, units_sold: 410, cost: 75000 },
+          { region: 'APAC', country: 'Singapore', city: 'Singapore', store_name: 'Marina Bay', revenue: 190000, units_sold: 580, cost: 105000 },
+          { region: 'Americas', country: 'USA', city: 'New York', store_name: '5th Avenue', revenue: 320000, units_sold: 920, cost: 175000 },
+          { region: 'Americas', country: 'USA', city: 'San Francisco', store_name: 'Market Street', revenue: 280000, units_sold: 810, cost: 150000 },
+          { region: 'Americas', country: 'Canada', city: 'Toronto', store_name: 'Downtown', revenue: 150000, units_sold: 440, cost: 82000 },
+        ]
+      },
+      org: {
+        type: 'parent_child',
+        idCol: 'employee_id',
+        parentIdCol: 'manager_id',
+        labelCol: 'name',
+        metrics: ['salary', 'budget_managed'],
+        formatters: {
+          salary: v => '$' + Number(v).toLocaleString('en-US'),
+          budget_managed: v => '$' + Number(v).toLocaleString('en-US'),
+        },
+        records: [
+          { employee_id: '1', manager_id: null, name: 'Elena Rossi (CEO)', salary: 220000, budget_managed: 5000000 },
+          { employee_id: '2', manager_id: '1', name: 'Marco Bianchi (CTO)', salary: 160000, budget_managed: 2000000 },
+          { employee_id: '3', manager_id: '1', name: 'Giulia Verdi (CMO)', salary: 150000, budget_managed: 1500000 },
+          { employee_id: '4', manager_id: '1', name: 'Davide Neri (CFO)', salary: 155000, budget_managed: 1000000 },
+          { employee_id: '5', manager_id: '2', name: 'Luca Ferrari (VP Eng)', salary: 125000, budget_managed: 800000 },
+          { employee_id: '6', manager_id: '2', name: 'Sara Romano (VP Cloud)', salary: 120000, budget_managed: 700000 },
+          { employee_id: '7', manager_id: '5', name: 'Alessandro Galli (Lead Data)', salary: 90000, budget_managed: 150000 },
+          { employee_id: '8', manager_id: '5', name: 'Chiara Costa (Lead Frontend)', salary: 88000, budget_managed: 120000 },
+        ]
+      },
+      pnl: {
+        type: 'parent_child',
+        idCol: 'account_code',
+        parentIdCol: 'parent_account_code',
+        labelCol: 'account_name',
+        metrics: ['q1_actual', 'q2_actual', 'full_year_budget'],
+        formatters: {
+          q1_actual: v => '€' + Number(v).toLocaleString('it-IT'),
+          q2_actual: v => '€' + Number(v).toLocaleString('it-IT'),
+          full_year_budget: v => '€' + Number(v).toLocaleString('it-IT'),
+        },
+        records: [
+          { account_code: '1000', parent_account_code: null, account_name: 'Ricavi Totali', q1_actual: 750000, q2_actual: 820000, full_year_budget: 3200000 },
+          { account_code: '1100', parent_account_code: '1000', account_name: 'Ricavi Prodotti SaaS', q1_actual: 500000, q2_actual: 560000, full_year_budget: 2200000 },
+          { account_code: '1200', parent_account_code: '1000', account_name: 'Servizi Professionali & Consulting', q1_actual: 250000, q2_actual: 260000, full_year_budget: 1000000 },
+          { account_code: '2000', parent_account_code: null, account_name: 'Costi Operativi (OPEX)', q1_actual: 420000, q2_actual: 450000, full_year_budget: 1800000 },
+          { account_code: '2100', parent_account_code: '2000', account_name: 'Personale & Payroll', q1_actual: 280000, q2_actual: 295000, full_year_budget: 1200000 },
+          { account_code: '2200', parent_account_code: '2000', account_name: 'Infrastruttura Cloud & SaaS', q1_actual: 85000, q2_actual: 92000, full_year_budget: 360000 },
+          { account_code: '2300', parent_account_code: '2000', account_name: 'Marketing & Growth', q1_actual: 55000, q2_actual: 63000, full_year_budget: 240000 },
+        ]
+      }
+    };
+
+    let currentDatasetKey = 'sales';
+    let currentTree = [];
+    let expandedKeys = new Set();
+    let currentSearchTerm = '';
+
+    // --- Core Algorithm Ported from TypeScript ---
+    function buildMultiDimensionTree(records, dimensions, metrics) {
+      const rootMap = new Map();
+      for (const record of records) {
+        let currentMap = rootMap;
+        const currentPath = [];
+        for (let i = 0; i < dimensions.length; i++) {
+          const dim = dimensions[i];
+          const val = String(record[dim] ?? '(Empty)');
+          currentPath.push(val);
+          const pathKey = currentPath.join(' > ');
+          const isLeaf = i === dimensions.length - 1;
+
+          if (!currentMap.has(val)) {
+            const node = {
+              key: pathKey,
+              name: val,
+              dimension: dim,
+              depth: i,
+              path: [...currentPath],
+              isLeaf,
+              metrics: {},
+              childrenMap: isLeaf ? null : new Map()
+            };
+            if (isLeaf) {
+              metrics.forEach(m => node.metrics[m] = Number(record[m]) || 0);
+            }
+            currentMap.set(val, node);
+          }
+          const curr = currentMap.get(val);
+          if (!isLeaf && curr.childrenMap) {
+            currentMap = curr.childrenMap;
+          }
+        }
+      }
+
+      function convert(map) {
+        const nodes = [];
+        for (const item of map.values()) {
+          const n = {
+            key: item.key,
+            name: item.name,
+            dimension: item.dimension,
+            depth: item.depth,
+            path: item.path,
+            isLeaf: item.isLeaf,
+            metrics: item.metrics,
+          };
+          if (item.childrenMap && item.childrenMap.size > 0) {
+            n.children = convert(item.childrenMap);
+          }
+          nodes.push(n);
+        }
+        return nodes;
+      }
+
+      const tree = convert(rootMap);
+      rollupMetrics(tree, metrics);
+      return tree;
+    }
+
+    function buildParentChildTree(records, idCol, parentIdCol, labelCol, metrics) {
+      const nodeMap = new Map();
+      const parentToChildren = new Map();
+      const allIds = new Set();
+
+      for (const r of records) {
+        const id = String(r[idCol]);
+        const pId = r[parentIdCol] ? String(r[parentIdCol]) : null;
+        const name = labelCol ? String(r[labelCol]) : id;
+        allIds.add(id);
+
+        const mValues = {};
+        metrics.forEach(m => mValues[m] = Number(r[m]) || 0);
+
+        nodeMap.set(id, {
+          key: id,
+          name,
+          depth: 0,
+          path: [name],
+          isLeaf: true,
+          metrics: mValues
+        });
+
+        const pKey = pId ?? '__ROOT__';
+        if (!parentToChildren.has(pKey)) parentToChildren.set(pKey, []);
+        parentToChildren.get(pKey).push(id);
+      }
+
+      const rootIds = [];
+      for (const r of records) {
+        const id = String(r[idCol]);
+        const pId = r[parentIdCol] ? String(r[parentIdCol]) : null;
+        if (!pId || !allIds.has(pId)) {
+          if (!rootIds.includes(id)) rootIds.push(id);
+        }
+      }
+
+      function assemble(id, depth, path) {
+        const node = nodeMap.get(id);
+        if (!node) return null;
+        node.depth = depth;
+        node.path = [...path, node.name];
+        const childIds = parentToChildren.get(id) || [];
+        if (childIds.length > 0) {
+          node.isLeaf = false;
+          node.children = childIds.map(cId => assemble(cId, depth + 1, node.path)).filter(Boolean);
+        }
+        return node;
+      }
+
+      const roots = rootIds.map(rId => assemble(rId, 0, [])).filter(Boolean);
+      rollupMetrics(roots, metrics);
+      return roots;
+    }
+
+    function rollupMetrics(nodes, metrics) {
+      for (const node of nodes) {
+        if (node.children && node.children.length > 0) {
+          rollupMetrics(node.children, metrics);
+          for (const m of metrics) {
+            node.metrics[m] = node.children.reduce((acc, c) => acc + (c.metrics[m] || 0), 0);
+          }
+        }
+      }
+    }
+
+    function computeGrandTotal(roots, metrics) {
+      const gMetrics = {};
+      for (const m of metrics) {
+        gMetrics[m] = roots.reduce((acc, r) => acc + (r.metrics[m] || 0), 0);
+      }
+      return {
+        key: '__grand_total__',
+        name: 'Grand Total',
+        depth: 0,
+        metrics: gMetrics
+      };
+    }
+
+    function filterTree(nodes, term) {
+      if (!term) return nodes;
+      const lower = term.toLowerCase();
+
+      function filterNode(n) {
+        const matches = n.name.toLowerCase().includes(lower);
+        let matchingChildren = [];
+        if (n.children) {
+          matchingChildren = n.children.map(filterNode).filter(Boolean);
+        }
+        if (matches || matchingChildren.length > 0) {
+          return {
+            ...n,
+            children: matchingChildren.length > 0 ? matchingChildren : n.children
+          };
+        }
+        return null;
+      }
+
+      return nodes.map(filterNode).filter(Boolean);
+    }
+
+    // --- UI Rendering ---
+    function renderTable() {
+      const config = datasets[currentDatasetKey];
+      const head = document.getElementById('tableHead');
+      const body = document.getElementById('tableBody');
+
+      // 1. Render Header
+      let headerHTML = '<tr><th>Hierarchy Tree</th>';
+      for (const m of config.metrics) {
+        headerHTML += `<th class="numeric">${m.replace('_', ' ').toUpperCase()}</th>`;
+      }
+      headerHTML += '</tr>';
+      head.innerHTML = headerHTML;
+
+      // 2. Filter data
+      const filtered = filterTree(currentTree, currentSearchTerm);
+      const grandTotal = computeGrandTotal(currentTree, config.metrics);
+
+      // 3. Render Grand Total
+      let bodyHTML = `
+        <tr class="grand-total-row">
+          <td>${grandTotal.name}</td>
+          ${config.metrics.map(m => `<td class="numeric">${config.formatters[m](grandTotal.metrics[m])}</td>`).join('')}
+        </tr>
+      `;
+
+      // 4. Flatten visible rows
+      function renderNodes(nodes) {
+        for (const n of nodes) {
+          const hasChildren = n.children && n.children.length > 0;
+          const isExpanded = expandedKeys.has(n.key) || currentSearchTerm.length > 0;
+          const indent = n.depth * 22;
+
+          bodyHTML += `
+            <tr>
+              <td style="padding-left: ${indent + 16}px;">
+                ${hasChildren ? `
+                  <span class="tree-toggle" onclick="toggleNode('${n.key}')">${isExpanded ? '−' : '+'}</span>
+                ` : '<span class="tree-spacer"></span>'}
+                <span class="node-title ${hasChildren ? 'parent-node' : ''}" onclick="triggerCrossFilter('${n.dimension || 'node'}', '${n.name}')">
+                  ${n.name}
+                </span>
+              </td>
+              ${config.metrics.map(m => `<td class="numeric">${config.formatters[m](n.metrics[m])}</td>`).join('')}
+            </tr>
+          `;
+
+          if (hasChildren && isExpanded) {
+            renderNodes(n.children);
+          }
+        }
+      }
+
+      renderNodes(filtered);
+      body.innerHTML = bodyHTML;
+    }
+
+    function toggleNode(key) {
+      if (expandedKeys.has(key)) {
+        expandedKeys.delete(key);
+      } else {
+        expandedKeys.add(key);
+      }
+      renderTable();
+    }
+
+    function handleExpandAll() {
+      function collect(nodes) {
+        for (const n of nodes) {
+          if (n.children) {
+            expandedKeys.add(n.key);
+            collect(n.children);
+          }
+        }
+      }
+      collect(currentTree);
+      renderTable();
+    }
+
+    function handleCollapseAll() {
+      expandedKeys.clear();
+      renderTable();
+    }
+
+    function handleSearch(val) {
+      currentSearchTerm = val.trim();
+      renderTable();
+    }
+
+    function triggerCrossFilter(dim, val) {
+      const toast = document.getElementById('toast');
+      toast.innerText = `⚡ [Superset Event] Emitted Cross-Filter: { "${dim}": ["${val}"] }`;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function loadDataset(key) {
+      currentDatasetKey = key;
+      const cfg = datasets[key];
+      if (cfg.type === 'multi_dimension') {
+        currentTree = buildMultiDimensionTree(cfg.records, cfg.dimensions, cfg.metrics);
+      } else {
+        currentTree = buildParentChildTree(cfg.records, cfg.idCol, cfg.parentIdCol, cfg.labelCol, cfg.metrics);
+      }
+      expandedKeys.clear();
+      // Default: expand level 0
+      currentTree.forEach(n => expandedKeys.add(n.key));
+      renderTable();
+    }
+
+    // Initialize
+    loadDataset('sales');
+  </script>
+</body>
+</html>
