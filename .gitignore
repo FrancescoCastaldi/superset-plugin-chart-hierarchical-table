@@ -55,7 +55,22 @@ Thumbs.db
 .env.local
 .env.*.local
 
-# AI Agent Context & Memory Files
+# AI Assistants, Agent Context & Memory Files
+.agents/
 AGENTS.md
 CLAUDE.md
+.claude/
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.copilot/
+.aider*
+.continue/
+.gemini/
+.antigravity/
+.cortex/
+.chat/
+*.prompt.md
+*.chat
 
