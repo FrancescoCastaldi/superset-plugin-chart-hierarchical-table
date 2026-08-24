@@ -101,7 +101,7 @@ def patch_main_preset(preset_file: Path):
     with open(preset_file, "r", encoding="utf-8") as f:
         content = f.read()
 
-    import_stmt = "import { HierarchicalTableChartPlugin } from 'superset-plugin-chart-hierarchical-table';"
+    import_stmt = "import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';"
     register_stmt = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register(),"
 
     if import_stmt in content or "HierarchicalTableChartPlugin" in content:

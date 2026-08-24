@@ -109,7 +109,7 @@ if ($PythonCmd) {
         }
 
         $Content = Get-Content -Raw -Path $PresetPath
-        $ImportStmt = "import { HierarchicalTableChartPlugin } from 'superset-plugin-chart-hierarchical-table';"
+        $ImportStmt = "import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';"
         $RegStmt = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register(),"
 
         if (-not ($Content.Contains("HierarchicalTableChartPlugin"))) {
