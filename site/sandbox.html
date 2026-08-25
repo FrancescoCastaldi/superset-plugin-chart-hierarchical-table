@@ -66,8 +66,12 @@
           <div class="section-tag">Live Superset 6.1.0 Dashboard Simulator</div>
           <h2>Simulatore Dashboard con Cross-Filtering Nativo</h2>
           <p>
-            Interagisci con la griglia gerarchica e osserva come cliccando su un qualsiasi nodo o riga,
-            <strong>tutti i grafici companion della dashboard si aggiornano e filtrano in tempo reale</strong>
+            Interagisci con la griglia gerarchica e osserva come cliccando su un qualsiasi nodo o
+            riga,
+            <strong
+              >tutti i grafici companion della dashboard si aggiornano e filtrano in tempo
+              reale</strong
+            >
             tramite il protocollo nativo <code>setDataMask</code>.
           </p>
         </div>
@@ -170,11 +174,58 @@
               </div>
 
               <div class="filter-box-item">
+                <label>ROLLUP AGGREGATION</label>
+                <select
+                  id="aggModeSelect"
+                  class="select-control"
+                  style="width: 100%"
+                  onchange="handleAggModeChange(this.value)"
+                >
+                  <option value="sum">SUM (Standard Rollup)</option>
+                  <option value="avg">AVG (Average of Sub-tree)</option>
+                  <option value="min">MIN (Minimum Value)</option>
+                  <option value="max">MAX (Peak Value)</option>
+                </select>
+              </div>
+
+              <div class="filter-box-item">
+                <label>VARIANCE / PERIOD DELTA</label>
+                <div style="display: flex; gap: 6px; align-items: center">
+                  <button
+                    id="toggleDeltaBtn"
+                    class="btn-sm"
+                    style="flex: 1; text-align: center"
+                    onclick="toggleVarianceDelta()"
+                  >
+                    📈 YoY Delta (%): OFF
+                  </button>
+                </div>
+              </div>
+
+              <div class="filter-box-item">
+                <label>DATA EXPORT</label>
+                <button
+                  class="btn-sm"
+                  style="
+                    width: 100%;
+                    background: rgba(59, 130, 246, 0.15);
+                    border-color: var(--blue-accent);
+                    color: #93c5fd;
+                    font-weight: 600;
+                  "
+                  onclick="exportHierarchyCsv()"
+                >
+                  📥 Export CSV (Hierarchical)
+                </button>
+              </div>
+
+              <div class="filter-box-item">
                 <label>INTERACTIVE FEATURES</label>
                 <div style="font-size: 11px; color: var(--text-dimmed); line-height: 1.6">
-                  • Click any node name to cross-filter.<br />
+                  • Click column headers to <strong>Sort Hierarchically</strong>.<br />
+                  • Click any node name to <strong>Cross-Filter</strong>.<br />
                   • Click <code>+</code> / <code>−</code> to expand/collapse.<br />
-                  • Click sub-level bars to drill down.
+                  • Toggle YoY Delta to see growth variances.
                 </div>
               </div>
             </div>
@@ -192,6 +243,7 @@
                       >
                       <button class="btn-sm" onclick="handleExpandAll()">Expand All</button>
                       <button class="btn-sm" onclick="handleCollapseAll()">Collapse All</button>
+                      <div id="activeSortContainer" style="display: inline-flex"></div>
                       <div id="activeFilterContainer"></div>
                     </div>
 
@@ -229,9 +281,7 @@
                     >
                       Grand Total (Revenue)
                     </div>
-                    <div
-                      style="display: flex; align-items: center; justify-content: space-between"
-                    >
+                    <div style="display: flex; align-items: center; justify-content: space-between">
                       <span class="kpi-delta-tag">↑ +18.4% YTD</span>
                       <span style="font-size: 11px; color: var(--text-dimmed)"
                         >vs previous period</span

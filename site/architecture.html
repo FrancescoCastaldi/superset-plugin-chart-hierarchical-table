@@ -66,8 +66,9 @@
           <div class="section-tag">System Architecture</div>
           <h2>Come Funziona il Concetto di Gerarchia</h2>
           <p>
-            StratumTree implementa un'architettura dual-engine progettata per scalare su dataset complessi,
-            supportando sia gerarchie categoriche a livelli fissi che grafi ricorsivi genitore-figlio.
+            StratumTree implementa un'architettura dual-engine progettata per scalare su dataset
+            complessi, supportando sia gerarchie categoriche a livelli fissi che grafi ricorsivi
+            genitore-figlio.
           </p>
         </div>
 
@@ -87,15 +88,35 @@
                 1. Multi-Dimension Level Grouping
               </h3>
             </div>
-            <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.6">
-              Ideale per dati categorici dove ogni riga rappresenta un record con granularità a più livelli sequenziali
-              (es. <code>Region &gt; Country &gt; City &gt; Store</code> o <code>Department &gt; Category &gt; Product</code>).
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 13.5px;
+                margin-bottom: 18px;
+                line-height: 1.6;
+              "
+            >
+              Ideale per dati categorici dove ogni riga rappresenta un record con granularità a più
+              livelli sequenziali (es. <code>Region &gt; Country &gt; City &gt; Store</code> o
+              <code>Department &gt; Category &gt; Product</code>).
             </p>
             <ul class="milestone-list">
-              <li><span class="check-icon">✓</span> Query SQL generate automaticamente con sequenza di <code>GROUP BY</code></li>
-              <li><span class="check-icon">✓</span> Costruzione albero via `buildMultiDimensionTree` (complessità O(N))</li>
-              <li><span class="check-icon">✓</span> Subtotali intermedi calcolati in post-order traversal per ogni livello</li>
-              <li><span class="check-icon">✓</span> In-Tree Search con conservazione del path di antenati fino alla foglia</li>
+              <li>
+                <span class="check-icon">✓</span> Query SQL generate automaticamente con sequenza di
+                <code>GROUP BY</code>
+              </li>
+              <li>
+                <span class="check-icon">✓</span> Costruzione albero via `buildMultiDimensionTree`
+                (complessità O(N))
+              </li>
+              <li>
+                <span class="check-icon">✓</span> Subtotali intermedi calcolati in post-order
+                traversal per ogni livello
+              </li>
+              <li>
+                <span class="check-icon">✓</span> In-Tree Search con conservazione del path di
+                antenati fino alla foglia
+              </li>
             </ul>
           </div>
 
@@ -107,15 +128,35 @@
                 2. Parent-Child Adjacency Graph
               </h3>
             </div>
-            <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.6">
-              Ideale per strutture ricorsive ad albero con profondità variabile e non vincolata
-              (es. Organigrammi aziendali <code>employee_id &rarr; manager_id</code> o Piani dei Conti Finanziari P&amp;L).
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 13.5px;
+                margin-bottom: 18px;
+                line-height: 1.6;
+              "
+            >
+              Ideale per strutture ricorsive ad albero con profondità variabile e non vincolata (es.
+              Organigrammi aziendali <code>employee_id &rarr; manager_id</code> o Piani dei Conti
+              Finanziari P&amp;L).
             </p>
             <ul class="milestone-list">
-              <li><span class="check-icon">✓</span> Risoluzione grafi di adiacenza con rilevamento e prevenzione cicli</li>
-              <li><span class="check-icon">✓</span> Calcolo dinamico di profondità <code>depth</code> e percorsi <code>path</code></li>
-              <li><span class="check-icon">✓</span> Query SQL Recursive CTE per motori compatibili (Postgres, Trino, Snowflake, DuckDB)</li>
-              <li><span class="check-icon">✓</span> Aggregazione bottom-up scalabile senza esplosione del piano query</li>
+              <li>
+                <span class="check-icon">✓</span> Risoluzione grafi di adiacenza con rilevamento e
+                prevenzione cicli
+              </li>
+              <li>
+                <span class="check-icon">✓</span> Calcolo dinamico di profondità
+                <code>depth</code> e percorsi <code>path</code>
+              </li>
+              <li>
+                <span class="check-icon">✓</span> Query SQL Recursive CTE per motori compatibili
+                (Postgres, Trino, Snowflake, DuckDB)
+              </li>
+              <li>
+                <span class="check-icon">✓</span> Aggregazione bottom-up scalabile senza esplosione
+                del piano query
+              </li>
             </ul>
           </div>
         </div>
@@ -128,14 +169,45 @@
               Protocollo di Cross-Filtering Nativo Apache Superset 6.1.0 (`setDataMask`)
             </h3>
           </div>
-          <p style="color: var(--text-muted); font-size: 13.5px; line-height: 1.7; margin-bottom: 16px">
-            StratumTree interagisce direttamente con l'Event Bus di Superset. Quando l'utente clicca su un nodo intermedio
-            o su una riga foglia, il plugin costruisce un payload <code>extraFormData</code> contenente un filtro <code>IN</code>
-            con i valori selezionati, trasmettendolo istantaneamente a tutti i chart della dashboard tramite la callback <code>setDataMask</code>.
+          <p
+            style="
+              color: var(--text-muted);
+              font-size: 13.5px;
+              line-height: 1.7;
+              margin-bottom: 16px;
+            "
+          >
+            StratumTree interagisce direttamente con l'Event Bus di Superset. Quando l'utente clicca
+            su un nodo intermedio o su una riga foglia, il plugin costruisce un payload
+            <code>extraFormData</code> contenente un filtro <code>IN</code> con i valori
+            selezionati, trasmettendolo istantaneamente a tutti i chart della dashboard tramite la
+            callback <code>setDataMask</code>.
           </p>
-          <div style="background: var(--bg-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px">
-            <span style="font-size: 11px; color: var(--text-dimmed); font-family: 'Roboto Mono', monospace">Esempio Payload Emesso su Click:</span>
-            <pre style="color: #a7f3d0; font-family: 'Roboto Mono', monospace; font-size: 12px; margin-top: 8px; overflow-x: auto"><code>{
+          <div
+            style="
+              background: var(--bg-inset);
+              border: 1px solid var(--border);
+              border-radius: var(--radius-md);
+              padding: 16px;
+            "
+          >
+            <span
+              style="
+                font-size: 11px;
+                color: var(--text-dimmed);
+                font-family: 'Roboto Mono', monospace;
+              "
+              >Esempio Payload Emesso su Click:</span
+            >
+            <pre
+              style="
+                color: #a7f3d0;
+                font-family: 'Roboto Mono', monospace;
+                font-size: 12px;
+                margin-top: 8px;
+                overflow-x: auto;
+              "
+            ><code>{
   "extraFormData": {
     "filters": [
       { "col": "region", "op": "IN", "val": ["Americas", "EMEA"] }
@@ -149,6 +221,52 @@
           </div>
         </div>
 
+        <!-- Section: Advanced Rollup & Sorting Engines -->
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+          "
+        >
+          <!-- Feature 1: Hierarchical Sort -->
+          <div class="companion-card" style="padding: 28px">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px">
+              <span style="font-size: 24px">🔃</span>
+              <h3 style="color: var(--blue-accent); font-size: 18px">
+                Ordinamento Gerarchico In-Tree
+              </h3>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 12px">
+              A differenza delle tabelle piatte tradizionali che disperdono le righe su sort, StratumTree riordina i nodi figli
+              <strong>all'interno di ciascun ramo genitore</strong> ricorsivamente, preservando l'integrità dell'albero.
+            </p>
+            <ul class="milestone-list">
+              <li><span class="check-icon">✓</span> Algoritmo ricorsivo O(N log N) isolato per sotto-rami</li>
+              <li><span class="check-icon">✓</span> Supporto ordinamento crescente/decrescente su qualsiasi metrica</li>
+            </ul>
+          </div>
+
+          <!-- Feature 2: Variance Delta & CSV Export -->
+          <div class="companion-card" style="padding: 28px">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px">
+              <span style="font-size: 24px">📥</span>
+              <h3 style="color: #4ade80; font-size: 18px">
+                Motore Variance Δ % &amp; Esportazione CSV
+              </h3>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 12px">
+              Calcolo dinamico di scostamenti percentuali Period-over-Period (YoY) ed esportatore CSV nativo con indentazione
+              a spazi, percorsi completi e subtotali intermedi inclusi.
+            </p>
+            <ul class="milestone-list">
+              <li><span class="check-icon">✓</span> Badge delta colorati con indicatori grafici <code>▲ / ▼</code></li>
+              <li><span class="check-icon">✓</span> Download immediato con codifica UTF-8 BOM per Excel</li>
+            </ul>
+          </div>
+        </div>
+
         <!-- Section: SQL CTE Pattern -->
         <div class="companion-card" style="padding: 32px">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px">
@@ -158,10 +276,25 @@
             </h3>
           </div>
           <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 14px">
-            Per i dataset Parent-Child su larga scala, puoi eseguire direttamente una CTE ricorsiva per pre-calcolare profondità e percorsi:
+            Per i dataset Parent-Child su larga scala, puoi eseguire direttamente una CTE ricorsiva
+            per pre-calcolare profondità e percorsi:
           </p>
-          <div style="background: var(--bg-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px">
-            <pre style="color: #cbd5e1; font-family: 'Roboto Mono', monospace; font-size: 12px; overflow-x: auto"><code>WITH RECURSIVE HierarchyCTE AS (
+          <div
+            style="
+              background: var(--bg-inset);
+              border: 1px solid var(--border);
+              border-radius: var(--radius-md);
+              padding: 16px;
+            "
+          >
+            <pre
+              style="
+                color: #cbd5e1;
+                font-family: 'Roboto Mono', monospace;
+                font-size: 12px;
+                overflow-x: auto;
+              "
+            ><code>WITH RECURSIVE HierarchyCTE AS (
   -- Anchor Member: Radici (Level 0)
   SELECT id, parent_id, name, amount, 0 AS depth, CAST(name AS VARCHAR(1000)) AS path
   FROM financial_accounts

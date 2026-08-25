@@ -213,6 +213,63 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'enableHierarchicalSort',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Enable Hierarchical In-Tree Sorting'),
+              renderTrigger: true,
+              default: true,
+              description: t(
+                'Allow sorting tree nodes within their respective parent branch by clicking metric column headers.',
+              ),
+            },
+          },
+          {
+            name: 'showVarianceDelta',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Show Period-over-Period Variance (Δ %)'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Display YoY/Period growth delta badges next to numeric metric values.',
+              ),
+            },
+          },
+        ],
+        [
+          {
+            name: 'enableExport',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Enable CSV / Excel Hierarchy Export'),
+              renderTrigger: true,
+              default: true,
+              description: t(
+                'Show export button to download hierarchy with preserved levels and subtotals.',
+              ),
+            },
+          },
+          {
+            name: 'aggregationMode',
+            config: {
+              type: 'SelectControl',
+              label: t('Rollup Aggregation Function'),
+              default: 'sum',
+              renderTrigger: false,
+              choices: [
+                ['sum', t('SUM (Add Subtotals)')],
+                ['avg', t('AVG (Mean of Children)')],
+                ['min', t('MIN (Minimum Value)')],
+                ['max', t('MAX (Maximum Value)')],
+                ['weighted_avg', t('Weighted Average / Ratio')],
+              ],
+              description: t('Default aggregation algorithm for calculating intermediate parent node subtotals.'),
+            },
+          },
+        ],
+        [
+          {
             name: 'emit_filter',
             config: {
               type: 'CheckboxControl',
