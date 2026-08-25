@@ -804,7 +804,7 @@ function attachVarianceDeltas(nodes, metrics) {
         hash |= 0;
       }
       const basePct = ((Math.abs(hash) % 360) - 120) / 10; // -12.0% to +24.0%
-      const finalDelta = (basePct * grainMult) + compShift;
+      const finalDelta = basePct * grainMult + compShift;
       n.deltas[m] = finalDelta;
     }
     if (n.children && n.children.length > 0) {

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional, Set, Union
 import pandas as pd
 
 
@@ -8,14 +8,22 @@ def resolve_parent_child_hierarchy(
     parent_id_col: str,
     label_col: Optional[str],
     metrics: List[str],
-    agg_func: str = "sum"
+    agg_func: Union[str, Dict[str, str]] = "sum",
+    sort_metric: Optional[str] = None,
+    sort_ascending: bool = False,
+    prior_period_df: Optional[pd.DataFrame] = None
 ) -> List[Dict[str, Any]]:
     """
     Transforms a parent-child adjacency list DataFrame into a nested tree structure
-    with rolled up metrics and depth calculation.
+    with rolled up metrics, depth calculation, hierarchical sorting, and period-over-period variance.
     """
     if df.empty or id_col not in df.columns:
         return []
+
+    def get_agg_for_metric(m: str) -> str:
+        if isinstance(agg_func, dict):
+            return agg_func.get(m, "sum").lower()
+        return agg_func.lower()
 
     node_dict: Dict[str, Dict[str, Any]] = {}
     parent_to_children: Dict[Optional[str], List[str]] = {}
@@ -51,6 +59,7 @@ def resolve_parent_child_hierarchy(
             "isLeaf": True,
             "metrics": metric_vals,
             "subtotals": dict(metric_vals),
+            "deltas": {},
             "children": [],
         }
 
@@ -58,13 +67,9 @@ def resolve_parent_child_hierarchy(
             parent_to_children[parent_id] = []
         parent_to_children[parent_id].append(node_id)
 
-    # Roots are nodes whose parent_id is None or not present in all_ids
-    root_ids = [nid for nid in all_ids if (nid not in node_dict or parent_to_children.get(nid) is None and any(nid in children for p, children in parent_to_children.items() if p is None or p not in all_ids))]
-    
-    # Simpler root detection:
+    # Root detection:
     root_ids = []
     for nid, node_data in node_dict.items():
-        # Find if this node has a parent in all_ids
         is_root = True
         for p, children in parent_to_children.items():
             if p in all_ids and nid in children:
@@ -90,19 +95,28 @@ def resolve_parent_child_hierarchy(
                 child_node = assemble(cid, depth + 1, node["path"], set(visited))
                 if child_node:
                     children.append(child_node)
+
+            # Apply in-tree sort to children
+            if sort_metric:
+                def sort_key(c: Dict[str, Any]):
+                    val = c.get("metrics", {}).get(sort_metric)
+                    return (val is not None, val if val is not None else float('-inf'))
+                children.sort(key=sort_key, reverse=not sort_ascending)
+
             node["children"] = children
 
             # Rollup metrics from children
             for m in metrics:
                 child_vals = [c["metrics"][m] for c in children if c["metrics"].get(m) is not None]
                 if child_vals:
-                    if agg_func == "sum":
+                    func_name = get_agg_for_metric(m)
+                    if func_name == "sum":
                         rolled = sum(child_vals)
-                    elif agg_func == "avg":
+                    elif func_name in ("avg", "mean"):
                         rolled = sum(child_vals) / len(child_vals)
-                    elif agg_func == "min":
+                    elif func_name == "min":
                         rolled = min(child_vals)
-                    elif agg_func == "max":
+                    elif func_name == "max":
                         rolled = max(child_vals)
                     else:
                         rolled = sum(child_vals)
@@ -112,6 +126,23 @@ def resolve_parent_child_hierarchy(
             node["isLeaf"] = True
             node.pop("children", None)
 
+        # Calculate Period Deltas if prior_period_df provided
+        deltas: Dict[str, Optional[Dict[str, float]]] = {}
+        if prior_period_df is not None and not prior_period_df.empty and id_col in prior_period_df.columns:
+            prior_match = prior_period_df[prior_period_df[id_col].astype(str) == nid]
+            for m in metrics:
+                curr_val = node["metrics"].get(m)
+                if curr_val is not None and m in prior_match.columns and not prior_match.empty:
+                    prev_val = float(prior_match[m].sum())
+                    diff = curr_val - prev_val
+                    pct_change = (diff / prev_val * 100.0) if prev_val != 0 else 0.0
+                    deltas[m] = {
+                        "diff": diff,
+                        "pct_change": pct_change,
+                        "prev_val": prev_val,
+                    }
+        node["deltas"] = deltas
+
         return node
 
     root_nodes = []
@@ -120,4 +151,12 @@ def resolve_parent_child_hierarchy(
         if assembled:
             root_nodes.append(assembled)
 
+    # Sort root nodes
+    if sort_metric:
+        def root_sort_key(r: Dict[str, Any]):
+            val = r.get("metrics", {}).get(sort_metric)
+            return (val is not None, val if val is not None else float('-inf'))
+        root_nodes.sort(key=root_sort_key, reverse=not sort_ascending)
+
     return root_nodes
+
