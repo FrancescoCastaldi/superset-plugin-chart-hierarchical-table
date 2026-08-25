@@ -877,6 +877,185 @@ function updateDeltaButtonLabel() {
   }
 }
 
+const activeFilterMap = new Map(); // key -> { dim, val, key, path, node }
+let sortState = { col: null, ascending: false };
+let showVarianceDelta = false;
+let aggregationMode = 'sum';
+
+function findNodeByKey(nodes, key) {
+  for (const n of nodes) {
+    if (n.key === key) return n;
+    if (n.children && n.children.length > 0) {
+      const found = findNodeByKey(n.children, key);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// Evaluates raw records matching the active multi-selection
+function getFilteredRecords() {
+  const config = datasets[currentDatasetKey];
+  const selectedItems = Array.from(activeFilterMap.values());
+  if (!selectedItems || selectedItems.length === 0) {
+    return config.records;
+  }
+
+  if (config.type === 'multi_dimension') {
+    return config.records.filter(record => {
+      return selectedItems.some(item => {
+        if (item.path && item.path.length > 0) {
+          for (let i = 0; i < item.path.length; i++) {
+            const dim = config.dimensions[i];
+            if (String(record[dim] ?? '(Empty)') !== item.path[i]) {
+              return false;
+            }
+          }
+          return true;
+        }
+        return String(record[item.dim]) === String(item.val);
+      });
+    });
+  } else {
+    // Parent-Child mode: collect all matching IDs (including subtree)
+    const allowedIds = new Set();
+    for (const item of selectedItems) {
+      if (item.node) {
+        function collect(n) {
+          allowedIds.add(String(n.id || n.key));
+          if (n.children && n.children.length > 0) {
+            n.children.forEach(collect);
+          }
+        }
+        collect(item.node);
+      } else {
+        allowedIds.add(String(item.key));
+      }
+    }
+    return config.records.filter(r => allowedIds.has(String(r[config.idCol])));
+  }
+}
+
+// Compute aggregate metrics from a filtered list of records
+function computeFilteredMetrics(records, metrics) {
+  const result = {};
+  for (const m of metrics) {
+    if (m === 'profit_margin' || aggregationMode === 'avg') {
+      const sum = records.reduce((acc, r) => acc + (Number(r[m]) || 0), 0);
+      result[m] = records.length > 0 ? sum / records.length : 0;
+    } else if (aggregationMode === 'min') {
+      result[m] = records.length > 0 ? Math.min(...records.map(r => Number(r[m]) || 0)) : 0;
+    } else if (aggregationMode === 'max') {
+      result[m] = records.length > 0 ? Math.max(...records.map(r => Number(r[m]) || 0)) : 0;
+    } else {
+      result[m] = records.reduce((acc, r) => acc + (Number(r[m]) || 0), 0);
+    }
+  }
+  return result;
+}
+
+// Hierarchical Recursive In-Tree Sorting
+function sortTreeRecursively(nodes, col, ascending = false) {
+  nodes.sort((a, b) => {
+    const valA = a.metrics[col] !== undefined ? a.metrics[col] : 0;
+    const valB = b.metrics[col] !== undefined ? b.metrics[col] : 0;
+    return ascending ? valA - valB : valB - valA;
+  });
+  for (const n of nodes) {
+    if (n.children && n.children.length > 0) {
+      sortTreeRecursively(n.children, col, ascending);
+    }
+  }
+}
+
+function computeGrandTotal(roots, metrics) {
+  const gMetrics = {};
+  for (const m of metrics) {
+    if (m === 'profit_margin' || aggregationMode === 'avg') {
+      const sum = roots.reduce((acc, r) => acc + (r.metrics[m] || 0), 0);
+      gMetrics[m] = sum / (roots.length || 1);
+    } else if (aggregationMode === 'min') {
+      gMetrics[m] = Math.min(...roots.map(r => r.metrics[m] || 0));
+    } else if (aggregationMode === 'max') {
+      gMetrics[m] = Math.max(...roots.map(r => r.metrics[m] || 0));
+    } else {
+      gMetrics[m] = roots.reduce((acc, r) => acc + (r.metrics[m] || 0), 0);
+    }
+  }
+  return {
+    key: '__grand_total__',
+    name: 'Grand Total (All Records)',
+    depth: 0,
+    metrics: gMetrics,
+  };
+}
+
+function filterTree(nodes, term) {
+  if (!term) return nodes;
+  const lower = term.toLowerCase();
+
+  function filterNode(n) {
+    const matches = n.name.toLowerCase().includes(lower);
+    let matchingChildren = [];
+    if (n.children) {
+      matchingChildren = n.children.map(filterNode).filter(Boolean);
+    }
+    if (matches || matchingChildren.length > 0) {
+      return {
+        ...n,
+        children: matchingChildren.length > 0 ? matchingChildren : n.children,
+      };
+    }
+    return null;
+  }
+
+  return nodes.map(filterNode).filter(Boolean);
+}
+
+// Column Sorting Toggle Handler
+function handleColumnSort(colKey) {
+  if (sortState.col === colKey) {
+    if (!sortState.ascending) {
+      sortState.ascending = true;
+    } else {
+      sortState.col = null;
+      sortState.ascending = false;
+    }
+  } else {
+    sortState.col = colKey;
+    sortState.ascending = false;
+  }
+
+  rebuildActiveTree();
+
+  const logEl = document.getElementById('consoleLog');
+  const timestamp = new Date().toLocaleTimeString();
+  if (logEl) {
+    if (sortState.col) {
+      logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> 🔃 <strong>Hierarchical Sort Applied:</strong> <code>${sortState.col}</code> (${sortState.ascending ? 'Ascending ▲' : 'Descending ▼'}) — Subtree branches sorted preserving hierarchy`;
+    } else {
+      logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Hierarchical Sort</strong>`;
+    }
+  }
+}
+
+function clearSort() {
+  sortState.col = null;
+  sortState.ascending = false;
+  rebuildActiveTree();
+}
+
+function handleAggModeChange(newMode) {
+  aggregationMode = newMode;
+  rebuildActiveTree();
+
+  const logEl = document.getElementById('consoleLog');
+  const timestamp = new Date().toLocaleTimeString();
+  if (logEl) {
+    logEl.innerHTML = `<span style="color:#a855f7;">[${timestamp}]</span> 🧮 <strong>Rollup Aggregation Updated:</strong> <code>${newMode.toUpperCase()}</code> for all parent rollup nodes`;
+  }
+}
+
 function rebuildActiveTree() {
   const cfg = datasets[currentDatasetKey];
   if (cfg.type === 'multi_dimension') {
