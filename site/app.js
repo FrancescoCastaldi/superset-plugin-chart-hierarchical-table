@@ -1690,7 +1690,8 @@ let isEditMode = false;
 function updateFilterCountBadge() {
   const badgeEl = document.getElementById('filterCountBadge');
   if (badgeEl) {
-    const totalActive = activeFilterMap.size + (showVarianceDelta ? 1 : 0) + (sortState.col ? 1 : 0);
+    const totalActive =
+      activeFilterMap.size + (showVarianceDelta ? 1 : 0) + (sortState.col ? 1 : 0);
     badgeEl.innerText = totalActive;
   }
 }
@@ -1840,4 +1841,3 @@ document.addEventListener('DOMContentLoaded', () => {
   loadDataset(currentDatasetKey || 'sales');
   updateFilterCountBadge();
 });
-
