@@ -1136,6 +1136,7 @@ function exportHierarchyCsv() {
 
 // --- Table Rendering ---
 function renderTable() {
+  updateFilterCountBadge();
   const config = datasets[currentDatasetKey];
   const head = document.getElementById('tableHead');
   const body = document.getElementById('tableBody');
@@ -1682,7 +1683,161 @@ function copyCode() {
   });
 }
 
+// --- Top Nav Bar Actions (Filters Toggle, Edit Mode, Save) ---
+let isFilterSidebarOpen = true;
+let isEditMode = false;
+
+function updateFilterCountBadge() {
+  const badgeEl = document.getElementById('filterCountBadge');
+  if (badgeEl) {
+    const totalActive = activeFilterMap.size + (showVarianceDelta ? 1 : 0) + (sortState.col ? 1 : 0);
+    badgeEl.innerText = totalActive;
+  }
+}
+
+function toggleFilterSidebar() {
+  isFilterSidebarOpen = !isFilterSidebarOpen;
+  const sidebar = document.querySelector('.superset-sidebar-filters');
+  const layout = document.querySelector('.dashboard-body-layout');
+  const btn = document.getElementById('btnToggleFilters');
+
+  if (sidebar && layout) {
+    if (isFilterSidebarOpen) {
+      sidebar.classList.remove('collapsed');
+      layout.classList.remove('full-width');
+      if (btn) btn.style.background = 'var(--bg-elevated)';
+    } else {
+      sidebar.classList.add('collapsed');
+      layout.classList.add('full-width');
+      if (btn) btn.style.background = 'transparent';
+    }
+  }
+
+  const logEl = document.getElementById('consoleLog');
+  const timestamp = new Date().toLocaleTimeString();
+  if (logEl) {
+    logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> ⚙️ <strong>Filters Sidebar:</strong> ${isFilterSidebarOpen ? 'EXPANDED' : 'COLLAPSED (Full-width canvas)'}`;
+  }
+}
+
+function toggleDashboardEditMode() {
+  isEditMode = !isEditMode;
+  const simulator = document.querySelector('.dashboard-simulator');
+  const editBtn = document.getElementById('btnToggleEditMode');
+  const editBanner = document.getElementById('editModeBanner');
+  const titleEl = document.getElementById('dashboardTitle');
+
+  if (simulator) {
+    if (isEditMode) {
+      simulator.classList.add('dashboard-edit-active');
+      if (editBtn) {
+        editBtn.innerText = '👁️ View Mode';
+        editBtn.style.background = 'rgba(245, 158, 11, 0.2)';
+        editBtn.style.borderColor = '#f59e0b';
+        editBtn.style.color = '#fde68a';
+      }
+      if (editBanner) editBanner.style.display = 'flex';
+      if (titleEl) {
+        titleEl.contentEditable = 'true';
+        titleEl.focus();
+      }
+    } else {
+      simulator.classList.remove('dashboard-edit-active');
+      if (editBtn) {
+        editBtn.innerText = '✏️ Edit';
+        editBtn.style.background = 'var(--bg-elevated)';
+        editBtn.style.borderColor = 'var(--border)';
+        editBtn.style.color = 'var(--text-main)';
+      }
+      if (editBanner) editBanner.style.display = 'none';
+      if (titleEl) titleEl.contentEditable = 'false';
+    }
+  }
+
+  const logEl = document.getElementById('consoleLog');
+  const timestamp = new Date().toLocaleTimeString();
+  if (logEl) {
+    logEl.innerHTML = `<span style="color:#f59e0b;">[${timestamp}]</span> ✏️ <strong>Dashboard Mode Switched:</strong> ${isEditMode ? 'EDIT MODE (Editable Titles & Slot Layout)' : 'VIEW MODE (Interactive Analytics)'}`;
+  }
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toastNotification');
+  if (toast) {
+    toast.innerHTML = message;
+    toast.style.display = 'flex';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3200);
+  }
+}
+
+function handleSaveDashboard() {
+  const title = document.getElementById('dashboardTitle')?.innerText || 'Dashboard';
+  const dashState = {
+    title,
+    dataset: currentDatasetKey,
+    timeGrain,
+    referencePeriod,
+    comparisonPeriod,
+    showVarianceDelta,
+    aggregationMode,
+    sortState,
+    expandedKeys: Array.from(expandedKeys),
+    activeFilters: Array.from(activeFilterMap.values()).map(f => ({ dim: f.dim, val: f.val })),
+    savedAt: new Date().toISOString(),
+  };
+
+  try {
+    localStorage.setItem('stratumtree_dashboard_config', JSON.stringify(dashState));
+  } catch (e) {
+    console.warn('LocalStorage save failed:', e);
+  }
+
+  const saveBtn = document.getElementById('btnSaveDashboard');
+  if (saveBtn) {
+    const originalText = saveBtn.innerText;
+    const originalBg = saveBtn.style.background;
+    saveBtn.innerText = '✓ Saved!';
+    saveBtn.style.background = '#059669';
+    saveBtn.style.borderColor = '#059669';
+    setTimeout(() => {
+      saveBtn.innerText = originalText;
+      saveBtn.style.background = originalBg;
+      saveBtn.style.borderColor = 'var(--blue-accent)';
+    }, 2000);
+  }
+
+  showToast('💾 <strong>Dashboard Saved:</strong> Layout, filters and time comparisons persisted!');
+
+  const logEl = document.getElementById('consoleLog');
+  const timestamp = new Date().toLocaleTimeString();
+  if (logEl) {
+    logEl.innerHTML = `<span style="color:#10b981;">[${timestamp}]</span> 💾 <strong>Saved Dashboard Configuration:</strong> <pre style="display:inline; color:#a7f3d0;">${JSON.stringify(dashState)}</pre>`;
+  }
+}
+
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
-  loadDataset('sales');
+  // Check if there is saved configuration in localStorage
+  try {
+    const saved = localStorage.getItem('stratumtree_dashboard_config');
+    if (saved) {
+      const cfg = JSON.parse(saved);
+      if (cfg.title && document.getElementById('dashboardTitle')) {
+        document.getElementById('dashboardTitle').innerText = cfg.title;
+      }
+      if (cfg.dataset && datasets[cfg.dataset]) {
+        currentDatasetKey = cfg.dataset;
+        const dropdown = document.getElementById('datasetDropdown');
+        if (dropdown) dropdown.value = cfg.dataset;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed restoring saved config:', e);
+  }
+
+  loadDataset(currentDatasetKey || 'sales');
+  updateFilterCountBadge();
 });
+

@@ -83,30 +83,68 @@
             <div class="superset-dash-title">
               <span style="font-size: 20px">📊</span>
               <div>
-                <strong style="font-size: 15px; color: var(--text-main)"
+                <strong
+                  id="dashboardTitle"
+                  style="font-size: 15px; color: var(--text-main); outline: none;"
+                  title="Click to rename in Edit Mode"
                   >Executive Multi-Level Sales &amp; Tree Hierarchy Dashboard</strong
                 >
-                <div style="font-size: 11px; color: var(--text-muted)">
+                <div id="dashboardSubTitle" style="font-size: 11px; color: var(--text-muted)">
                   Draft Mode • Auto-refresh: 30s • 4 charts linked
                 </div>
               </div>
               <span class="superset-badge-ver">Superset 6.1.0</span>
             </div>
             <div style="display: flex; gap: 8px; align-items: center">
-              <button class="btn-sm">⚙️ Filters (1)</button>
-              <button class="btn-sm">✏️ Edit</button>
               <button
+                id="btnToggleFilters"
                 class="btn-sm"
+                onclick="toggleFilterSidebar()"
+                title="Toggle Filters Sidebar"
+              >
+                ⚙️ Filters (<span id="filterCountBadge">0</span>)
+              </button>
+              <button
+                id="btnToggleEditMode"
+                class="btn-sm"
+                onclick="toggleDashboardEditMode()"
+                title="Toggle Edit / View Mode"
+              >
+                ✏️ Edit
+              </button>
+              <button
+                id="btnSaveDashboard"
+                class="btn-sm btn-save"
+                onclick="handleSaveDashboard()"
                 style="
                   background: var(--blue-accent);
                   color: white;
                   border-color: var(--blue-accent);
+                  transition: all 0.2s ease;
                 "
+                title="Save Dashboard Configuration"
               >
                 💾 Save
               </button>
             </div>
           </div>
+
+          <!-- Edit Mode Banner -->
+          <div
+            id="editModeBanner"
+            class="edit-mode-banner"
+            style="display: none"
+          >
+            <span>✏️ <strong>Dashboard Edit Mode Active:</strong> Click the title to rename, reconfigure filters, or click <strong>Save</strong> to persist changes.</span>
+            <button class="btn-sm" onclick="toggleDashboardEditMode()" style="padding: 2px 8px; font-size: 11px;">Done Editing ✓</button>
+          </div>
+
+          <!-- Save Toast Notification -->
+          <div
+            id="toastNotification"
+            class="toast-notification"
+            style="display: none"
+          ></div>
 
           <!-- Cross-Filter Broadcast Alert Banner -->
           <div
