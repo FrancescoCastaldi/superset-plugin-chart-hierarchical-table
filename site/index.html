@@ -736,43 +736,6 @@
       </div>
     </div>
 
-    <!-- Floating AI Assistant FAB & Chat Drawer -->
-    <button class="ai-fab" onclick="toggleAiChatDrawer()" id="aiFabBtn">
-      <span>✨</span> Chiedi all'AI su StratumTree
-    </button>
-
-    <div id="aiChatDrawer" class="ai-chat-drawer" style="display: none">
-      <div class="ai-chat-header">
-        <div style="display: flex; align-items: center; gap: 8px">
-          <span style="font-size: 16px">🤖</span>
-          <div>
-            <strong style="font-size: 13px; color: #ffffff">StratumTree AI Copilot</strong>
-            <div style="font-size: 10px; color: #4ade80">● Online • Superset 6.1.0 Expert</div>
-          </div>
-        </div>
-        <button class="modal-close" onclick="toggleAiChatDrawer()">✕</button>
-      </div>
-
-      <div class="ai-chat-messages" id="aiChatMessages">
-        <div class="chat-msg chat-msg-ai">
-          👋 Ciao! Sono l'assistente AI di <strong>StratumTree</strong>. Chiedimi qualsiasi cosa su
-          come configurare il plugin su <strong>Apache Superset 6.1.0</strong>, come scrivere query
-          SQL ricorsive CTE o come funzionano i rollup di rollup!
-        </div>
-      </div>
-
-      <div class="ai-chat-footer">
-        <input
-          type="text"
-          id="aiChatInput"
-          class="ai-chat-input"
-          placeholder="Scrivi una domanda..."
-          onkeydown="if (event.key === 'Enter') sendAiChatMessage();"
-        />
-        <button class="ai-chat-send-btn" onclick="sendAiChatMessage()">Invia</button>
-      </div>
-    </div>
-
     <script src="app.js?v=20260820"></script>
   </body>
 </html>
