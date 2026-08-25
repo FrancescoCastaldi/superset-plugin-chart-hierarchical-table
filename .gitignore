@@ -73,4 +73,6 @@ CLAUDE.md
 .chat/
 *.prompt.md
 *.chat
+.wrangler/
+
 

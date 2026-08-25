@@ -47,7 +47,6 @@
         </a>
 
         <div class="nav-links">
-          <a href="#sandbox" class="ai-navbar-badge">✨ AI Prompt Engine</a>
           <a href="#roadmap">Development Status</a>
           <a href="#sandbox">Live Sandbox</a>
           <a href="#architecture">Architecture</a>
@@ -239,102 +238,17 @@
     <section id="sandbox" class="section">
       <div class="container">
         <div class="section-header">
-          <div class="section-tag">AI-Prompted Live Sandbox &amp; Simulator</div>
-          <h2>Simulatore StratumTree AI &amp; Cross-Filtering</h2>
+          <div class="section-tag">Live Superset 6.1.0 Dashboard Simulator</div>
+          <h2>Simulatore Dashboard Superset con Cross-Filtering</h2>
           <p>
-            Interagisci con la griglia gerarchica tramite
-            <strong>prompt in linguaggio naturale</strong> o clicca sui nodi per osservare come
-            tutti i grafici si aggiornano in tempo reale tramite <code>setDataMask</code>.
+            Interagisci con la tabella gerarchica e osserva come cliccando su un qualsiasi nodo o
+            riga,
+            <strong
+              >tutti i grafici companion della dashboard si aggiornano e filtrano in tempo
+              reale</strong
+            >
+            tramite il protocollo nativo <code>setDataMask</code>.
           </p>
-        </div>
-
-        <!-- AI Prompt Engine Hero Container -->
-        <div class="ai-prompt-container">
-          <div class="ai-prompt-header">
-            <div class="ai-prompt-title-group">
-              <span class="ai-sparkle-icon">✨</span>
-              <div>
-                <div class="ai-prompt-title">
-                  StratumTree Generative AI &amp; Natural Language Grid Engine
-                </div>
-                <div class="ai-prompt-subtitle">
-                  Scrivi cosa vuoi visualizzare o filtrare: l'AI genererà e modellerà al volo la
-                  struttura ad albero, i livelli e i KPI
-                </div>
-              </div>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center">
-              <span class="ai-engine-status-badge" id="aiStatusBadge">
-                <span
-                  style="
-                    display: inline-block;
-                    width: 6px;
-                    height: 6px;
-                    border-radius: 50%;
-                    background: #4ade80;
-                  "
-                ></span>
-                Client-Side NLP Ready
-              </span>
-              <button
-                class="btn-sm"
-                onclick="openAiConfigModal()"
-                style="border-color: rgba(139, 92, 246, 0.4); color: #c4b5fd"
-              >
-                ⚙️ AI Settings
-              </button>
-            </div>
-          </div>
-
-          <div class="ai-prompt-input-wrapper">
-            <input
-              type="text"
-              id="aiPromptInput"
-              class="ai-prompt-input"
-              placeholder="💬 Es: 'Crea una gerarchia per la supply chain con rotte e difetti' oppure 'Filtra negozi EMEA con margine critico <28%'..."
-              onkeydown="if (event.key === 'Enter') handleAiPromptSubmit();"
-            />
-            <button class="ai-run-btn" id="aiRunBtn" onclick="handleAiPromptSubmit()">
-              <span>⚡ Esegui Prompt</span>
-            </button>
-          </div>
-
-          <div class="ai-prompt-chips-bar">
-            <span class="ai-chips-label">Prompt Rapidi:</span>
-            <button class="ai-chip" onclick="applyPresetPrompt('org')">
-              🏢 Organigramma HR (P-C)
-            </button>
-            <button class="ai-chip" onclick="applyPresetPrompt('supply_chain')">
-              📦 Supply Chain Logistics (4-Lvl)
-            </button>
-            <button class="ai-chip" onclick="applyPresetPrompt('ecommerce')">
-              🛒 Catalogo E-Commerce (3-Lvl)
-            </button>
-            <button class="ai-chip" onclick="applyPresetPrompt('cloud_finops')">
-              ☁️ Cloud FinOps &amp; IT Budget (P-C)
-            </button>
-            <button class="ai-chip" onclick="applyPresetPrompt('filter_margin')">
-              📉 Filtra Margine Critico (&lt;28%)
-            </button>
-            <button class="ai-chip" onclick="applyPresetPrompt('insights')">
-              💡 AI Insights &amp; Diagnostic
-            </button>
-            <button class="ai-chip" onclick="applyPresetPrompt('sql_cte')">
-              ⚡ Genera Query Superset CTE
-            </button>
-          </div>
-
-          <!-- AI Dynamic Insight / Generation Output Box -->
-          <div id="aiInsightBox" class="ai-insight-box" style="display: none">
-            <div class="ai-insight-top">
-              <span class="ai-insight-tag" id="aiInsightTag">✨ StratumTree AI Response</span>
-              <span style="font-size: 11px; color: var(--text-dimmed)" id="aiInsightTime"
-                >Just now</span
-              >
-            </div>
-            <div class="ai-insight-body" id="aiInsightBody"></div>
-            <div class="ai-insight-highlights" id="aiInsightHighlights"></div>
-          </div>
         </div>
 
         <!-- Dashboard Simulator Container -->
@@ -671,70 +585,6 @@
         </p>
       </div>
     </footer>
-
-    <!-- AI Config Modal (BYOK / Engine Switcher) -->
-    <div id="aiConfigModal" class="modal-overlay" style="display: none">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div class="modal-title"><span>⚙️</span> StratumTree AI Engine Settings</div>
-          <button class="modal-close" onclick="closeAiConfigModal()">✕</button>
-        </div>
-
-        <div class="modal-body">
-          <p style="margin-bottom: 14px">
-            Configura l'engine AI per l'interpretazione dei prompt in linguaggio naturale. Puoi
-            usare il <strong>Client-Side NLP Engine gratuito</strong> (istantaneo, zero
-            configurazioni) oppure connettere la tua <strong>Google Gemini API Key</strong> per
-            generazioni generative complete.
-          </p>
-
-          <div class="modal-field">
-            <label>AI ENGINE MODE</label>
-            <select id="aiEngineMode" class="modal-input" onchange="toggleAiKeyInput(this.value)">
-              <option value="local">
-                ⚡ Local Smart NLP Engine (Instant, Offline, Zero API Key)
-              </option>
-              <option value="gemini">✨ Google Gemini API (Cloud Generative AI)</option>
-            </select>
-          </div>
-
-          <div class="modal-field" id="geminiKeyField" style="display: none">
-            <label>GOOGLE GEMINI API KEY</label>
-            <input type="password" id="geminiApiKey" class="modal-input" placeholder="AIzaSy..." />
-            <div style="font-size: 11px; color: var(--text-dimmed); margin-top: 5px">
-              La chiave viene salvata esclusivamente nel tuo browser (<code>localStorage</code>) e
-              mai inviata a server terzi. Puoi ottenerne una gratuita su
-              <a
-                href="https://aistudio.google.com/"
-                target="_blank"
-                style="color: var(--blue-accent)"
-                >Google AI Studio</a
-              >.
-            </div>
-          </div>
-
-          <div class="modal-field" id="geminiModelField" style="display: none">
-            <label>GEMINI MODEL</label>
-            <select id="geminiModelSelect" class="modal-input">
-              <option value="gemini-2.5-flash">gemini-2.5-flash (Consigliato, Ultra-veloce)</option>
-              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-              <option value="gemini-1.5-pro">gemini-1.5-pro (Massima capacità)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn-sm" onclick="closeAiConfigModal()">Annulla</button>
-          <button
-            class="btn-sm"
-            style="background: var(--ai-purple); color: white; border-color: var(--ai-purple)"
-            onclick="saveAiConfig()"
-          >
-            Salva Configurazione
-          </button>
-        </div>
-      </div>
-    </div>
 
     <script src="app.js?v=20260820"></script>
   </body>
