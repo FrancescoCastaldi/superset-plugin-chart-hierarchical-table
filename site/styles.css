@@ -144,6 +144,23 @@ h4,
   color: var(--text-main);
 }
 
+.nav-links a.active {
+  color: var(--blue-accent);
+  font-weight: 700;
+  position: relative;
+}
+
+.nav-links a.active::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--blue-accent);
+  border-radius: 2px;
+}
+
 .github-btn {
   display: inline-flex;
   align-items: center;
