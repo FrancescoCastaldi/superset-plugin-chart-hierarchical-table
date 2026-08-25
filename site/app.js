@@ -718,20 +718,94 @@ function rollupMetrics(nodes, metrics) {
   }
 }
 
-// Attach deterministic YoY growth & variance deltas to nodes
+let timeGrain = 'year';
+let referencePeriod = 'current';
+let comparisonPeriod = 'prev_period';
+
+const timeGrainConfig = {
+  year: {
+    badge: 'YoY',
+    label: 'Anno (YoY)',
+    refOptions: [
+      { value: 'current', label: 'Anno Corrente (2026)' },
+      { value: 'previous', label: 'Anno Precedente (2025)' },
+      { value: 'ytd', label: 'Year-to-Date (YTD 2026)' },
+    ],
+    compOptions: [
+      { value: 'prev_period', label: 'Anno Precedente (YoY - 2025)' },
+      { value: 'prev_year_same_period', label: 'Stesso Periodo Anno Scorso' },
+      { value: 'budget_target', label: 'Budget / Target 2026' },
+    ],
+    rangeMultiplier: 1.0,
+  },
+  month: {
+    badge: 'MoM',
+    label: 'Mese (MoM)',
+    refOptions: [
+      { value: 'current', label: 'Mese Corrente (Feb 2026)' },
+      { value: 'previous', label: 'Mese Precedente (Gen 2026)' },
+      { value: 'mtd', label: 'Month-to-Date (MTD)' },
+    ],
+    compOptions: [
+      { value: 'prev_period', label: 'Mese Precedente (MoM - Gen 2026)' },
+      { value: 'prev_year_same_period', label: 'Stesso Mese Anno Scorso (Feb 2025)' },
+      { value: 'budget_target', label: 'Budget Mensile Pianificato' },
+    ],
+    rangeMultiplier: 0.65,
+  },
+  week: {
+    badge: 'WoW',
+    label: 'Settimana (WoW)',
+    refOptions: [
+      { value: 'current', label: 'Settimana Corrente (W08 2026)' },
+      { value: 'previous', label: 'Settimana Precedente (W07 2026)' },
+    ],
+    compOptions: [
+      { value: 'prev_period', label: 'Settimana Precedente (WoW - W07)' },
+      { value: 'prev_year_same_period', label: 'Stessa Settimana Anno Scorso (W08 2025)' },
+      { value: 'budget_target', label: 'Target Settimanale' },
+    ],
+    rangeMultiplier: 0.45,
+  },
+  day: {
+    badge: 'DoD',
+    label: 'Giorno (DoD)',
+    refOptions: [
+      { value: 'current', label: 'Oggi (25 Feb 2026)' },
+      { value: 'previous', label: 'Ieri (24 Feb 2026)' },
+    ],
+    compOptions: [
+      { value: 'prev_period', label: 'Giorno Precedente (DoD - Ieri)' },
+      { value: 'prev_year_same_period', label: 'Stesso Giorno Anno Scorso (25 Feb 2025)' },
+      { value: 'budget_target', label: 'Daily Target' },
+    ],
+    rangeMultiplier: 0.25,
+  },
+};
+
+// Attach deterministic period growth & variance deltas to nodes
 function attachVarianceDeltas(nodes, metrics) {
+  const grainCfg = timeGrainConfig[timeGrain] || timeGrainConfig.year;
+  const grainMult = grainCfg.rangeMultiplier;
+
+  // Comparison baseline shift modifier
+  let compShift = 0;
+  if (comparisonPeriod === 'budget_target') compShift = 2.5;
+  if (comparisonPeriod === 'prev_year_same_period') compShift = -1.2;
+
   function process(n) {
     n.deltas = {};
     for (const m of metrics) {
-      // Deterministic pseudo-random delta percentage derived from node key string
+      // Deterministic pseudo-random delta percentage derived from node key + grain + comp
       let hash = 0;
-      const str = n.key + '_' + m;
+      const str = `${n.key}_${m}_${timeGrain}_${referencePeriod}_${comparisonPeriod}`;
       for (let i = 0; i < str.length; i++) {
         hash = (hash << 5) - hash + str.charCodeAt(i);
         hash |= 0;
       }
-      const rawPct = ((Math.abs(hash) % 360) - 120) / 10; // -12.0% to +24.0%
-      n.deltas[m] = rawPct;
+      const basePct = ((Math.abs(hash) % 360) - 120) / 10; // -12.0% to +24.0%
+      const finalDelta = (basePct * grainMult) + compShift;
+      n.deltas[m] = finalDelta;
     }
     if (n.children && n.children.length > 0) {
       n.children.forEach(process);
@@ -740,246 +814,95 @@ function attachVarianceDeltas(nodes, metrics) {
   nodes.forEach(process);
 }
 
-// Hierarchical Recursive In-Tree Sorting
-function sortTreeRecursively(nodes, col, ascending = false) {
-  nodes.sort((a, b) => {
-    const valA = a.metrics[col] !== undefined ? a.metrics[col] : 0;
-    const valB = b.metrics[col] !== undefined ? b.metrics[col] : 0;
-    return ascending ? valA - valB : valB - valA;
-  });
-  for (const n of nodes) {
-    if (n.children && n.children.length > 0) {
-      sortTreeRecursively(n.children, col, ascending);
-    }
-  }
-}
+// Time Grain Switcher
+function handleTimeGrainChange(newGrain) {
+  timeGrain = newGrain;
+  const cfg = timeGrainConfig[newGrain] || timeGrainConfig.year;
 
-function computeGrandTotal(roots, metrics) {
-  const gMetrics = {};
-  for (const m of metrics) {
-    if (m === 'profit_margin' || aggregationMode === 'avg') {
-      const sum = roots.reduce((acc, r) => acc + (r.metrics[m] || 0), 0);
-      gMetrics[m] = sum / (roots.length || 1);
-    } else if (aggregationMode === 'min') {
-      gMetrics[m] = Math.min(...roots.map(r => r.metrics[m] || 0));
-    } else if (aggregationMode === 'max') {
-      gMetrics[m] = Math.max(...roots.map(r => r.metrics[m] || 0));
-    } else {
-      gMetrics[m] = roots.reduce((acc, r) => acc + (r.metrics[m] || 0), 0);
-    }
-  }
-  return {
-    key: '__grand_total__',
-    name: 'Grand Total (All Records)',
-    depth: 0,
-    metrics: gMetrics,
-  };
-}
-
-function filterTree(nodes, term) {
-  if (!term) return nodes;
-  const lower = term.toLowerCase();
-
-  function filterNode(n) {
-    const matches = n.name.toLowerCase().includes(lower);
-    let matchingChildren = [];
-    if (n.children) {
-      matchingChildren = n.children.map(filterNode).filter(Boolean);
-    }
-    if (matches || matchingChildren.length > 0) {
-      return {
-        ...n,
-        children: matchingChildren.length > 0 ? matchingChildren : n.children,
-      };
-    }
-    return null;
+  // Update Reference Period dropdown options
+  const refSelect = document.getElementById('referencePeriodSelect');
+  if (refSelect) {
+    refSelect.innerHTML = cfg.refOptions
+      .map(opt => `<option value="${opt.value}">${opt.label}</option>`)
+      .join('');
+    referencePeriod = cfg.refOptions[0].value;
   }
 
-  return nodes.map(filterNode).filter(Boolean);
-}
-
-const activeFilterMap = new Map(); // key -> { dim, val, key, path, node }
-let sortState = { col: null, ascending: false };
-let showVarianceDelta = false;
-let aggregationMode = 'sum';
-
-function findNodeByKey(nodes, key) {
-  for (const n of nodes) {
-    if (n.key === key) return n;
-    if (n.children && n.children.length > 0) {
-      const found = findNodeByKey(n.children, key);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-// Evaluates raw records matching the active multi-selection
-function getFilteredRecords() {
-  const config = datasets[currentDatasetKey];
-  const selectedItems = Array.from(activeFilterMap.values());
-  if (!selectedItems || selectedItems.length === 0) {
-    return config.records;
+  // Update Comparison Period dropdown options
+  const compSelect = document.getElementById('comparisonPeriodSelect');
+  if (compSelect) {
+    compSelect.innerHTML = cfg.compOptions
+      .map(opt => `<option value="${opt.value}">${opt.label}</option>`)
+      .join('');
+    comparisonPeriod = cfg.compOptions[0].value;
   }
 
-  if (config.type === 'multi_dimension') {
-    return config.records.filter(record => {
-      // Record matches if it belongs to ANY selected branch
-      return selectedItems.some(item => {
-        if (item.path && item.path.length > 0) {
-          for (let i = 0; i < item.path.length; i++) {
-            const dim = config.dimensions[i];
-            if (String(record[dim] ?? '(Empty)') !== item.path[i]) {
-              return false;
-            }
-          }
-          return true;
-        }
-        return String(record[item.dim]) === String(item.val);
-      });
-    });
-  } else {
-    // Parent-Child mode: collect all matching IDs (including subtree)
-    const allowedIds = new Set();
-    for (const item of selectedItems) {
-      if (item.node) {
-        function collect(n) {
-          allowedIds.add(String(n.id || n.key));
-          if (n.children && n.children.length > 0) {
-            n.children.forEach(collect);
-          }
-        }
-        collect(item.node);
-      } else {
-        allowedIds.add(String(item.key));
-      }
-    }
-    return config.records.filter(r => allowedIds.has(String(r[config.idCol])));
-  }
-}
-
-// Compute aggregate metrics from a filtered list of records
-function computeFilteredMetrics(records, metrics) {
-  const result = {};
-  for (const m of metrics) {
-    if (m === 'profit_margin' || aggregationMode === 'avg') {
-      const sum = records.reduce((acc, r) => acc + (Number(r[m]) || 0), 0);
-      result[m] = records.length > 0 ? sum / records.length : 0;
-    } else if (aggregationMode === 'min') {
-      result[m] = records.length > 0 ? Math.min(...records.map(r => Number(r[m]) || 0)) : 0;
-    } else if (aggregationMode === 'max') {
-      result[m] = records.length > 0 ? Math.max(...records.map(r => Number(r[m]) || 0)) : 0;
-    } else {
-      result[m] = records.reduce((acc, r) => acc + (Number(r[m]) || 0), 0);
-    }
-  }
-  return result;
-}
-
-// Column Sorting Toggle Handler
-function handleColumnSort(colKey) {
-  if (sortState.col === colKey) {
-    if (!sortState.ascending) {
-      // Toggle to ascending
-      sortState.ascending = true;
-    } else {
-      // Clear sort
-      sortState.col = null;
-      sortState.ascending = false;
-    }
-  } else {
-    sortState.col = colKey;
-    sortState.ascending = false; // default to descending for numbers
-  }
-
-  const cfg = datasets[currentDatasetKey];
-  if (cfg.type === 'multi_dimension') {
-    currentTree = buildMultiDimensionTree(cfg.records, cfg.dimensions, cfg.metrics);
-  } else {
-    currentTree = buildParentChildTree(
-      cfg.records,
-      cfg.idCol,
-      cfg.parentIdCol,
-      cfg.labelCol,
-      cfg.metrics,
-    );
-  }
+  updateDeltaButtonLabel();
+  rebuildActiveTree();
 
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
   if (logEl) {
-    if (sortState.col) {
-      logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> 🔃 <strong>Hierarchical Sort Applied:</strong> <code>${sortState.col}</code> (${sortState.ascending ? 'Ascending ▲' : 'Descending ▼'}) — Subtree branches sorted preserving hierarchy`;
-    } else {
-      logEl.innerHTML = `<span style="color:#94a3b8;">[${timestamp}]</span> 🔄 <strong>Cleared Hierarchical Sort</strong>`;
-    }
+    logEl.innerHTML = `<span style="color:#38bdf8;">[${timestamp}]</span> ⏱️ <strong>Time Comparison Granularity Updated:</strong> <code>${cfg.label}</code> • Reference: <code>${referencePeriod}</code> vs Comparison: <code>${comparisonPeriod}</code>`;
   }
-
-  renderTable();
-  updateCompanionCharts();
 }
 
-function clearSort() {
-  sortState.col = null;
-  sortState.ascending = false;
-  const cfg = datasets[currentDatasetKey];
-  if (cfg.type === 'multi_dimension') {
-    currentTree = buildMultiDimensionTree(cfg.records, cfg.dimensions, cfg.metrics);
-  } else {
-    currentTree = buildParentChildTree(
-      cfg.records,
-      cfg.idCol,
-      cfg.parentIdCol,
-      cfg.labelCol,
-      cfg.metrics,
-    );
-  }
-  renderTable();
-  updateCompanionCharts();
-}
+function handleComparisonChange() {
+  const refSelect = document.getElementById('referencePeriodSelect');
+  const compSelect = document.getElementById('comparisonPeriodSelect');
+  if (refSelect) referencePeriod = refSelect.value;
+  if (compSelect) comparisonPeriod = compSelect.value;
 
-function handleAggModeChange(newMode) {
-  aggregationMode = newMode;
-  const cfg = datasets[currentDatasetKey];
-  if (cfg.type === 'multi_dimension') {
-    currentTree = buildMultiDimensionTree(cfg.records, cfg.dimensions, cfg.metrics);
-  } else {
-    currentTree = buildParentChildTree(
-      cfg.records,
-      cfg.idCol,
-      cfg.parentIdCol,
-      cfg.labelCol,
-      cfg.metrics,
-    );
-  }
+  rebuildActiveTree();
 
+  const cfg = timeGrainConfig[timeGrain] || timeGrainConfig.year;
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
   if (logEl) {
-    logEl.innerHTML = `<span style="color:#a855f7;">[${timestamp}]</span> 🧮 <strong>Rollup Aggregation Updated:</strong> <code>${newMode.toUpperCase()}</code> for all parent rollup nodes`;
+    logEl.innerHTML = `<span style="color:#10b981;">[${timestamp}]</span> 📅 <strong>Period Comparison Matrix Re-calculated:</strong> Granularity: <code>${cfg.badge}</code> • Reference: <code>${referencePeriod}</code> vs Baseline: <code>${comparisonPeriod}</code>`;
   }
+}
 
+function updateDeltaButtonLabel() {
+  const btn = document.getElementById('toggleDeltaBtn');
+  const cfg = timeGrainConfig[timeGrain] || timeGrainConfig.year;
+  if (btn) {
+    if (showVarianceDelta) {
+      btn.classList.add('btn-active-toggle');
+      btn.innerText = `📈 ${cfg.badge} Delta (%): ON ✓`;
+    } else {
+      btn.classList.remove('btn-active-toggle');
+      btn.innerText = `📈 ${cfg.badge} Delta (%): OFF`;
+    }
+  }
+}
+
+function rebuildActiveTree() {
+  const cfg = datasets[currentDatasetKey];
+  if (cfg.type === 'multi_dimension') {
+    currentTree = buildMultiDimensionTree(cfg.records, cfg.dimensions, cfg.metrics);
+  } else {
+    currentTree = buildParentChildTree(
+      cfg.records,
+      cfg.idCol,
+      cfg.parentIdCol,
+      cfg.labelCol,
+      cfg.metrics,
+    );
+  }
   renderTable();
   updateCompanionCharts();
 }
 
 function toggleVarianceDelta() {
   showVarianceDelta = !showVarianceDelta;
-  const btn = document.getElementById('toggleDeltaBtn');
-  if (btn) {
-    if (showVarianceDelta) {
-      btn.classList.add('btn-active-toggle');
-      btn.innerText = '📈 YoY Delta (%): ON ✓';
-    } else {
-      btn.classList.remove('btn-active-toggle');
-      btn.innerText = '📈 YoY Delta (%): OFF';
-    }
-  }
+  updateDeltaButtonLabel();
 
+  const cfg = timeGrainConfig[timeGrain] || timeGrainConfig.year;
   const logEl = document.getElementById('consoleLog');
   const timestamp = new Date().toLocaleTimeString();
   if (logEl) {
-    logEl.innerHTML = `<span style="color:#10b981;">[${timestamp}]</span> 📈 <strong>Period-over-Period Variance Delta:</strong> ${showVarianceDelta ? 'ENABLED' : 'DISABLED'}`;
+    logEl.innerHTML = `<span style="color:#10b981;">[${timestamp}]</span> 📈 <strong>Period Variance Delta (${cfg.badge}):</strong> ${showVarianceDelta ? 'ENABLED' : 'DISABLED'}`;
   }
 
   renderTable();
@@ -989,7 +912,7 @@ function toggleVarianceDelta() {
 function exportHierarchyCsv() {
   const config = datasets[currentDatasetKey];
   const rows = [];
-  
+
   // CSV Header
   const headers = ['Hierarchy Node', 'Depth Level', 'Full Path', 'Is Leaf'];
   config.metrics.forEach(m => headers.push(m.replace(/_/g, ' ').toUpperCase()));
@@ -1153,7 +1076,9 @@ function renderTable() {
               if (showVarianceDelta && n.deltas && n.deltas[m] !== undefined) {
                 const deltaVal = n.deltas[m];
                 const isPos = deltaVal >= 0;
-                deltaHTML = `<span class="delta-badge ${isPos ? 'delta-badge-pos' : 'delta-badge-neg'}">${isPos ? '▲ +' : '▼ '}${deltaVal.toFixed(1)}%</span>`;
+                const grainCfg = timeGrainConfig[timeGrain] || timeGrainConfig.year;
+                const tooltip = `Periodo Riferimento: ${referencePeriod} vs Confronto: ${comparisonPeriod}`;
+                deltaHTML = `<span class="delta-badge ${isPos ? 'delta-badge-pos' : 'delta-badge-neg'}" title="${tooltip}">${isPos ? '▲ +' : '▼ '}${deltaVal.toFixed(1)}% ${grainCfg.badge}</span>`;
               }
               return `<td class="num">${formattedVal}${deltaHTML}</td>`;
             })
@@ -1582,4 +1507,3 @@ function copyCode() {
 document.addEventListener('DOMContentLoaded', () => {
   loadDataset('sales');
 });
-

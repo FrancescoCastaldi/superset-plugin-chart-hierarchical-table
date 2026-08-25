@@ -188,8 +188,52 @@
                 </select>
               </div>
 
+              <!-- Full Time Comparison Engine Controls -->
               <div class="filter-box-item">
-                <label>VARIANCE / PERIOD DELTA</label>
+                <label>TIME GRAIN (GRANULARITÀ CONFRONTO)</label>
+                <select
+                  id="timeGrainSelect"
+                  class="select-control"
+                  style="width: 100%"
+                  onchange="handleTimeGrainChange(this.value)"
+                >
+                  <option value="year">📈 Anno (YoY - Year-over-Year)</option>
+                  <option value="month">🗓️ Mese (MoM - Month-over-Month)</option>
+                  <option value="week">📆 Settimana (WoW - Week-over-Week)</option>
+                  <option value="day">⏱️ Singolo Giorno (DoD - Day-over-Day)</option>
+                </select>
+              </div>
+
+              <div class="filter-box-item">
+                <label>PERIODO DI RIFERIMENTO (REFERENCE)</label>
+                <select
+                  id="referencePeriodSelect"
+                  class="select-control"
+                  style="width: 100%"
+                  onchange="handleComparisonChange()"
+                >
+                  <option value="current">Periodo Corrente Attivo (2026)</option>
+                  <option value="previous">Periodo Precedente (2025)</option>
+                  <option value="ytd">Year-To-Date (YTD 2026)</option>
+                </select>
+              </div>
+
+              <div class="filter-box-item">
+                <label>PERIODO DI CONFRONTO (BASELINE)</label>
+                <select
+                  id="comparisonPeriodSelect"
+                  class="select-control"
+                  style="width: 100%"
+                  onchange="handleComparisonChange()"
+                >
+                  <option value="prev_period">Periodo Precedente Immediato</option>
+                  <option value="prev_year_same_period">Stesso Periodo Anno Scorso</option>
+                  <option value="budget_target">Target / Budget Pianificato</option>
+                </select>
+              </div>
+
+              <div class="filter-box-item">
+                <label>DELTA BADGES &amp; VARIANZA</label>
                 <div style="display: flex; gap: 6px; align-items: center">
                   <button
                     id="toggleDeltaBtn"
@@ -197,7 +241,7 @@
                     style="flex: 1; text-align: center"
                     onclick="toggleVarianceDelta()"
                   >
-                    📈 YoY Delta (%): OFF
+                    📈 Mostra Delta (%): OFF
                   </button>
                 </div>
               </div>

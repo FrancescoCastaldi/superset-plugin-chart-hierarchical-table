@@ -225,20 +225,6 @@ const config: ControlPanelConfig = {
             },
           },
           {
-            name: 'showVarianceDelta',
-            config: {
-              type: 'CheckboxControl',
-              label: t('Show Period-over-Period Variance (Δ %)'),
-              renderTrigger: true,
-              default: false,
-              description: t(
-                'Display YoY/Period growth delta badges next to numeric metric values.',
-              ),
-            },
-          },
-        ],
-        [
-          {
             name: 'enableExport',
             config: {
               type: 'CheckboxControl',
@@ -250,6 +236,82 @@ const config: ControlPanelConfig = {
               ),
             },
           },
+        ],
+      ],
+    },
+    {
+      label: t('Time Comparison & Period-over-Period Variance'),
+      expanded: false,
+      controlSetRows: [
+        [
+          {
+            name: 'showVarianceDelta',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Enable Period Delta Badges (Δ %)'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Display period-over-period growth or variance delta badges next to numeric metric values.',
+              ),
+            },
+          },
+          {
+            name: 'timeGrain',
+            config: {
+              type: 'SelectControl',
+              label: t('Time Comparison Granularity'),
+              default: 'year',
+              renderTrigger: true,
+              choices: [
+                ['day', t('📅 Day (DoD - Day-over-Day)')],
+                ['week', t('📆 Week (WoW - Week-over-Week)')],
+                ['month', t('🗓️ Month (MoM - Month-over-Month)')],
+                ['quarter', t('📊 Quarter (QoQ - Quarter-over-Quarter)')],
+                ['year', t('📈 Year (YoY - Year-over-Year)')],
+              ],
+              description: t('Temporal resolution for period delta calculations.'),
+            },
+          },
+        ],
+        [
+          {
+            name: 'referencePeriod',
+            config: {
+              type: 'SelectControl',
+              label: t('Reference Period (Periodo di Riferimento)'),
+              default: 'current',
+              renderTrigger: true,
+              choices: [
+                ['current', t('Current Active Period (Periodo Corrente)')],
+                ['previous', t('Previous Completed Period (Periodo Precedente)')],
+                ['ytd', t('Year-to-Date (YTD)')],
+              ],
+              description: t('Primary active time interval to evaluate.'),
+            },
+          },
+          {
+            name: 'comparisonType',
+            config: {
+              type: 'SelectControl',
+              label: t('Comparison Baseline (Periodo di Confronto)'),
+              default: 'prev_period',
+              renderTrigger: true,
+              choices: [
+                ['prev_period', t('Immediately Preceding Period (DoD / WoW / MoM / YoY)')],
+                ['prev_year_same_period', t('Same Period in Prior Year (Stesso Periodo Anno Scorso)')],
+                ['budget_target', t('Budget / Target Baseline (Target Pianificato)')],
+              ],
+              description: t('Baseline interval to compute delta and percentage variance.'),
+            },
+          },
+        ],
+      ],
+    },
+    {
+      label: t('Advanced Rollup Calculations'),
+      expanded: false,
+      controlSetRows: [
           {
             name: 'aggregationMode',
             config: {
