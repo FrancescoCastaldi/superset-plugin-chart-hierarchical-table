@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Apache Superset 6.1.0 - Automated Chart Plugin Installer
 Author: Francesco Castaldi
 Description: Cross-platform installer for integrating the Hierarchical Table Chart Plugin
-into an existing Superset repository (Docker Compose / Local Dev).
+into an existing Superset repository (Docker Compose non-dev / dev / Local).
 """
 
 import os
@@ -33,7 +33,6 @@ def log_error(msg: str):
 
 
 def find_superset_frontend(superset_root: Path) -> Path:
-    """Locates the superset-frontend directory."""
     frontend_dir = superset_root / "superset-frontend"
     if frontend_dir.is_dir() and (frontend_dir / "package.json").is_file():
         return frontend_dir
@@ -44,7 +43,6 @@ def find_superset_frontend(superset_root: Path) -> Path:
 
 
 def find_main_preset(frontend_dir: Path) -> Path:
-    """Finds MainPreset.js, MainPreset.ts, or setupPlugins.ts."""
     candidates = [
         frontend_dir / "src" / "visualizations" / "presets" / "MainPreset.js",
         frontend_dir / "src" / "visualizations" / "presets" / "MainPreset.ts",
@@ -60,7 +58,6 @@ def find_main_preset(frontend_dir: Path) -> Path:
 
 
 def backup_file(file_path: Path):
-    """Creates a .bak backup of the given file if not already present."""
     bak_path = file_path.with_suffix(file_path.suffix + ".bak")
     if not bak_path.exists():
         shutil.copy2(file_path, bak_path)
@@ -68,15 +65,40 @@ def backup_file(file_path: Path):
 
 
 def restore_backup(file_path: Path):
-    """Restores a .bak backup if present."""
     bak_path = file_path.with_suffix(file_path.suffix + ".bak")
     if bak_path.is_file():
         shutil.copy2(bak_path, file_path)
         log_info(f"Restored {file_path.name} from backup.")
 
 
+def copy_plugin_files(plugin_root: Path, frontend_dir: Path) -> tuple[str, bool]:
+    src_plugin_package = plugin_root / "packages" / "superset-plugin-chart-hierarchical-table"
+    if not src_plugin_package.exists():
+        src_plugin_package = plugin_root / "frontend"
+    if not src_plugin_package.exists():
+        raise FileNotFoundError(f"Source plugin directory not found in '{plugin_root}'")
+
+    plugins_target_dir = frontend_dir / "plugins"
+    plugins_target_dir.mkdir(parents=True, exist_ok=True)
+
+    dest_plugin_dir = plugins_target_dir / "superset-plugin-chart-hierarchical-table"
+    is_update = dest_plugin_dir.exists()
+
+    if is_update:
+        log_info(f"🧹 Pulizia e rimozione forzata cartella obsoleta: {dest_plugin_dir.name}...")
+        shutil.rmtree(dest_plugin_dir, ignore_errors=True)
+
+    log_info(f"Copia da zero dei sorgenti del plugin in '{dest_plugin_dir.name}'...")
+    shutil.copytree(
+        src_plugin_package,
+        dest_plugin_dir,
+        ignore=shutil.ignore_patterns("node_modules", "dist", ".git", ".turbo", "*.log")
+    )
+    log_success(f"Sorgenti plugin aggiornati con successo in {dest_plugin_dir}")
+    return "./plugins/superset-plugin-chart-hierarchical-table", is_update
+
+
 def patch_package_json(frontend_dir: Path, plugin_rel_path: str):
-    """Adds the plugin to superset-frontend/package.json dependencies."""
     pkg_file = frontend_dir / "package.json"
     backup_file(pkg_file)
 
@@ -95,42 +117,25 @@ def patch_package_json(frontend_dir: Path, plugin_rel_path: str):
 
 
 def patch_main_preset(preset_file: Path):
-    """Injects plugin import and registration into MainPreset / setupPlugins."""
     backup_file(preset_file)
 
     with open(preset_file, "r", encoding="utf-8") as f:
         content = f.read()
 
-    import_stmt = "import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';"
-    register_stmt = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register(),"
+    import_stmt = "import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';\n"
+    register_stmt = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register(),\n"
 
-    if import_stmt in content or "HierarchicalTableChartPlugin" in content:
-        log_warn("Plugin is already imported in MainPreset. Skipping injection.")
+    if "HierarchicalTableChartPlugin" in content:
+        log_warn(f"Plugin is already imported in {preset_file.name}. Skipping injection.")
         return
 
-    # 1. Inject import statement near top
-    import_match = re.search(r"(import .*?;\n)(?!import)", content, re.MULTILINE)
-    if import_match:
-        idx = import_match.end()
-        content = content[:idx] + import_stmt + "\n" + content[idx:]
-    else:
-        content = import_stmt + "\n" + content
-
-    # 2. Inject registration into plugins array
-    # Look for plugins: [ ... ] or new Preset({ ... plugins: [ ... ] })
-    plugins_match = re.search(r"(plugins\s*:\s*\[)", content)
+    content = import_stmt + content
+    plugins_match = re.search(r"plugins\s*:\s*\[", content)
     if plugins_match:
-        idx = plugins_match.end()
-        content = content[:idx] + "\n" + register_stmt + content[idx:]
+        insert_pos = plugins_match.end()
+        content = content[:insert_pos] + "\n" + register_stmt + content[insert_pos:]
     else:
-        # Fallback search for class constructor or array
-        array_match = re.search(r"(\[\s*new\s+\w+ChartPlugin)", content)
-        if array_match:
-            idx = array_match.start() + 1
-            content = content[:idx] + "\n" + register_stmt + content[idx:]
-        else:
-            log_warn("Could not find standard 'plugins: [...]' array. Appending registration.")
-            content += f"\nnew HierarchicalTableChartPlugin().configure({{ key: 'hierarchical_table' }}).register();\n"
+        content += f"\nnew HierarchicalTableChartPlugin().configure({{ key: 'hierarchical_table' }}).register();\n"
 
     with open(preset_file, "w", encoding="utf-8") as f:
         f.write(content)
@@ -138,79 +143,20 @@ def patch_main_preset(preset_file: Path):
     log_success(f"Registered plugin in {preset_file.name}")
 
 
-def copy_plugin_files(plugin_root: Path, frontend_dir: Path) -> tuple[str, bool]:
-    """Copies frontend plugin directory into superset-frontend/plugins/. Returns (rel_path, is_update)."""
-    target_plugins_dir = frontend_dir / "plugins"
-    target_plugins_dir.mkdir(parents=True, exist_ok=True)
-
-    dest_dir = target_plugins_dir / "superset-plugin-chart-hierarchical-table"
-    is_update = dest_dir.exists()
-    
-    # Check packages/ directory first (monorepo layout), then legacy frontend/
-    src_frontend_dir = plugin_root / "packages" / "superset-plugin-chart-hierarchical-table"
-    if not src_frontend_dir.is_dir():
-        src_frontend_dir = plugin_root / "frontend"
-
-    if not src_frontend_dir.is_dir():
-        raise FileNotFoundError(f"Source frontend plugin directory '{src_frontend_dir}' not found.")
-
-    if is_update:
-        log_info(f"Plugin già presente in '{dest_dir.name}'. Esecuzione UPDATE & sincronizzazione nuovi sorgenti...")
-        shutil.rmtree(dest_dir)
-    else:
-        log_info(f"Nuova installazione del plugin in '{dest_dir.name}'...")
-
-    # Exclude node_modules and build artifacts from copy
-    def ignore_patterns(path, names):
-        return [n for n in names if n in ("node_modules", "dist", ".git", ".turbo")]
-
-    shutil.copytree(src_frontend_dir, dest_dir, ignore=ignore_patterns)
-    log_success(f"Sorgenti plugin aggiornati con successo in {dest_dir}")
-
-    # Return relative path from superset-frontend
-    return "./plugins/superset-plugin-chart-hierarchical-table", is_update
-
-
-def rollback(superset_root: Path):
-    """Rolls back all modifications."""
-    frontend_dir = find_superset_frontend(superset_root)
-    preset_file = find_main_preset(frontend_dir)
-    pkg_file = frontend_dir / "package.json"
-
-    restore_backup(preset_file)
-    restore_backup(pkg_file)
-
-    plugin_dir = frontend_dir / "plugins" / "superset-plugin-chart-hierarchical-table"
-    if plugin_dir.exists():
-        shutil.rmtree(plugin_dir)
-        log_info(f"Removed {plugin_dir}")
-
-    log_success("Rollback completed successfully.")
-
-
-def trigger_docker_build(superset_root: Path):
-    """Attempts to restart superset_node container or run npm install inside container."""
-    log_info("Checking Docker containers...")
+def trigger_docker_build(superset_root: Path, compose_file: str = "docker-compose-non-dev.yml"):
+    log_info(f"Avvio Docker Compose Build con file '{compose_file}'...")
     try:
-        res = subprocess.run(
-            ["docker", "compose", "ps", "--services"],
-            cwd=superset_root,
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        services = res.stdout.strip().split()
-        if "superset-node" in services or "superset_node" in services:
-            node_svc = "superset-node" if "superset-node" in services else "superset_node"
-            log_info(f"Found frontend service '{node_svc}'. Restarting container to trigger build...")
-            subprocess.run(["docker", "compose", "restart", node_svc], cwd=superset_root, check=True)
-            log_success(f"Service '{node_svc}' restarted successfully!")
-        else:
-            log_info("Running docker compose build for superset-node...")
-            subprocess.run(["docker", "compose", "up", "-d", "--build", "superset-node"], cwd=superset_root)
+        cmd = ["docker", "compose", "-f", compose_file, "up", "-d", "--build", "superset"]
+        if not (superset_root / compose_file).exists():
+            log_warn(f"File '{compose_file}' non trovato in {superset_root}, fallback su 'docker compose up -d --build superset'")
+            cmd = ["docker", "compose", "up", "-d", "--build", "superset"]
+
+        log_info(f"Esecuzione: {' '.join(cmd)}")
+        subprocess.run(cmd, cwd=superset_root, check=True)
+        log_success(f"Container Superset ricostruito e avviato con successo!")
     except Exception as e:
-        log_warn(f"Could not automatically restart Docker container: {e}")
-        log_info("You can restart the frontend container manually with: docker compose restart superset-node")
+        log_warn(f"Errore durante l'esecuzione di Docker Compose: {e}")
+        log_info(f"Puoi eseguire manualmente: docker compose -f {compose_file} up -d --build superset")
 
 
 def main():
@@ -222,18 +168,20 @@ def main():
         "-s",
         type=str,
         required=True,
-        help="Path to the local Apache Superset 6.1.0 repository root"
+        help="Path to the local Apache Superset repository root"
     )
     parser.add_argument(
-        "--rollback",
-        action="store_true",
-        help="Revert all changes and restore backups"
+        "--compose-file",
+        "-c",
+        type=str,
+        default="docker-compose-non-dev.yml",
+        help="Docker compose file to use (e.g. docker-compose-non-dev.yml or docker-compose.yml)"
     )
     parser.add_argument(
         "--docker",
         action="store_true",
         default=True,
-        help="Attempt to restart Docker compose frontend service"
+        help="Build and restart Docker compose superset service"
     )
     parser.add_argument(
         "--no-docker",
@@ -256,16 +204,13 @@ def main():
     print("=" * 65)
     log_info(f"Target Superset Path: {superset_root}")
     log_info(f"Plugin Root Path:   {plugin_root}")
-
-    if args.rollback:
-        rollback(superset_root)
-        sys.exit(0)
+    log_info(f"Docker Compose File: {args.compose_file}")
 
     try:
         frontend_dir = find_superset_frontend(superset_root)
         preset_file = find_main_preset(frontend_dir)
 
-        # 1. Copy/Update plugin files in superset-frontend/plugins/
+        # 1. Clean and Copy plugin files in superset-frontend/plugins/
         rel_path, is_update = copy_plugin_files(plugin_root, frontend_dir)
 
         # 2. Patch package.json
@@ -274,21 +219,16 @@ def main():
         # 3. Patch MainPreset
         patch_main_preset(preset_file)
 
-        action_label = "AGGIORNAMENTO (UPDATE)" if is_update else "INSTALLAZIONE"
+        action_label = "REINSTALLAZIONE PULITA" if is_update else "INSTALLAZIONE"
         log_success(f"Tutti i file del frontend e le registrazioni completate con successo ({action_label})!")
 
-        # 4. Handle Docker if requested
+        # 4. Handle Docker Compose Build
         if args.docker:
-            trigger_docker_build(superset_root)
+            trigger_docker_build(superset_root, args.compose_file)
 
         print("\n" + "=" * 65)
         log_success(f"{action_label} COMPLETATA CON SUCCESSO!")
         print("=" * 65)
-        print("Per vedere le nuove modifiche nel browser:")
-        print("1. Ricarica la pagina di Apache Superset (Ctrl + F5 / svuota cache)")
-        print("2. Apri il grafico con il plugin 'Hierarchical Table & Matrix Grid'")
-        print("3. Troverai ora il controllo 'Pivot Columns (Horizontal Matrix)'!")
-        print("=" * 65 + "\n")
 
     except Exception as e:
         log_error(f"Installation failed: {e}")
