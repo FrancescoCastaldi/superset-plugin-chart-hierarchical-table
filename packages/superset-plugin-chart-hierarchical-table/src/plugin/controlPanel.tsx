@@ -324,6 +324,7 @@ const config: ControlPanelConfig = {
       label: t('Advanced Rollup Calculations'),
       expanded: false,
       controlSetRows: [
+        [
           {
             name: 'aggregationMode',
             config: {
