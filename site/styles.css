@@ -1327,7 +1327,10 @@ h4,
    ========================================================================== */
 .card-3d-enhanced {
   transform-style: preserve-3d;
-  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   will-change: transform;
   position: relative;
 }
@@ -1371,7 +1374,9 @@ h4,
   background: var(--bg-card);
   overflow: hidden;
   position: relative;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s ease;
 }
 
 .hero-3d-visual:hover {
@@ -1427,4 +1432,3 @@ h4,
   text-decoration: none;
   font-weight: 600;
 }
-

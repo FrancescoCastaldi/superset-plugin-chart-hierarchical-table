@@ -214,6 +214,10 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     );
   }
 
+  const displayCols = useMemo(() => {
+    return columns.filter(c => c.isMetric);
+  }, [columns]);
+
   return (
     <div className="superset-hierarchical-table-container" style={containerStyle}>
       {/* Toolbar */}
@@ -278,23 +282,61 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             'sticky-first-col': stickyFirstColumn,
             compact: compactMode,
             striped: stripedRows,
+            'pivot-matrix-mode': props.isPivotMode,
           })}
         >
           <thead>
-            <tr>
-              {columns.map(col => (
-                <th
-                  key={col.key}
-                  className={classNames({
-                    'hierarchy-col': col.isHierarchyDimension,
-                    'metric-header': col.isMetric,
-                  })}
-                  style={{ width: col.width, minWidth: col.width }}
-                >
-                  {col.title}
-                </th>
-              ))}
-            </tr>
+            {props.isPivotMode && props.pivotHeaderGroups && props.pivotHeaderGroups.length > 0 ? (
+              <>
+                {/* Level 1: Main Metric Header Row */}
+                <tr className="pivot-group-header-row">
+                  <th
+                    rowSpan={2}
+                    className="hierarchy-col"
+                    style={{ width: columns[0]?.width, minWidth: columns[0]?.width }}
+                  >
+                    {columns[0]?.title}
+                  </th>
+                  {props.pivotHeaderGroups.map(group => (
+                    <th
+                      key={group.key}
+                      colSpan={group.colSpan}
+                      className="metric-group-header"
+                      style={{ textAlign: 'center', borderBottom: '1px solid #d1d5db' }}
+                    >
+                      {group.title}
+                    </th>
+                  ))}
+                </tr>
+                {/* Level 2: Sub-column Pivot Dimension Values Row */}
+                <tr className="pivot-sub-header-row">
+                  {displayCols.map(col => (
+                    <th
+                      key={col.key}
+                      className="metric-header pivot-sub-header"
+                      style={{ width: col.width, minWidth: col.width }}
+                    >
+                      {col.title}
+                    </th>
+                  ))}
+                </tr>
+              </>
+            ) : (
+              <tr>
+                {columns.map(col => (
+                  <th
+                    key={col.key}
+                    className={classNames({
+                      'hierarchy-col': col.isHierarchyDimension,
+                      'metric-header': col.isMetric,
+                    })}
+                    style={{ width: col.width, minWidth: col.width }}
+                  >
+                    {col.title}
+                  </th>
+                ))}
+              </tr>
+            )}
           </thead>
           <tbody>
             {/* Grand Total Row at Top if enabled */}
@@ -303,11 +345,10 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                 <td className="hierarchy-cell">
                   <span className="node-name">{grandTotalNode.name}</span>
                 </td>
-                {metrics.map(m => {
-                  const col = columns.find(c => c.key === m);
-                  const val = grandTotalNode.metrics[m];
+                {displayCols.map(col => {
+                  const val = grandTotalNode.metrics[col.key];
                   return (
-                    <td key={m} className="metric-cell">
+                    <td key={col.key} className="metric-cell">
                       {col?.formatter ? col.formatter(val) : String(val ?? '-')}
                     </td>
                   );
@@ -367,12 +408,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     </div>
                   </td>
 
-                  {/* Metric Columns */}
-                  {metrics.map(m => {
-                    const col = columns.find(c => c.key === m);
-                    const val = node.metrics[m];
+                  {/* Metric / Pivot Columns */}
+                  {displayCols.map(col => {
+                    const val = node.metrics[col.key];
                     return (
-                      <td key={m} className="metric-cell">
+                      <td key={col.key} className="metric-cell">
                         {col?.formatter ? col.formatter(val) : String(val ?? '-')}
                       </td>
                     );

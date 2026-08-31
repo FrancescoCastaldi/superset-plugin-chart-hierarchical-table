@@ -8,7 +8,7 @@
 
   // 1. Interactive 3D Card Tilt with Dynamic Specular Glare
   const tiltElements = document.querySelectorAll(
-    '.status-card, .companion-card, .feature-card, .hero-3d-visual, .code-box-card, .sandbox-card'
+    '.status-card, .companion-card, .feature-card, .hero-3d-visual, .code-box-card, .sandbox-card',
   );
 
   tiltElements.forEach(card => {
@@ -38,7 +38,9 @@
 
   // 2. Smooth 3D Parallax Scroll Engine
   let ticking = false;
-  const parallaxTargets = document.querySelectorAll('.status-grid, .companion-card, .hero-3d-visual, .section-header');
+  const parallaxTargets = document.querySelectorAll(
+    '.status-grid, .companion-card, .hero-3d-visual, .section-header',
+  );
 
   function onScroll() {
     if (!ticking) {
@@ -49,7 +51,10 @@
           const rect = el.getBoundingClientRect();
           const elementCenter = rect.top + rect.height / 2;
           const distanceFromCenter = elementCenter - viewportHeight / 2;
-          const normalizedDist = Math.max(-1, Math.min(1, distanceFromCenter / (viewportHeight / 1.5)));
+          const normalizedDist = Math.max(
+            -1,
+            Math.min(1, distanceFromCenter / (viewportHeight / 1.5)),
+          );
 
           // Subtle 3D pitch based on vertical scroll position
           const pitch = normalizedDist * 3.5; // -3.5deg to +3.5deg

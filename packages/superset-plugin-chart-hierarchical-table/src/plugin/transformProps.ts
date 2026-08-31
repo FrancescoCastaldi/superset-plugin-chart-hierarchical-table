@@ -74,10 +74,20 @@ export default function transformProps(
   // Calculate subtotal display
   const isSubtotals = showSubtotals ?? showRollupTotals ?? show_rollup_totals ?? true;
 
+  // Extract pivot dimensions
+  const rawPivotDims = ensureIsArray(mergedFormData.columns || mergedFormData.pivot_columns);
+  const pivotDimensions: string[] = rawPivotDims.map((d: any) =>
+    typeof d === 'string'
+      ? d
+      : d?.column_name || d?.label || d?.sqlExpression || String(d),
+  );
+
+  const isPivotMode = hierarchyType === 'multi_dimension' && pivotDimensions.length > 0;
+
   // Build hierarchical data tree based on mode
   let treeData: TreeNode[] = [];
   if (hierarchyType === 'multi_dimension') {
-    treeData = buildMultiDimensionTree(dataRecords, dimensions, metrics);
+    treeData = buildMultiDimensionTree(dataRecords, dimensions, metrics, pivotDimensions);
   } else {
     treeData = buildParentChildTree(dataRecords, idColStr, parentIdColStr, labelColStr, metrics);
   }
@@ -98,22 +108,66 @@ export default function transformProps(
     },
   ];
 
-  for (const m of metrics) {
-    columns.push({
-      key: m,
-      title: m,
-      dataIndex: m,
-      isMetric: true,
-      align: 'right',
-      width: 160,
-      formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol),
-    });
+  const pivotHeaderGroups: any[] = [];
+  const allMetricKeysToCompute: string[] = [];
+
+  if (isPivotMode) {
+    // 1. Discover all distinct pivot values from dataRecords in appearance order
+    const pivotValSet = new Set<string>();
+    for (const record of dataRecords) {
+      const parts: string[] = [];
+      for (const pDim of pivotDimensions) {
+        const rawP = record[pDim];
+        parts.push(rawP !== null && rawP !== undefined ? String(rawP) : '(Empty)');
+      }
+      pivotValSet.add(parts.join(' - '));
+    }
+
+    const pivotValues = Array.from(pivotValSet).sort();
+
+    // 2. Build multi-level header structure: Metric (top level) -> Pivot Value (bottom level)
+    for (const m of metrics) {
+      pivotHeaderGroups.push({
+        title: m,
+        key: m,
+        colSpan: pivotValues.length,
+      });
+
+      for (const pVal of pivotValues) {
+        const compositeKey = `${m}___${pVal}`;
+        allMetricKeysToCompute.push(compositeKey);
+        columns.push({
+          key: compositeKey,
+          title: pVal,
+          dataIndex: compositeKey,
+          isMetric: true,
+          pivotValue: pVal,
+          baseMetric: m,
+          align: 'right',
+          width: 140,
+          formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol),
+        });
+      }
+    }
+  } else {
+    for (const m of metrics) {
+      allMetricKeysToCompute.push(m);
+      columns.push({
+        key: m,
+        title: m,
+        dataIndex: m,
+        isMetric: true,
+        align: 'right',
+        width: 160,
+        formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol),
+      });
+    }
   }
 
   // Calculate Grand Total if enabled
   let grandTotalNode: TreeNode | undefined;
   if (showGrandTotal && treeData.length > 0) {
-    grandTotalNode = computeGrandTotal(treeData, metrics);
+    grandTotalNode = computeGrandTotal(treeData, allMetricKeysToCompute);
   }
 
   const isCrossFilterActive = Boolean(
@@ -242,10 +296,14 @@ export default function transformProps(
     data: treeData,
     rawRecords: dataRecords,
     columns,
+    pivotHeaderGroups,
+    isPivotMode,
     formData,
     hierarchyType,
     dimensions,
+    pivotColumns: pivotDimensions,
     metrics,
+    displayMetrics: allMetricKeysToCompute,
     initialExpandDepth: calculatedExpandDepth,
     showSubtotals: isSubtotals,
     showGrandTotal,

@@ -24,6 +24,8 @@ export interface HierarchicalTableFormData extends QueryFormData {
   // Dimension & Metric Controls
   hierarchyType: HierarchyType;
   groupby?: string[];
+  columns?: string[];
+  pivot_columns?: string[];
   idColumn?: string;
   parentIdColumn?: string;
   labelColumn?: string;
@@ -74,7 +76,15 @@ export interface TableColumn {
   align?: 'left' | 'center' | 'right';
   isMetric: boolean;
   isHierarchyDimension?: boolean;
+  pivotValue?: string;
+  baseMetric?: string;
   formatter?: (val: any) => string;
+}
+
+export interface PivotHeaderGroup {
+  title: string;
+  key: string;
+  colSpan: number;
 }
 
 export interface HierarchicalTableTransformedProps {
@@ -83,10 +93,14 @@ export interface HierarchicalTableTransformedProps {
   data: TreeNode[];
   rawRecords: DataRecord[];
   columns: TableColumn[];
+  pivotHeaderGroups?: PivotHeaderGroup[];
+  isPivotMode?: boolean;
   formData: HierarchicalTableFormData;
   hierarchyType: HierarchyType;
   dimensions: string[];
+  pivotColumns?: string[];
   metrics: string[];
+  displayMetrics: string[];
   initialExpandDepth: number;
   showSubtotals: boolean;
   showGrandTotal: boolean;

@@ -132,12 +132,38 @@
   text-align: right;
 }
 
+.hierarchical-table.pivot-matrix-mode th.metric-group-header {
+  background: #e5e7eb;
+  color: #1f2937;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid #cbd5e1;
+  border-right: 1px solid #cbd5e1;
+  padding: 6px 10px;
+}
+
+.hierarchical-table.pivot-matrix-mode th.pivot-sub-header {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  padding: 6px 10px;
+  border-bottom: 2px solid #cbd5e1;
+  border-right: 1px solid #e2e8f0;
+}
+
 .hierarchical-table.sticky-header th {
   position: sticky;
   top: 0;
   z-index: 10;
   background-color: #f3f4f6;
   box-shadow: 0 1px 0 #e5e7eb;
+}
+
+.hierarchical-table.sticky-header tr.pivot-sub-header-row th {
+  top: 33px;
+  z-index: 9;
 }
 
 .hierarchical-table.sticky-first-col th.hierarchy-col {

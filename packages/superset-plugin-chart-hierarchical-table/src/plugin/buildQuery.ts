@@ -19,7 +19,9 @@ export default function buildQuery(formData: HierarchicalTableFormData): QueryCo
 
     if (hierarchyType === 'multi_dimension') {
       // Backward compat: support groupby, hierarchyDimensions, hierarchy_dimensions
-      columns = ensureIsArray(groupby || hierarchyDimensions || hierarchy_dimensions);
+      const rowDims = ensureIsArray(groupby || hierarchyDimensions || hierarchy_dimensions);
+      const pivotDims = ensureIsArray(fd.columns || fd.pivot_columns);
+      columns = Array.from(new Set([...rowDims, ...pivotDims]));
     } else {
       // Parent-Child hierarchy requires ID, Parent ID, and optional Label column
       const cols = [idColumn, parentIdColumn, labelColumn].filter(Boolean) as string[];

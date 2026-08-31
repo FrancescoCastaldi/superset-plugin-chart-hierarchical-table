@@ -10,16 +10,29 @@ export function buildMultiDimensionTree(
   records: DataRecord[],
   dimensions: string[],
   metrics: string[],
+  pivotDimensions: string[] = [],
 ): TreeNode[] {
   if (!records || records.length === 0 || !dimensions || dimensions.length === 0) {
     return [];
   }
 
+  const isPivot = pivotDimensions && pivotDimensions.length > 0;
   const rootMap = new Map<string, any>();
 
   for (const record of records) {
     let currentLevelMap = rootMap;
     const currentPath: string[] = [];
+
+    // Construct pivot key for this record if pivotDimensions are present
+    let pivotKey = '';
+    if (isPivot) {
+      const pivotParts: string[] = [];
+      for (const pDim of pivotDimensions) {
+        const rawP = record[pDim];
+        pivotParts.push(rawP !== null && rawP !== undefined ? String(rawP) : '(Empty)');
+      }
+      pivotKey = pivotParts.join(' - ');
+    }
 
     for (let i = 0; i < dimensions.length; i++) {
       const dim = dimensions[i];
@@ -48,7 +61,13 @@ export function buildMultiDimensionTree(
         if (isLeaf) {
           for (const m of metrics) {
             const rawM = record[m];
-            nodeObj.metrics[m] = typeof rawM === 'number' ? rawM : parseFloat(String(rawM)) || 0;
+            const numVal = typeof rawM === 'number' ? rawM : parseFloat(String(rawM)) || 0;
+            if (isPivot && pivotKey) {
+              const compositeMetricKey = `${m}___${pivotKey}`;
+              nodeObj.metrics[compositeMetricKey] = numVal;
+            } else {
+              nodeObj.metrics[m] = numVal;
+            }
           }
         }
 
@@ -59,7 +78,12 @@ export function buildMultiDimensionTree(
         for (const m of metrics) {
           const rawM = record[m];
           const numVal = typeof rawM === 'number' ? rawM : parseFloat(String(rawM)) || 0;
-          existingNode.metrics[m] = (existingNode.metrics[m] || 0) + numVal;
+          if (isPivot && pivotKey) {
+            const compositeMetricKey = `${m}___${pivotKey}`;
+            existingNode.metrics[compositeMetricKey] = (existingNode.metrics[compositeMetricKey] || 0) + numVal;
+          } else {
+            existingNode.metrics[m] = (existingNode.metrics[m] || 0) + numVal;
+          }
         }
       }
 
@@ -97,7 +121,22 @@ export function buildMultiDimensionTree(
   }
 
   const tree = mapToTreeNodes(rootMap);
-  rollupTreeMetrics(tree, metrics);
+
+  // Collect all actual metric keys present in tree (including pivoted keys like Richieste___SSN)
+  const allMetricKeys = new Set<string>(metrics);
+  function collectKeys(nodes: TreeNode[]) {
+    for (const node of nodes) {
+      if (node.metrics) {
+        for (const k of Object.keys(node.metrics)) {
+          allMetricKeys.add(k);
+        }
+      }
+      if (node.children) collectKeys(node.children);
+    }
+  }
+  collectKeys(tree);
+
+  rollupTreeMetrics(tree, Array.from(allMetricKeys));
   return tree;
 }
 

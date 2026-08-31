@@ -89,12 +89,17 @@ if ($PythonCmd) {
         $SrcFrontend = Join-Path $PluginRoot "frontend"
     }
 
-    # Copia sorgenti
-    Write-Color "[INFO] Copia dei file del plugin in $DestDir..." "Green"
-    if (Test-Path $DestDir) {
+    # Copia sorgenti con supporto UPDATE automatico
+    $isUpdate = Test-Path $DestDir
+    if ($isUpdate) {
+        Write-Color "[INFO] Plugin già presente in '$DestDir'. Esecuzione UPDATE..." "Yellow"
         Remove-Item -Recurse -Force $DestDir
+    } else {
+        Write-Color "[INFO] Nuova installazione del plugin in $DestDir..." "Green"
     }
+
     Copy-Item -Path $SrcFrontend -Destination $DestDir -Recurse -Exclude @("node_modules", "dist", ".git")
+    Write-Color "[SUCCESS] File del plugin sincronizzati con successo!" "Green"
 
     # Patch MainPreset
     $PresetPath = Join-Path $FrontendDir "src\visualizations\presets\MainPreset.js"

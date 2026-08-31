@@ -46,8 +46,20 @@ const config: ControlPanelConfig = {
             name: 'groupby',
             config: {
               ...sharedControls.groupby,
-              label: t('Hierarchy Dimensions (in order)'),
-              description: t('Select dimensions from highest to lowest level of hierarchy (e.g. Region > Country > City).'),
+              label: t('Hierarchy Dimensions / Rows (in order)'),
+              description: t('Select dimensions from highest to lowest level of hierarchy for rows (e.g. FARE LIV1 > FARE LIV2 > Prestazione).'),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension',
+            },
+          },
+        ],
+        [
+          {
+            name: 'columns',
+            config: {
+              ...sharedControls.groupby,
+              label: t('Pivot Columns (Horizontal Matrix)'),
+              description: t('Optional: group metrics horizontally by one or more dimensions (e.g. RegimeErogazione).'),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension',
             },

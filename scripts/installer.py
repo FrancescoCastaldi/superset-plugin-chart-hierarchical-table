@@ -138,12 +138,13 @@ def patch_main_preset(preset_file: Path):
     log_success(f"Registered plugin in {preset_file.name}")
 
 
-def copy_plugin_files(plugin_root: Path, frontend_dir: Path) -> str:
-    """Copies frontend plugin directory into superset-frontend/plugins/."""
+def copy_plugin_files(plugin_root: Path, frontend_dir: Path) -> tuple[str, bool]:
+    """Copies frontend plugin directory into superset-frontend/plugins/. Returns (rel_path, is_update)."""
     target_plugins_dir = frontend_dir / "plugins"
     target_plugins_dir.mkdir(parents=True, exist_ok=True)
 
     dest_dir = target_plugins_dir / "superset-plugin-chart-hierarchical-table"
+    is_update = dest_dir.exists()
     
     # Check packages/ directory first (monorepo layout), then legacy frontend/
     src_frontend_dir = plugin_root / "packages" / "superset-plugin-chart-hierarchical-table"
@@ -153,19 +154,21 @@ def copy_plugin_files(plugin_root: Path, frontend_dir: Path) -> str:
     if not src_frontend_dir.is_dir():
         raise FileNotFoundError(f"Source frontend plugin directory '{src_frontend_dir}' not found.")
 
-    if dest_dir.exists():
-        log_info(f"Removing existing plugin destination at '{dest_dir.name}'")
+    if is_update:
+        log_info(f"Plugin già presente in '{dest_dir.name}'. Esecuzione UPDATE & sincronizzazione nuovi sorgenti...")
         shutil.rmtree(dest_dir)
+    else:
+        log_info(f"Nuova installazione del plugin in '{dest_dir.name}'...")
 
     # Exclude node_modules and build artifacts from copy
     def ignore_patterns(path, names):
         return [n for n in names if n in ("node_modules", "dist", ".git", ".turbo")]
 
     shutil.copytree(src_frontend_dir, dest_dir, ignore=ignore_patterns)
-    log_success(f"Copied plugin sources to {dest_dir}")
+    log_success(f"Sorgenti plugin aggiornati con successo in {dest_dir}")
 
     # Return relative path from superset-frontend
-    return "./plugins/superset-plugin-chart-hierarchical-table"
+    return "./plugins/superset-plugin-chart-hierarchical-table", is_update
 
 
 def rollback(superset_root: Path):
@@ -262,8 +265,8 @@ def main():
         frontend_dir = find_superset_frontend(superset_root)
         preset_file = find_main_preset(frontend_dir)
 
-        # 1. Copy plugin files to superset-frontend/plugins/
-        rel_path = copy_plugin_files(plugin_root, frontend_dir)
+        # 1. Copy/Update plugin files in superset-frontend/plugins/
+        rel_path, is_update = copy_plugin_files(plugin_root, frontend_dir)
 
         # 2. Patch package.json
         patch_package_json(frontend_dir, rel_path)
@@ -271,19 +274,20 @@ def main():
         # 3. Patch MainPreset
         patch_main_preset(preset_file)
 
-        log_success("All frontend files and registrations configured successfully!")
+        action_label = "AGGIORNAMENTO (UPDATE)" if is_update else "INSTALLAZIONE"
+        log_success(f"Tutti i file del frontend e le registrazioni completate con successo ({action_label})!")
 
         # 4. Handle Docker if requested
         if args.docker:
             trigger_docker_build(superset_root)
 
         print("\n" + "=" * 65)
-        log_success("INSTALLATION COMPLETED SUCCESSFULLY!")
+        log_success(f"{action_label} COMPLETATA CON SUCCESSO!")
         print("=" * 65)
-        print("To verify in your browser:")
-        print("1. Open Superset (http://localhost:8088)")
-        print("2. Click '+ -> Chart'")
-        print("3. Search for 'Hierarchical Table & Matrix Grid' in the Table category.")
+        print("Per vedere le nuove modifiche nel browser:")
+        print("1. Ricarica la pagina di Apache Superset (Ctrl + F5 / svuota cache)")
+        print("2. Apri il grafico con il plugin 'Hierarchical Table & Matrix Grid'")
+        print("3. Troverai ora il controllo 'Pivot Columns (Horizontal Matrix)'!")
         print("=" * 65 + "\n")
 
     except Exception as e:
