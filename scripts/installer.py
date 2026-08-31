@@ -98,24 +98,6 @@ def copy_plugin_files(plugin_root: Path, frontend_dir: Path) -> tuple[str, bool]
     return "./plugins/superset-plugin-chart-hierarchical-table", is_update
 
 
-def patch_package_json(frontend_dir: Path, plugin_rel_path: str):
-    pkg_file = frontend_dir / "package.json"
-    backup_file(pkg_file)
-
-    with open(pkg_file, "r", encoding="utf-8") as f:
-        pkg_data = json.load(f)
-
-    deps = pkg_data.setdefault("dependencies", {})
-    plugin_name = "superset-plugin-chart-hierarchical-table"
-    deps[plugin_name] = f"file:{plugin_rel_path}"
-
-    with open(pkg_file, "w", encoding="utf-8") as f:
-        json.dump(pkg_data, f, indent=2)
-        f.write("\n")
-
-    log_success(f"Added '{plugin_name}' to {pkg_file.name}")
-
-
 def patch_main_preset(preset_file: Path):
     backup_file(preset_file)
 
@@ -210,19 +192,22 @@ def main():
         frontend_dir = find_superset_frontend(superset_root)
         preset_file = find_main_preset(frontend_dir)
 
+        # Ripristina package.json se è stato sporcato
+        pkg_bak = frontend_dir / "package.json.bak"
+        if pkg_bak.is_file():
+            shutil.copy2(pkg_bak, frontend_dir / "package.json")
+            log_info("Ripristinato package.json intatto dal backup per mantenere il lock file sincronizzato.")
+
         # 1. Clean and Copy plugin files in superset-frontend/plugins/
         rel_path, is_update = copy_plugin_files(plugin_root, frontend_dir)
 
-        # 2. Patch package.json
-        patch_package_json(frontend_dir, rel_path)
-
-        # 3. Patch MainPreset
+        # 2. Patch MainPreset (l'import punta direttamente al plugin nel workspace)
         patch_main_preset(preset_file)
 
         action_label = "REINSTALLAZIONE PULITA" if is_update else "INSTALLAZIONE"
         log_success(f"Tutti i file del frontend e le registrazioni completate con successo ({action_label})!")
 
-        # 4. Handle Docker Compose Build
+        # 3. Handle Docker Compose Build
         if args.docker:
             trigger_docker_build(superset_root, args.compose_file)
 
