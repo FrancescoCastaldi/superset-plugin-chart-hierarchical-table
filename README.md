@@ -12,53 +12,67 @@
 
 ---
 
-## 📑 Sommario
+# StratumTree — Hierarchical Matrix Grid & Tree Table for Apache Superset 6.1.0
 
-- [Anteprima Visiva & Animazione Interattiva](#-anteprima-visiva--animazione-interattiva)
-- [Simulatore Dashboard Live](#-simulatore-dashboard-live-su-github-pages)
-- [Architettura & Funzionalità Chiave](#-architettura--funzionalità-chiave)
-- [Struttura del Repository (Monorepo Layout)](#-struttura-del-repository-monorepo-layout)
-- [Guida all'Installazione](#-guida-allinstallazione)
-  - [Installazione Automatica (Docker Compose)](#1-installazione-automatica-consigliata)
-  - [Installazione Manuale](#2-installazione-manuale)
-- [Parametri Explore (Control Panel)](#-parametri-explore-control-panel)
-- [Collaudo & Test Suite](#-collaudo--test-suite)
-- [Maintainer & Governance](#-maintainer--governance)
-- [Licenza](#-licenza)
+[![Apache Superset](https://img.shields.io/badge/Apache%20Superset-6.1.0-007A87.svg?logo=apache-superset&logoColor=white)](https://superset.apache.org/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-StratumTree%20Sandbox-0ea5e9.svg)](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
+[![Ant Design](https://img.shields.io/badge/Ant%20Design-v5-1890FF.svg?logo=antdesign&logoColor=white)](https://ant.design/)
+[![Python](https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+
+**StratumTree** is an enterprise-grade visualization plugin and companion aggregation engine designed for **Apache Superset 6.1.0+**. It delivers an interactive **Hierarchical Tree Table and Matrix Grid** with dual-mode hierarchy processing (multi-dimensional level grouping and recursive parent-child graph traversal), automated roll-up calculations, native Superset dashboard cross-filtering (`setDataMask`), and automated cross-platform installation tooling.
 
 ---
 
-## 📸 Anteprima Visiva & Animazione Interattiva
+## 📑 Table of Contents
 
-### 🎬 Animazione Dinamica del Cross-Filtering & Interattività Multi-Grafico
+- [Visual Preview & Interactive Animation](#-visual-preview--interactive-animation)
+- [Live Dashboard Simulator on GitHub Pages](#-live-dashboard-simulator-on-github-pages)
+- [Architecture & Key Features](#-architecture--key-features)
+- [Repository Structure (Monorepo Layout)](#-repository-structure-monorepo-layout)
+- [Installation Guide](#-installation-guide)
+  - [Automated Installation (Docker Compose)](#1-automated-installation-recommended)
+  - [Manual Installation](#2-manual-installation)
+- [Explore Parameters (Control Panel)](#-explore-parameters-control-panel)
+- [Verification & Test Suite](#-verification--test-suite)
+- [Maintainer & Governance](#-maintainer--governance)
+- [License](#-license)
 
-L'animazione vettoriale illustra l'interazione ad albero, l'espansione dei rami dimensionali, l'emissione dell'evento `setDataMask` e la reattività dei grafici companion della dashboard:
+---
+
+## 📸 Visual Preview & Interactive Animation
+
+### 🎬 Dynamic Cross-Filtering Animation & Multi-Chart Interactivity
+
+The vector animation illustrates tree navigation, branch expansion, the emitted `setDataMask` cross-filter event, and the reactive update of companion dashboard charts:
 
 ![Hierarchical Table Dynamic Animation](docs/images/hierarchical_table_animation.svg)
 
-### 🖼️ Screenshot UI in Apache Superset 6.1.0
+### 🖼️ UI Screenshot in Apache Superset 6.1.0
 
 ![Apache Superset Hierarchical Table Preview](docs/images/hierarchical_table_preview.jpg)
 
 ---
 
-## 🌐 Simulatore Dashboard Live su GitHub Pages
+## 🌐 Live Dashboard Simulator on GitHub Pages
 
-È disponibile una simulazione interattiva completa di una dashboard Apache Superset 6.1.0 con 4 grafici companion collegati in tempo reale:
+A complete, interactive simulation of an Apache Superset 6.1.0 dashboard with 4 real-time linked companion charts is available:
 
-👉 **[Accedi al Simulatore Live su GitHub Pages](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/)**
+👉 **[Access the Live Simulator on GitHub Pages](https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/)**
 
-- **Tabella Gerarchica Principale**: Espansione/collasso nodi, ricerca in-tree con conservazione del path, selezione multipla interattiva tramite checkbox e click su riga (`.selected-filter-row`).
-- **Card KPI Big Number con Sparkline**: Ricalcolo istantaneo del totale filtrato sui record atomici e conteggio dei record/store corrispondenti.
-- **Donut Share Composition Chart**: Ripartizione percentuale dinamica e comparativa della quota tra le entità selezionate.
-- **Distribution Bar Chart**: Confronto visivo tra i rami selezionati con indicatore di spunta `✓` e barre evidenziate.
-- **Quarterly Performance Area Chart**: Traiettoria temporale (Q1–Q4) ricalcolata in tempo reale sui soli record filtrati.
-- **Active Filter Chips & Broadcast Banner**: Gestione dei filtri attivi con rimozione selettiva `✕` e pulsante `Clear All`.
-- **Console Eventi Superset**: Ispezione in tempo reale del payload emesso da `setDataMask` con raggruppamento `IN` per colonna.
+- **Main Hierarchical Table**: Node expand/collapse, in-tree path-preserving search, interactive multi-selection via checkboxes and row click (`.selected-filter-row`).
+- **Big Number KPI Card with Sparkline**: Instant recalculation of filtered totals on atomic records and corresponding count of matched records/entities.
+- **Donut Share Composition Chart**: Dynamic proportional distribution of metric share across selected entities.
+- **Distribution Bar Chart**: Visual comparison across selected branches with checkmark indicators `✓` and highlighted bars.
+- **Quarterly Performance Area Chart**: Temporal trend (Q1–Q4) recalculated in real-time over the filtered subset.
+- **Active Filter Chips & Broadcast Banner**: Active filter management with selective badge removal `✕` and `Clear All` action.
+- **Superset Event Console**: Live inspection of the payload emitted by `setDataMask` grouped by column with `IN` operators.
 
 ---
 
-## 🏛️ Architettura & Funzionalità Chiave
+## 🏛️ Architecture & Key Features
 
 ```mermaid
 flowchart LR
@@ -72,149 +86,149 @@ flowchart LR
     G -->|setDataMask Multi-Filter Event| A
 ```
 
-### 1. Elaborazione Gerarchica Dual-Mode
+### 1. Dual-Mode Hierarchy Processing
 
-- **Multi-Dimension Level Grouping**: Raggruppamento per serie ordinata di dimensioni (es. `Region > Country > City > Store`).
-- **Parent-Child Adjacency Graph**: Risoluzione ricorsiva di grafi di adiacenza (es. Organigrammi `employee_id -> manager_id`, Piani dei Conti `account_code -> parent_account_code`).
+- **Multi-Dimension Level Grouping**: Grouping by an ordered sequence of dimensions (e.g., `Region > Country > City > Store`).
+- **Parent-Child Adjacency Graph**: Recursive adjacency graph traversal (e.g., Organizational charts `employee_id -> manager_id`, Chart of Accounts `account_code -> parent_account_code`).
 
-### 2. Cross-Filtering a Selezione Multipla Nativo Superset 6.1.0 (`setDataMask`)
+### 2. Native Superset 6.1.0 Multi-Selection Cross-Filtering (`setDataMask`)
 
-- **Multi-Selection & Union Evaluation**: Selezione simultanea di più nodi e parametri a livelli diversi della gerarchia con valutazione a livello di record (zero doppio conteggio).
-- **Subtree Graph Traversal**: Per gerarchie Parent-Child, risoluzione automatica dell'intero sottoalbero di ID discendenti per ciascun nodo selezionato.
-- **Grouped `IN` Filters**: Generazione automatica di filtri aggregati per colonna (`{ col: "country", op: "IN", val: ["USA", "Germany"] }`).
-- **Path-Aware Filtering**: Trasmissione automatica di tutti i livelli gerarchici antenati per garantire la corretta contestualizzazione del filtro.
-- **URI-Safe Key Handling**: Protezione contro caratteri speciali, spazi o apici nei percorsi gerarchici.
-- **Active Filter Management**: Badge interattivi con eliminazione del singolo filtro `✕`, pulsante `Clear All (N)` ed evidenziazione visiva `.selected-filter-row`.
+- **Multi-Selection & Union Evaluation**: Simultaneous selection of multiple nodes across different hierarchy depths with atomic record evaluation (zero double counting).
+- **Subtree Graph Traversal**: For Parent-Child hierarchies, automatic recursive discovery of all descendant IDs for each selected node.
+- **Grouped `IN` Filters**: Automatic generation of column-aggregated filter arrays (`{ col: "country", op: "IN", val: ["USA", "Germany"] }`).
+- **Path-Aware Filtering**: Automatic transmission of ancestor hierarchy levels to preserve filter context.
+- **URI-Safe Key Handling**: Protection against special characters, whitespace, and quotes in hierarchical paths.
+- **Active Filter Management**: Interactive badges with single filter removal `✕`, `Clear All (N)` button, and `.selected-filter-row` visual highlights.
 
-### 3. Calcolo Automatico di Roll-up & Subtotali
+### 3. Automated Roll-up & Subtotals Computation
 
-- Algoritmo di attraversamento post-order per il calcolo di subtotali su tutti i nodi non-foglia (Somma, Media, Min, Max, Conteggio).
-- Generazione automatica della riga di riepilogo complessivo (**Grand Total**).
+- Post-order tree traversal algorithm computing subtotals across all non-leaf nodes (Sum, Mean, Min, Max, Count).
+- Automatic generation of the overall **Grand Total** summary row.
 
-### 4. Companion Engine Backend (Python)
+### 4. Companion Backend Engine (Python)
 
-- Pacchetto `superset_hierarchical_table` per elaborazioni pesanti lato server su grandi DataFrame Pandas e generazione di query SQL con CTE ricorsive.
+- `superset_hierarchical_table` package for heavy server-side processing over large Pandas DataFrames and SQL queries with recursive CTEs.
 
-### 5. Responsive Scrollbar & Contenimento Grafico
+### 5. Responsive Scrollbars & Viewport Containment
 
-- **Dynamic Bounding**: Integrazione diretta con le proprietà `width` e `height` fornite dal motore di rendering di Apache Superset.
-- **Scroll Interno Bidirezionale**: Contenitore `.table-scroll-wrapper` con `min-height: 0` e `min-width: 0` in Flexbox, garantendo lo scorrimento fluido verticale/orizzontale ed evitando tagli grafici o overflow.
-- **Sticky Headers & Columns Opache**: Intestazioni di colonna (`th`) e colonna gerarchica ad albero (`td.hierarchy-cell`) fisse con sfondo opaco e ombreggiatura per evitare sovrapposizioni visive.
-- **Custom Scrollbar Styling**: Scrollbar personalizzata e sottile coerente sia su browser standard che motori WebKit.
+- **Dynamic Bounding**: Direct binding to the `width` and `height` properties provided by the Apache Superset dashboard layout engine.
+- **Bidirectional Internal Scrolling**: `.table-scroll-wrapper` container with `min-height: 0` and `min-width: 0` Flexbox constraints, ensuring smooth horizontal/vertical scrolling without layout clipping or page overflow.
+- **Opaque Sticky Headers & Columns**: Fixed column headers (`th`) and tree hierarchy columns (`td.hierarchy-cell`) with opaque backgrounds and subtle drop shadows to prevent visual overlap.
+- **Custom Scrollbar Styling**: Consistent, minimal scrollbars across standard browsers and WebKit rendering engines.
 
 ---
 
-## 📂 Struttura del Repository (Monorepo Layout)
+## 📂 Repository Structure (Monorepo Layout)
 
 ```
 superset-plugin-chart-hierarchical-table/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                             # Pipeline CI: test TypeScript e Pytest
-│       └── deploy-pages.yml                   # Pipeline CD: deploy automatico GitHub Pages
+│       ├── ci.yml                             # CI pipeline: TypeScript & Pytest suites
+│       └── deploy-pages.yml                   # CD pipeline: automated GitHub Pages deployment
 │
 ├── configs/
-│   └── tsconfig.base.json                     # Configurazione TypeScript di base condivisa
+│   └── tsconfig.base.json                     # Shared base TypeScript configuration
 │
 ├── packages/
-│   ├── superset-plugin-chart-hierarchical-table/  # Plugin Frontend (React 18 / TypeScript)
+│   ├── superset-plugin-chart-hierarchical-table/  # Frontend Plugin (React 18 / TypeScript)
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/
-│   │   │   ├── index.ts                       # Entry point e registrazione del plugin
+│   │   │   ├── index.ts                       # Entry point and plugin registration
 │   │   │   ├── plugin/                        # buildQuery, controlPanel, transformProps
-│   │   │   ├── components/                    # HierarchicalTable UI, stili Ant Design v5
-│   │   │   ├── types/                         # Definizioni TypeScript e interfacce
+│   │   │   ├── components/                    # HierarchicalTable UI, Ant Design v5 styles
+│   │   │   ├── types/                         # TypeScript interfaces and type definitions
 │   │   │   └── utils/                         # treeBuilder, aggregations, formatters
-│   │   └── test/                              # Test unitari Jest
+│   │   └── test/                              # Jest unit tests
 │   │
-│   └── superset-hierarchical-table-backend/       # Companion Engine Backend (Python)
-│       ├── pyproject.toml                     # Configurazione PEP 621 e dipendenze
+│   └── superset-hierarchical-table-backend/       # Companion Backend Engine (Python)
+│       ├── pyproject.toml                     # PEP 621 configuration and dependencies
 │       ├── superset_hierarchical_table/
 │       │   ├── processors/                    # tree_aggregator, parent_child
-│       │   └── queries/                       # sql_builder e CTE ricorsive
-│       └── tests/                             # Test suite Pytest
+│       │   └── queries/                       # sql_builder and recursive CTEs
+│       └── tests/                             # Pytest test suite
 │
-├── site/                                      # Documentazione interattiva & Dashboard Simulator
-│   ├── index.html                             # UI del simulatore dashboard Superset 6.1.0
-│   ├── styles.css                             # Design system ultra-minimal dark
-│   ├── app.js                                 # Motore client-side e sincronizzazione grafici
-│   ├── favicon.svg                            # Favicon vettoriale SVG
-│   ├── favicon.png                            # Favicon bitmap 32x32 px
-│   ├── favicon.ico                            # Favicon formato ICO
-│   └── .nojekyll                              # Bypass elaborazione Jekyll su GitHub Pages
+├── site/                                      # Interactive documentation & Dashboard Simulator
+│   ├── index.html                             # Superset 6.1.0 dashboard simulator UI
+│   ├── styles.css                             # Ultra-minimal dark design system
+│   ├── app.js                                 # Client-side engine and chart synchronization
+│   ├── favicon.svg                            # Vector SVG favicon
+│   ├── favicon.png                            # 32x32 px bitmap favicon
+│   ├── favicon.ico                            # ICO format favicon
+│   └── .nojekyll                              # Bypass Jekyll processing on GitHub Pages
 │
-├── scripts/                                   # Strumenti di automazione e iniezione
-│   ├── install.ps1                            # Installer automatizzato Windows PowerShell
-│   ├── install.sh                             # Installer automatizzato Linux / macOS
-│   ├── installer.py                           # Motore di iniezione AST/regex con backup & rollback
-│   └── docker-compose.override.example.yml    # Template mount sorgenti per Docker Compose
+├── scripts/                                   # Automation and injection tooling
+│   ├── install.ps1                            # Automated Windows PowerShell installer
+│   ├── install.sh                             # Automated Linux / macOS installer
+│   ├── installer.py                           # AST/regex injection engine with backup & rollback
+│   └── docker-compose.override.example.yml    # Source mount template for Docker Compose
 │
-├── docs/                                      # Specifiche tecniche e manuali
-│   ├── architecture.md                        # Flusso dati dettagliato e pipeline di trasformazione
-│   ├── docker_installation_windows.md         # Guida passo-passo per Windows e Docker Desktop
-│   ├── installation.md                        # Guida all'installazione generale
-│   ├── hierarchy_guide.md                     # Modellazione dati (Dimensioni vs Parent-Child)
-│   ├── control_panel_reference.md             # Riferimento completo controlli Explore
-│   └── images/                                # Risorse grafiche e animazioni SVG
+├── docs/                                      # Technical specifications and guides
+│   ├── architecture.md                        # Detailed data flow and transformation pipeline
+│   ├── docker_installation_windows.md         # Step-by-step Windows & Docker Desktop guide
+│   ├── installation.md                        # General installation manual
+│   ├── hierarchy_guide.md                     # Data modeling (Multi-Dimension vs Parent-Child)
+│   ├── control_panel_reference.md             # Complete Explore control reference
+│   └── images/                                # Graphical assets and SVG animations
 │
-├── examples/                                  # Dataset di esempio per collaudo
-│   ├── financial_pnl.csv                      # Dataset Conto Economico / P&L
-│   ├── org_chart.csv                          # Dataset Organigramma aziendale
-│   ├── sales_hierarchy.csv                    # Dataset Vendite retail multi-livello
-│   └── interactive_preview.html               # Test runner HTML locale autonomo
+├── examples/                                  # Sample verification datasets
+│   ├── financial_pnl.csv                      # P&L / Financial statement dataset
+│   ├── org_chart.csv                          # Corporate org chart dataset
+│   ├── sales_hierarchy.csv                    # Multi-level retail sales hierarchy
+│   └── interactive_preview.html               # Standalone local HTML test runner
 │
-├── Makefile                                   # Automazione task (install, build, test, lint)
-├── package.json                               # Configurazione NPM Workspace monorepo root
-├── CHANGELOG.md                               # Storico rilasci conforme a Keep a Changelog
-├── MAINTAINER.md                              # Operational runbook per il maintainer
-├── LICENSE                                    # Licenza Open Source Apache 2.0
-└── README.md                                  # Documento principale
+├── Makefile                                   # Task automation (install, build, test, lint)
+├── package.json                               # Monorepo root NPM Workspace configuration
+├── CHANGELOG.md                               # Keep a Changelog history
+├── MAINTAINER.md                              # Operational runbook for maintainers
+├── LICENSE                                    # Open Source Apache 2.0 license
+└── README.md                                  # Main repository documentation
 ```
 
 ---
 
-## 🚀 Guida all'Installazione
+## 🚀 Installation Guide
 
-### 1. Installazione Automatica (Consigliata)
+### 1. Automated Installation (Recommended)
 
-Se utilizzi un'istanza locale di Apache Superset 6.1.0 avviata tramite **Docker Compose**, puoi eseguire l'installer automatico che effettua backup, iniezione AST e build in un solo passaggio.
+When using a local Apache Superset 6.1.0 instance deployed via **Docker Compose**, run the automated installer which performs safety backup, AST code injection, and frontend compilation in a single step.
 
-#### Su Windows (PowerShell):
+#### On Windows (PowerShell):
 
 ```powershell
 .\scripts\install.ps1 -SupersetPath "C:\path\to\superset"
 ```
 
-#### Su Linux / macOS / Git Bash:
+#### On Linux / macOS / Git Bash:
 
 ```bash
 ./scripts/install.sh --superset-path "/path/to/superset"
 ```
 
-_Per la procedura dettagliata in ambiente Windows con WSL 2 e Docker Desktop, consultare la [Guida all'Installazione su Windows](docs/docker_installation_windows.md)._
+_For detailed instructions on Windows with WSL 2 and Docker Desktop, see the [Windows Docker Installation Guide](docs/docker_installation_windows.md)._
 
 ---
 
-### 2. Installazione Manuale
+### 2. Manual Installation
 
-#### Prerequisiti:
+#### Prerequisites:
 
 - **Node.js**: `>= 20.x` LTS
 - **npm**: `>= 10.x`
 - **Python**: `>= 3.9`
 - **Apache Superset**: `6.1.0+`
 
-#### Passo A: Registrazione del Plugin Frontend
+#### Step A: Register the Frontend Plugin
 
-Posizionarsi all'interno della cartella `superset-frontend/` dell'istanza Superset:
+Navigate to the `superset-frontend/` directory of your Superset repository:
 
 ```bash
 cd superset-frontend
 npm install superset-plugin-chart-hierarchical-table
 ```
 
-Nel file `superset-frontend/src/visualizations/presets/MainPreset.js` (o `MainPreset.ts`), registrare il plugin:
+In `superset-frontend/src/visualizations/presets/MainPreset.js` (or `MainPreset.ts`), register the plugin:
 
 ```typescript
 import { HierarchicalTableChartPlugin } from 'superset-plugin-chart-hierarchical-table';
@@ -222,7 +236,7 @@ import { HierarchicalTableChartPlugin } from 'superset-plugin-chart-hierarchical
 new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register();
 ```
 
-#### Passo B: Installazione del Backend Companion (Opzionale)
+#### Step B: Install the Companion Backend (Optional)
 
 ```bash
 cd packages/superset-hierarchical-table-backend
@@ -231,39 +245,39 @@ pip install -e .
 
 ---
 
-## 🎛️ Parametri Explore (Control Panel)
+## 🎛️ Explore Parameters (Control Panel)
 
-| Parametro                        | Tipo         | Descrizione                                                                        |
+| Parameter                        | Type         | Description                                                                        |
 | -------------------------------- | ------------ | ---------------------------------------------------------------------------------- |
-| **Hierarchy Mode**               | Select       | `Multi-Dimension Grouping` o `Parent-Child Adjacency`.                             |
-| **Hierarchy Dimensions**         | Multi-Select | Lista ordinata delle colonne dimensionali (dal livello radice al livello foglia).  |
-| **Node ID Column**               | Select       | Colonna ID univoco (visibile in modalità Parent-Child).                            |
-| **Parent ID Column**             | Select       | Colonna Parent ID di riferimento (visibile in modalità Parent-Child).              |
-| **Metrics**                      | Metrics      | Metriche numeriche da aggregare ed esporre nella matrice.                          |
-| **Initial Expand Depth**         | Select       | Livello di apertura iniziale (`Collapse All`, `Level 1`, `Level 2`, `Expand All`). |
-| **Show Subtotals / Rollup**      | Checkbox     | Abilita il calcolo dei totali intermedi sui nodi padre.                            |
-| **Show Grand Total Row**         | Checkbox     | Visualizza la riga del Totale Generale in cima alla tabella.                       |
-| **Emit Dashboard Cross-Filters** | Checkbox     | Emette eventi `setDataMask` al click sulle righe per filtrare l'intera dashboard.  |
-| **Enable In-Tree Search**        | Checkbox     | Barra di ricerca in tempo reale con evidenziazione del path.                       |
-| **Sticky Table Header**          | Checkbox     | Blocca le intestazioni durante lo scroll verticale.                                |
-| **Sticky Hierarchy Column**      | Checkbox     | Blocca la prima colonna durante lo scroll orizzontale.                             |
+| **Hierarchy Mode**               | Select       | `Multi-Dimension Grouping` or `Parent-Child Adjacency`.                             |
+| **Hierarchy Dimensions**         | Multi-Select | Ordered list of dimension columns (from root to leaf level).                       |
+| **Node ID Column**               | Select       | Unique node identifier column (visible in Parent-Child mode).                      |
+| **Parent ID Column**             | Select       | Parent node identifier column (visible in Parent-Child mode).                      |
+| **Metrics**                      | Metrics      | Quantitative numeric metrics to aggregate and display in the matrix.               |
+| **Initial Expand Depth**         | Select       | Initial tree expansion depth (`Collapse All`, `Level 1`, `Level 2`, `Expand All`). |
+| **Show Subtotals / Rollup**      | Checkbox     | Computes intermediate roll-up subtotals on non-leaf parent nodes.                  |
+| **Show Grand Total Row**         | Checkbox     | Displays the overall Grand Total row at the top of the table.                      |
+| **Emit Dashboard Cross-Filters** | Checkbox     | Emits `setDataMask` cross-filtering events on row click across the dashboard.      |
+| **Enable In-Tree Search**        | Checkbox     | Real-time search bar with branch path preservation and highlight.                  |
+| **Sticky Table Header**          | Checkbox     | Locks column headers during vertical scrolling.                                    |
+| **Sticky Hierarchy Column**      | Checkbox     | Locks the primary hierarchical column during horizontal scrolling.                 |
 
-_Per il manuale completo di tutti i controlli, consultare il [Riferimento del Control Panel](docs/control_panel_reference.md)._
+_For a comprehensive guide to all form controls, see the [Control Panel Reference](docs/control_panel_reference.md)._
 
 ---
 
-## 🧪 Collaudo & Test Suite
+## 🧪 Verification & Test Suite
 
-Per eseguire l'intera suite di test automatizzati (TypeScript + Pytest):
+To run the complete automated test suite (TypeScript + Pytest):
 
 ```bash
-# Esegue tutti i test del monorepo
+# Run all tests across the monorepo
 make test
 
-# Test frontend isolati (Jest)
+# Frontend unit tests (Jest)
 npm run test
 
-# Test backend isolati (Pytest)
+# Backend unit tests (Pytest)
 cd packages/superset-hierarchical-table-backend && pytest tests/ -v
 ```
 
@@ -271,12 +285,11 @@ cd packages/superset-hierarchical-table-backend && pytest tests/ -v
 
 ## 👤 Maintainer & Governance
 
-Questo repository è sviluppato e mantenuto in modo esclusivo da **[Francesco Castaldi](https://github.com/FrancescoCastaldi)**.
-
-> **Nota di Accesso**: Il progetto è gestito a sviluppo personale. Non vengono accettate Pull Request o segnalazioni esterne.
+This repository is maintained by **[Francesco Castaldi](https://github.com/FrancescoCastaldi)**.
 
 ---
 
-## 📄 Licenza
+## 📄 License
 
-Rilasciato sotto i termini della licenza **[Apache License 2.0](LICENSE)**. Compatibile con Apache Superset 6.1.0+.
+Released under the terms of the **[Apache License 2.0](LICENSE)**. Compatible with Apache Superset 6.1.0+.
+
