@@ -194,10 +194,17 @@ superset-plugin-chart-hierarchical-table/
 
 When using a local Apache Superset 6.1.0 instance deployed via **Docker Compose**, run the automated installer which performs safety backup, AST code injection, and frontend compilation in a single step.
 
-#### On Windows (PowerShell):
+#### On Windows (Single-Click Batch / PowerShell):
 
+Simply run or double-click `install.bat` in the repository root:
+```cmd
+install.bat
+```
+Or execute the automated PowerShell installer directly:
 ```powershell
-.\scripts\install.ps1 -SupersetPath "C:\path\to\superset"
+.\install-plugin.ps1
+# Or targeting a custom path:
+.\install-plugin.ps1 -SupersetPath "C:\Users\admmaps\superset_6_1_0\superset"
 ```
 
 #### On Linux / macOS / Git Bash:
