@@ -6,3 +6,9 @@ declare module '@superset-ui/chart-controls' {
     [key: string]: any;
   }
 }
+
+declare module '*.png' {
+  const value: string;
+  export default value;
+}
+

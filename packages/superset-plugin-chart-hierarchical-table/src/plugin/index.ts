@@ -26,7 +26,7 @@ const metadata = new ChartMetadata({
     t('Financial'),
   ],
   credits: ['Francesco Castaldi'],
-  exampleGallery: [{ url: example, urlDark: example }],
+  exampleGallery: [{ url: example }],
   thumbnail,
 });
 

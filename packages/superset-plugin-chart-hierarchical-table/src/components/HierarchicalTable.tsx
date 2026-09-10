@@ -347,9 +347,30 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                 </td>
                 {displayCols.map(col => {
                   const val = grandTotalNode.metrics[col.key];
+                  const isDelta = col.key.toLowerCase().includes('delta');
+                  const isNuovo = val === 'Nuovo';
+
                   return (
                     <td key={col.key} className="metric-cell">
-                      {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+                      {isNuovo ? (
+                        <span className="badge-delta-nuovo">Nuovo</span>
+                      ) : isDelta && typeof val === 'number' ? (
+                        <span
+                          className={
+                            val > 0
+                              ? 'delta-positive'
+                              : val < 0
+                              ? 'delta-negative'
+                              : 'delta-neutral'
+                          }
+                        >
+                          {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+                        </span>
+                      ) : col?.formatter ? (
+                        col.formatter(val)
+                      ) : (
+                        String(val ?? '-')
+                      )}
                     </td>
                   );
                 })}
@@ -411,9 +432,30 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   {/* Metric / Pivot Columns */}
                   {displayCols.map(col => {
                     const val = node.metrics[col.key];
+                    const isDelta = col.key.toLowerCase().includes('delta');
+                    const isNuovo = val === 'Nuovo';
+
                     return (
                       <td key={col.key} className="metric-cell">
-                        {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+                        {isNuovo ? (
+                          <span className="badge-delta-nuovo">Nuovo</span>
+                        ) : isDelta && typeof val === 'number' ? (
+                          <span
+                            className={
+                              val > 0
+                                ? 'delta-positive'
+                                : val < 0
+                                ? 'delta-negative'
+                                : 'delta-neutral'
+                            }
+                          >
+                            {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+                          </span>
+                        ) : col?.formatter ? (
+                          col.formatter(val)
+                        ) : (
+                          String(val ?? '-')
+                        )}
                       </td>
                     );
                   })}

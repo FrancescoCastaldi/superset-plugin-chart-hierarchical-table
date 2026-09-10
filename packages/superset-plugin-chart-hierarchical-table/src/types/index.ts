@@ -63,8 +63,8 @@ export interface TreeNode {
   path: string[];
   isLeaf: boolean;
   children?: TreeNode[];
-  metrics: Record<string, number | null>;
-  subtotals?: Record<string, number | null>;
+  metrics: Record<string, number | string | null>;
+  subtotals?: Record<string, number | string | null>;
   rawData?: DataRecord;
 }
 
@@ -78,7 +78,7 @@ export interface TableColumn {
   isHierarchyDimension?: boolean;
   pivotValue?: string;
   baseMetric?: string;
-  formatter?: (val: any) => string;
+  formatter?: (val: any) => any;
 }
 
 export interface PivotHeaderGroup {

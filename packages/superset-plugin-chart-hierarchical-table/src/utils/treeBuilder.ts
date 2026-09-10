@@ -61,7 +61,14 @@ export function buildMultiDimensionTree(
         if (isLeaf) {
           for (const m of metrics) {
             const rawM = record[m];
-            const numVal = typeof rawM === 'number' ? rawM : parseFloat(String(rawM)) || 0;
+            const numVal =
+              rawM === null || rawM === undefined
+                ? null
+                : typeof rawM === 'number'
+                ? rawM
+                : isNaN(parseFloat(String(rawM)))
+                ? null
+                : parseFloat(String(rawM));
             if (isPivot && pivotKey) {
               const compositeMetricKey = `${m}___${pivotKey}`;
               nodeObj.metrics[compositeMetricKey] = numVal;
@@ -77,12 +84,19 @@ export function buildMultiDimensionTree(
         const existingNode = currentLevelMap.get(val);
         for (const m of metrics) {
           const rawM = record[m];
-          const numVal = typeof rawM === 'number' ? rawM : parseFloat(String(rawM)) || 0;
-          if (isPivot && pivotKey) {
-            const compositeMetricKey = `${m}___${pivotKey}`;
-            existingNode.metrics[compositeMetricKey] = (existingNode.metrics[compositeMetricKey] || 0) + numVal;
-          } else {
-            existingNode.metrics[m] = (existingNode.metrics[m] || 0) + numVal;
+          const numVal =
+            rawM === null || rawM === undefined
+              ? null
+              : typeof rawM === 'number'
+              ? rawM
+              : isNaN(parseFloat(String(rawM)))
+              ? null
+              : parseFloat(String(rawM));
+          const targetKey = isPivot && pivotKey ? `${m}___${pivotKey}` : m;
+          if (numVal !== null) {
+            const existing = existingNode.metrics[targetKey];
+            existingNode.metrics[targetKey] =
+              typeof existing === 'number' ? existing + numVal : numVal;
           }
         }
       }
@@ -173,10 +187,17 @@ export function buildParentChildTree(
     if (!id) continue;
     allIds.add(id);
 
-    const metricValues: Record<string, number | null> = {};
+    const metricValues: Record<string, number | string | null> = {};
     for (const m of metrics) {
       const rawM = record[m];
-      metricValues[m] = typeof rawM === 'number' ? rawM : parseFloat(String(rawM)) || 0;
+      metricValues[m] =
+        rawM === null || rawM === undefined
+          ? null
+          : typeof rawM === 'number'
+          ? rawM
+          : isNaN(parseFloat(String(rawM)))
+          ? null
+          : parseFloat(String(rawM));
     }
 
     const node: TreeNode = {

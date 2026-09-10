@@ -145,7 +145,7 @@ export default function transformProps(
           baseMetric: m,
           align: 'right',
           width: 140,
-          formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol),
+          formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
         });
       }
     }
@@ -159,7 +159,7 @@ export default function transformProps(
         isMetric: true,
         align: 'right',
         width: 160,
-        formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol),
+        formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
       });
     }
   }
