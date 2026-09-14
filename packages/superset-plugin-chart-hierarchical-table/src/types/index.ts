@@ -9,6 +9,24 @@ export type HierarchyType = 'multi_dimension' | 'parent_child';
 
 export type AggregationFunction = 'sum' | 'avg' | 'min' | 'max' | 'count';
 
+export type SortOrder = 'asc' | 'desc' | 'none';
+
+export type MinMaxDisplayMode = 'none' | 'badges' | 'heatmap' | 'data_bars';
+
+export type MinMaxScope = 'leaves_only' | 'level_aware' | 'all_nodes';
+
+export type MinMaxColorTheme = 'emerald' | 'ocean' | 'sunset' | 'stratum';
+
+export interface MinMaxBound {
+  min: number;
+  max: number;
+}
+
+export interface MinMaxBoundsMap {
+  global: Record<string, MinMaxBound>;
+  byLevel?: Record<string, Record<number, MinMaxBound>>;
+}
+
 export interface ConditionalFormattingRule {
   metric: string;
   operator: '>' | '>=' | '<' | '<=' | '==' | 'between';
@@ -35,12 +53,22 @@ export interface HierarchicalTableFormData extends QueryFormData {
   initialExpandDepth: number; // 0 = all collapsed, -1 = all expanded, N = expand up to level N
   showSubtotals: boolean;
   showGrandTotal: boolean;
+  grandTotalPosition?: 'top' | 'bottom';
   indentSize: number; // pixels
   stickyHeader: boolean;
   stickyFirstColumn: boolean;
   enableSearch: boolean;
   enableSorting: boolean;
+  enableHierarchicalSort?: boolean;
+  enableExport?: boolean;
   pageSize: number;
+
+  // Sorting & Conditional Formatting
+  defaultSortColumn?: string;
+  defaultSortOrder?: SortOrder;
+  minMaxDisplayMode?: MinMaxDisplayMode;
+  minMaxScope?: MinMaxScope;
+  minMaxColorTheme?: MinMaxColorTheme;
 
   // Formatting & Aesthetics
   numberFormat?: string;
@@ -104,10 +132,18 @@ export interface HierarchicalTableTransformedProps {
   initialExpandDepth: number;
   showSubtotals: boolean;
   showGrandTotal: boolean;
+  grandTotalPosition?: 'top' | 'bottom';
   grandTotalNode?: TreeNode;
   stickyHeader: boolean;
   stickyFirstColumn: boolean;
   enableSearch: boolean;
+  enableHierarchicalSort?: boolean;
+  defaultSortColumn?: string;
+  defaultSortOrder?: SortOrder;
+  minMaxDisplayMode?: MinMaxDisplayMode;
+  minMaxScope?: MinMaxScope;
+  minMaxColorTheme?: MinMaxColorTheme;
+  enableExport?: boolean;
   indentSize: number;
   compactMode: boolean;
   stripedRows: boolean;

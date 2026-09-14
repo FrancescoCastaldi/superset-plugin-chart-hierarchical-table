@@ -1,8 +1,29 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import classNames from 'classnames';
-import { HierarchicalTableTransformedProps, TreeNode } from '../types';
-import { filterTreeBySearch } from '../utils/treeBuilder';
+import {
+  HierarchicalTableTransformedProps,
+  TreeNode,
+  SortOrder,
+  MinMaxBound,
+} from '../types';
+import {
+  filterTreeBySearch,
+  sortTreeHierarchy,
+  calculateMinMaxBounds,
+} from '../utils/treeBuilder';
+import { getNormalizedMetricValue, getHeatmapBgColor } from '../utils/formatters';
 import './HierarchicalTable.css';
+
+function isHierarchySortKey(key?: string, dims?: string[]): boolean {
+  if (!key) return false;
+  return (
+    key === '__hierarchy_tree__' ||
+    key === 'name' ||
+    key === 'hierarchy' ||
+    key === 'category' ||
+    Boolean(dims && dims.includes(key))
+  );
+}
 
 export default function HierarchicalTable(props: HierarchicalTableTransformedProps) {
   const {
@@ -14,10 +35,18 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     dimensions = [],
     initialExpandDepth = 1,
     showGrandTotal = true,
+    grandTotalPosition = 'top',
     grandTotalNode,
     stickyHeader = true,
     stickyFirstColumn = true,
     enableSearch = true,
+    enableHierarchicalSort = true,
+    defaultSortColumn = '__hierarchy_tree__',
+    defaultSortOrder = 'none',
+    minMaxDisplayMode = 'none',
+    minMaxScope = 'leaves_only',
+    minMaxColorTheme = 'stratum',
+    enableExport = true,
     indentSize = 20,
     compactMode = false,
     stripedRows = true,
@@ -110,10 +139,55 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     setExpandedKeys(new Set<string>());
   }, []);
 
+  // Sorting state (initialized from formData defaultSortColumn & defaultSortOrder)
+  const [sortColumn, setSortColumn] = useState<string>(defaultSortColumn || '__hierarchy_tree__');
+  const [sortDirection, setSortDirection] = useState<SortOrder>(defaultSortOrder || 'none');
+
+  useEffect(() => {
+    if (defaultSortColumn) {
+      setSortColumn(defaultSortColumn);
+    }
+  }, [defaultSortColumn]);
+
+  useEffect(() => {
+    if (defaultSortOrder) {
+      setSortDirection(defaultSortOrder);
+    }
+  }, [defaultSortOrder]);
+
+  const handleHeaderSort = useCallback(
+    (columnKey: string) => {
+      if (!enableHierarchicalSort) return;
+      const isCurrent =
+        sortColumn === columnKey ||
+        (isHierarchySortKey(sortColumn, dimensions) && isHierarchySortKey(columnKey, dimensions));
+      if (isCurrent) {
+        // Cycle: asc -> desc -> none -> asc
+        setSortDirection(prev => {
+          if (prev === 'asc') return 'desc';
+          if (prev === 'desc') return 'none';
+          return 'asc';
+        });
+      } else {
+        setSortColumn(columnKey);
+        setSortDirection('asc');
+      }
+    },
+    [dimensions, enableHierarchicalSort, sortColumn],
+  );
+
+  // Sibling-aware recursive in-tree sorting
+  const sortedData = useMemo(() => {
+    if (!enableHierarchicalSort || sortDirection === 'none' || !sortColumn) {
+      return data;
+    }
+    return sortTreeHierarchy(data, sortColumn, sortDirection, dimensions, grandTotalPosition);
+  }, [data, dimensions, enableHierarchicalSort, grandTotalPosition, sortColumn, sortDirection]);
+
   // Filtered data tree based on search
   const filteredData = useMemo(() => {
-    return filterTreeBySearch(data, searchTerm);
-  }, [data, searchTerm]);
+    return filterTreeBySearch(sortedData, searchTerm);
+  }, [sortedData, searchTerm]);
 
   // Handle Node Click for Multi-Selection Cross-Filtering
   const handleNodeClick = useCallback(
@@ -218,6 +292,129 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     return columns.filter(c => c.isMetric);
   }, [columns]);
 
+  // Min/Max bounds calculation for conditional formatting
+  const minMaxBounds = useMemo(() => {
+    if (minMaxDisplayMode === 'none') return null;
+    const metricKeys = displayCols.map(c => c.key);
+    return calculateMinMaxBounds(data, metricKeys, minMaxScope);
+  }, [data, displayCols, minMaxDisplayMode, minMaxScope]);
+
+  const isNodeInMinMaxScope = useCallback(
+    (node: TreeNode): boolean => {
+      if (minMaxScope === 'all_nodes') return true;
+      if (minMaxScope === 'level_aware') return true;
+      // leaves_only: exclude parent subtotals
+      return Boolean(node.isLeaf || !node.children || node.children.length === 0);
+    },
+    [minMaxScope],
+  );
+
+  const getBoundForNode = useCallback(
+    (node: TreeNode, colKey: string): MinMaxBound | undefined => {
+      if (!minMaxBounds) return undefined;
+      if (minMaxScope === 'level_aware') {
+        return minMaxBounds.byLevel?.[colKey]?.[node.depth ?? 0];
+      }
+      return minMaxBounds.global[colKey];
+    },
+    [minMaxBounds, minMaxScope],
+  );
+
+  const renderSortIndicator = (columnKey: string) => {
+    if (!enableHierarchicalSort) return null;
+    const isCurrent =
+      sortColumn === columnKey ||
+      (isHierarchySortKey(sortColumn, dimensions) && isHierarchySortKey(columnKey, dimensions));
+    const isActive = isCurrent && sortDirection !== 'none';
+    if (!isActive) {
+      return <span className="sort-indicator sort-indicator-inactive" aria-hidden="true" />;
+    }
+    return (
+      <span
+        className="sort-indicator sort-indicator-active"
+        aria-label={`Sorted ${sortDirection}`}
+      >
+        {sortDirection === 'asc' ? ' ▲' : ' ▼'}
+      </span>
+    );
+  };
+
+  const handleExportCSV = useCallback(() => {
+    const exportCols = displayCols;
+    const headerRow = [
+      columns[0]?.title || 'Hierarchy',
+      ...exportCols.map(c => (c.baseMetric ? `${c.baseMetric} (${c.title || c.key})` : c.title || c.key)),
+    ];
+
+    const rows: string[][] = [headerRow];
+
+    const gtRow =
+      showGrandTotal && grandTotalNode
+        ? [
+            grandTotalNode.name,
+            ...exportCols.map(c => {
+              const val = grandTotalNode.metrics?.[c.key] ?? grandTotalNode.subtotals?.[c.key];
+              return val !== null && val !== undefined ? String(val) : '';
+            }),
+          ]
+        : null;
+
+    if (gtRow && grandTotalPosition === 'top') {
+      rows.push(gtRow);
+    }
+
+    function traverseForExport(nodes: TreeNode[]) {
+      for (const node of nodes) {
+        const indent = '  '.repeat(node.depth ?? 0);
+        const nodeRow = [
+          indent + node.name,
+          ...exportCols.map(c => {
+            const val = node.metrics?.[c.key] ?? node.subtotals?.[c.key];
+            return val !== null && val !== undefined ? String(val) : '';
+          }),
+        ];
+        rows.push(nodeRow);
+        if (node.children && node.children.length > 0) {
+          traverseForExport(node.children);
+        }
+      }
+    }
+
+    traverseForExport(filteredData);
+
+    if (gtRow && grandTotalPosition === 'bottom') {
+      rows.push(gtRow);
+    }
+
+    const csvContent = rows
+      .map(row =>
+        row
+          .map(cell => {
+            const str = String(cell ?? '');
+            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+              return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+          })
+          .join(','),
+      )
+      .join('\r\n');
+
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'stratum_tree_export.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    }
+  }, [displayCols, columns, showGrandTotal, grandTotalNode, grandTotalPosition, filteredData]);
+
   return (
     <div className="superset-hierarchical-table-container" style={containerStyle}>
       {/* Toolbar */}
@@ -265,6 +462,16 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         </div>
 
         <div className="table-toolbar-right">
+          {enableExport && (
+            <button
+              type="button"
+              className="toolbar-btn toolbar-export-btn"
+              onClick={handleExportCSV}
+              title="Download hierarchy CSV with preserved order and subtotals"
+            >
+              Export CSV
+            </button>
+          )}
           <button type="button" className="toolbar-btn" onClick={handleExpandAll}>
             Expand All
           </button>
@@ -292,61 +499,194 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                 <tr className="pivot-group-header-row">
                   <th
                     rowSpan={2}
-                    className="hierarchy-col"
-                    style={{ width: columns[0]?.width, minWidth: columns[0]?.width }}
+                    className={classNames('hierarchy-col', {
+                      'sortable-header': enableHierarchicalSort,
+                    })}
+                    onClick={
+                      enableHierarchicalSort
+                        ? () => handleHeaderSort('__hierarchy_tree__')
+                        : undefined
+                    }
+                    tabIndex={enableHierarchicalSort ? 0 : undefined}
+                    onKeyDown={
+                      enableHierarchicalSort
+                        ? e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleHeaderSort('__hierarchy_tree__');
+                            }
+                          }
+                        : undefined
+                    }
+                    aria-sort={
+                      !enableHierarchicalSort
+                        ? undefined
+                        : isHierarchySortKey(sortColumn, dimensions) && sortDirection !== 'none'
+                        ? sortDirection === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                    }
+                    style={{
+                      width: columns[0]?.width,
+                      minWidth: columns[0]?.width,
+                      cursor: enableHierarchicalSort ? 'pointer' : undefined,
+                    }}
                   >
-                    {columns[0]?.title}
+                    <span>{columns[0]?.title}</span>
+                    {renderSortIndicator('__hierarchy_tree__')}
                   </th>
-                  {props.pivotHeaderGroups.map(group => (
-                    <th
-                      key={group.key}
-                      colSpan={group.colSpan}
-                      className="metric-group-header"
-                      style={{ textAlign: 'center', borderBottom: '1px solid #d1d5db' }}
-                    >
-                      {group.title}
-                    </th>
-                  ))}
+                  {props.pivotHeaderGroups.map(group => {
+                    const isSortable = Boolean(enableHierarchicalSort);
+                    const isGroupActive = sortColumn === group.key && sortDirection !== 'none';
+                    return (
+                      <th
+                        key={group.key}
+                        colSpan={group.colSpan}
+                        className={classNames('metric-group-header', {
+                          'sortable-header': isSortable,
+                        })}
+                        onClick={isSortable ? () => handleHeaderSort(group.key) : undefined}
+                        tabIndex={isSortable ? 0 : undefined}
+                        onKeyDown={
+                          isSortable
+                            ? e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleHeaderSort(group.key);
+                                }
+                              }
+                            : undefined
+                        }
+                        aria-sort={
+                          !isSortable
+                            ? undefined
+                            : isGroupActive
+                            ? sortDirection === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                        }
+                        style={{
+                          textAlign: 'center',
+                          borderBottom: '1px solid #d1d5db',
+                          cursor: isSortable ? 'pointer' : undefined,
+                        }}
+                      >
+                        <span>{group.title}</span>
+                        {renderSortIndicator(group.key)}
+                      </th>
+                    );
+                  })}
                 </tr>
                 {/* Level 2: Sub-column Pivot Dimension Values Row */}
                 <tr className="pivot-sub-header-row">
-                  {displayCols.map(col => (
-                    <th
-                      key={col.key}
-                      className="metric-header pivot-sub-header"
-                      style={{ width: col.width, minWidth: col.width }}
-                    >
-                      {col.title}
-                    </th>
-                  ))}
+                  {displayCols.map(col => {
+                    const isSortable = Boolean(enableHierarchicalSort);
+                    const isColActive = sortColumn === col.key && sortDirection !== 'none';
+                    return (
+                      <th
+                        key={col.key}
+                        className={classNames('metric-header pivot-sub-header', {
+                          'sortable-header': isSortable,
+                        })}
+                        onClick={
+                          isSortable ? () => handleHeaderSort(col.key) : undefined
+                        }
+                        tabIndex={isSortable ? 0 : undefined}
+                        onKeyDown={
+                          isSortable
+                            ? e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleHeaderSort(col.key);
+                                }
+                              }
+                            : undefined
+                        }
+                        aria-sort={
+                          !isSortable
+                            ? undefined
+                            : isColActive
+                            ? sortDirection === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                        }
+                        style={{
+                          width: col.width,
+                          minWidth: col.width,
+                          cursor: isSortable ? 'pointer' : undefined,
+                        }}
+                      >
+                        <span>{col.title}</span>
+                        {renderSortIndicator(col.key)}
+                      </th>
+                    );
+                  })}
                 </tr>
               </>
             ) : (
               <tr>
-                {columns.map(col => (
-                  <th
-                    key={col.key}
-                    className={classNames({
-                      'hierarchy-col': col.isHierarchyDimension,
-                      'metric-header': col.isMetric,
-                    })}
-                    style={{ width: col.width, minWidth: col.width }}
-                  >
-                    {col.title}
-                  </th>
-                ))}
+                {columns.map(col => {
+                  const isSortable = Boolean(enableHierarchicalSort);
+                  const sortKey = col.isHierarchyDimension ? '__hierarchy_tree__' : col.key;
+                  const isColActive =
+                    (sortColumn === sortKey ||
+                      (col.isHierarchyDimension && isHierarchySortKey(sortColumn, dimensions))) &&
+                    sortDirection !== 'none';
+                  return (
+                    <th
+                      key={col.key}
+                      className={classNames({
+                        'hierarchy-col': col.isHierarchyDimension,
+                        'metric-header': col.isMetric,
+                        'sortable-header': isSortable,
+                      })}
+                      onClick={isSortable ? () => handleHeaderSort(sortKey) : undefined}
+                      tabIndex={isSortable ? 0 : undefined}
+                      onKeyDown={
+                        isSortable
+                          ? e => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleHeaderSort(sortKey);
+                              }
+                            }
+                          : undefined
+                      }
+                      aria-sort={
+                        !isSortable
+                          ? undefined
+                          : isColActive
+                          ? sortDirection === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
+                      style={{
+                        width: col.width,
+                        minWidth: col.width,
+                        cursor: isSortable ? 'pointer' : undefined,
+                      }}
+                    >
+                      <span>{col.title}</span>
+                      {renderSortIndicator(sortKey)}
+                    </th>
+                  );
+                })}
               </tr>
             )}
           </thead>
           <tbody>
-            {/* Grand Total Row at Top if enabled */}
-            {showGrandTotal && grandTotalNode && (
+            {/* Grand Total Row at Top if enabled and position is top */}
+            {showGrandTotal && grandTotalNode && grandTotalPosition === 'top' && (
               <tr className="grand-total-row">
                 <td className="hierarchy-cell">
                   <span className="node-name">{grandTotalNode.name}</span>
                 </td>
                 {displayCols.map(col => {
-                  const val = grandTotalNode.metrics[col.key];
+                  const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
                   const isDelta = col.key.toLowerCase().includes('delta');
                   const isNuovo = val === 'Nuovo';
 
@@ -431,30 +771,99 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
                   {/* Metric / Pivot Columns */}
                   {displayCols.map(col => {
-                    const val = node.metrics[col.key];
+                    const val = node.metrics?.[col.key] ?? node.subtotals?.[col.key];
                     const isDelta = col.key.toLowerCase().includes('delta');
                     const isNuovo = val === 'Nuovo';
 
+                    const inScope = isNodeInMinMaxScope(node);
+                    const bound = inScope ? getBoundForNode(node, col.key) : undefined;
+                    const numericVal =
+                      typeof val === 'number' && Number.isFinite(val)
+                        ? val
+                        : typeof val === 'string' && val.trim() !== '' && Number.isFinite(Number(val))
+                        ? Number(val)
+                        : null;
+                    const isNumeric = numericVal !== null;
+                    const range = bound && bound.max > bound.min ? bound.max - bound.min : 0;
+                    const normalized =
+                      isNumeric && bound && range > 0
+                        ? getNormalizedMetricValue(numericVal, bound)
+                        : 0;
+
+                    const isMin =
+                      inScope && isNumeric && bound && range > 0 && numericVal === bound.min;
+                    const isMax =
+                      inScope && isNumeric && bound && range > 0 && numericVal === bound.max;
+
+                    // Base metric content
+                    const baseContent = isNuovo ? (
+                      <span className="badge-delta-nuovo">Nuovo</span>
+                    ) : isDelta && typeof val === 'number' ? (
+                      <span
+                        className={
+                          val > 0
+                            ? 'delta-positive'
+                            : val < 0
+                            ? 'delta-negative'
+                            : 'delta-neutral'
+                        }
+                      >
+                        {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+                      </span>
+                    ) : col?.formatter ? (
+                      col.formatter(val)
+                    ) : (
+                      String(val ?? '-')
+                    );
+
+                    // Cell heatmap background style
+                    const cellStyle: React.CSSProperties = {};
+                    if (
+                      minMaxDisplayMode === 'heatmap' &&
+                      inScope &&
+                      isNumeric &&
+                      range > 0
+                    ) {
+                      cellStyle.backgroundColor = getHeatmapBgColor(
+                        normalized,
+                        minMaxColorTheme,
+                      );
+                    }
+
                     return (
-                      <td key={col.key} className="metric-cell">
-                        {isNuovo ? (
-                          <span className="badge-delta-nuovo">Nuovo</span>
-                        ) : isDelta && typeof val === 'number' ? (
-                          <span
-                            className={
-                              val > 0
-                                ? 'delta-positive'
-                                : val < 0
-                                ? 'delta-negative'
-                                : 'delta-neutral'
-                            }
-                          >
-                            {col?.formatter ? col.formatter(val) : String(val ?? '-')}
-                          </span>
-                        ) : col?.formatter ? (
-                          col.formatter(val)
+                      <td key={col.key} className="metric-cell" style={cellStyle}>
+                        {minMaxDisplayMode === 'badges' ? (
+                          <div className="metric-cell-badges-wrapper">
+                            <span className="metric-val">{baseContent}</span>
+                            {isMax && (
+                              <span
+                                className={`minmax-badge minmax-max theme-${minMaxColorTheme}`}
+                                title={`Maximum value: ${val}`}
+                              >
+                                MAX
+                              </span>
+                            )}
+                            {isMin && (
+                              <span
+                                className={`minmax-badge minmax-min theme-${minMaxColorTheme}`}
+                                title={`Minimum value: ${val}`}
+                              >
+                                MIN
+                              </span>
+                            )}
+                          </div>
+                        ) : minMaxDisplayMode === 'data_bars' ? (
+                          <div className="data-bar-container">
+                            {inScope && isNumeric && range > 0 && (
+                              <div
+                                className={`data-bar-fill theme-${minMaxColorTheme}`}
+                                style={{ width: `${Math.round(normalized * 100)}%` }}
+                              />
+                            )}
+                            <span className="data-bar-value">{baseContent}</span>
+                          </div>
                         ) : (
-                          String(val ?? '-')
+                          baseContent
                         )}
                       </td>
                     );
@@ -462,6 +871,44 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                 </tr>
               );
             })}
+
+            {/* Grand Total Row at Bottom if enabled and position is bottom */}
+            {showGrandTotal && grandTotalNode && grandTotalPosition === 'bottom' && (
+              <tr className="grand-total-row">
+                <td className="hierarchy-cell">
+                  <span className="node-name">{grandTotalNode.name}</span>
+                </td>
+                {displayCols.map(col => {
+                  const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
+                  const isDelta = col.key.toLowerCase().includes('delta');
+                  const isNuovo = val === 'Nuovo';
+
+                  return (
+                    <td key={col.key} className="metric-cell">
+                      {isNuovo ? (
+                        <span className="badge-delta-nuovo">Nuovo</span>
+                      ) : isDelta && typeof val === 'number' ? (
+                        <span
+                          className={
+                            val > 0
+                              ? 'delta-positive'
+                              : val < 0
+                              ? 'delta-negative'
+                              : 'delta-neutral'
+                          }
+                        >
+                          {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+                        </span>
+                      ) : col?.formatter ? (
+                        col.formatter(val)
+                      ) : (
+                        String(val ?? '-')
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

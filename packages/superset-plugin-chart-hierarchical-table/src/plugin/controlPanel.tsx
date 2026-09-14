@@ -252,6 +252,116 @@ const config: ControlPanelConfig = {
       ],
     },
     {
+      label: t('Sorting & Conditional Formatting'),
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: 'defaultSortColumn',
+            config: {
+              type: 'SelectControl',
+              label: t('Default Sort Column'),
+              default: '__hierarchy_tree__',
+              renderTrigger: true,
+              freeForm: true,
+              choices: [
+                ['__hierarchy_tree__', t('Hierarchy Category (Name)')],
+              ],
+              mapStateToProps: (explore: any) => {
+                const rawMetrics = explore?.controls?.metrics?.value || explore?.controls?.metric?.value || [];
+                const metrics = Array.isArray(rawMetrics) ? rawMetrics : rawMetrics ? [rawMetrics] : [];
+                const metricChoices = metrics.map((m: any) => {
+                  const val = typeof m === 'string' ? m : m?.label || m?.metric_name || String(m);
+                  return [val, val];
+                });
+                return {
+                  choices: [
+                    ['__hierarchy_tree__', t('Hierarchy Category (Name)')],
+                    ...metricChoices,
+                  ],
+                };
+              },
+              description: t(
+                'Select Hierarchy Category or any configured metric for default sorting.',
+              ),
+            },
+          },
+          {
+            name: 'defaultSortOrder',
+            config: {
+              type: 'SelectControl',
+              label: t('Default Sort Order'),
+              default: 'none',
+              renderTrigger: true,
+              choices: [
+                ['none', t('Query Order (None)')],
+                ['asc', t('Ascending / A-Z')],
+                ['desc', t('Descending / Z-A')],
+              ],
+              description: t('Initial sort direction on chart load.'),
+            },
+          },
+        ],
+        [
+          {
+            name: 'minMaxDisplayMode',
+            config: {
+              type: 'SelectControl',
+              label: t('Min/Max Display Mode'),
+              default: 'none',
+              renderTrigger: true,
+              choices: [
+                ['none', t('Disabled')],
+                ['badges', t('Min/Max Pill Badges')],
+                ['heatmap', t('Cell Heatmap Gradient')],
+                ['data_bars', t('In-Cell Data Bars')],
+              ],
+              description: t(
+                'Visual formatting style for highlighting minimum and maximum values across columns.',
+              ),
+            },
+          },
+          {
+            name: 'minMaxScope',
+            config: {
+              type: 'SelectControl',
+              label: t('Min/Max Calculation Scope'),
+              default: 'leaves_only',
+              renderTrigger: true,
+              choices: [
+                ['leaves_only', t('Leaf Nodes Only (Recommended)')],
+                ['level_aware', t('By Hierarchy Level')],
+                ['all_nodes', t('All Nodes Excl. Grand Total')],
+              ],
+              description: t(
+                'Scope used to calculate min and max values. Leaf nodes only prevents parent aggregations from distorting scale.',
+              ),
+            },
+          },
+        ],
+        [
+          {
+            name: 'minMaxColorTheme',
+            config: {
+              type: 'SelectControl',
+              label: t('Min/Max Color Theme'),
+              default: 'stratum',
+              renderTrigger: true,
+              choices: [
+                ['stratum', t('Stratum Teal')],
+                ['emerald', t('Emerald Green')],
+                ['ocean', t('Ocean Blue')],
+                ['sunset', t('Sunset (Amber/Red)')],
+              ],
+              description: t(
+                'Color theme applied for heatmap gradients, data bars, and badges.',
+              ),
+            },
+          },
+        ],
+      ],
+    },
+    {
       label: t('Time Comparison & Period-over-Period Variance'),
       expanded: false,
       controlSetRows: [

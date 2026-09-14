@@ -13,6 +13,29 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 - Integrazione drill-through a dashboard secondarie tramite Superset URL parameters.
 - Modalità Pivot dinamica a colonne per metriche temporali (Time Comparison / Period-over-Period).
 
+## [0.1.5] - 2026-09-14
+
+### Added
+
+- **⚡ In-Tree Hierarchical Sorting (Interactive & Sibling-Aware)**:
+  - Ordinamento interattivo su intestazioni di colonna: Categoria A-Z/Z-A e Metriche Asc/Desc con ciclo `asc -> desc -> default` e indicatori visivi (▲ / ▼).
+  - Ordinamento ricorsivo per fratelli (sibling-aware): le radici si ordinano tra radici, i figli si ordinano rigorosamente all'interno del proprio padre preservando l'albero e i subtotali aggregati.
+  - Grand Total ancorato ed escluso dal riordino.
+  - Supporto per tabelle standard e matrici pivot orizzontali.
+
+- **🎨 Multi-Mode Min/Max Conditional Formatting**:
+  - Modalità a scelta: `badges` (pillole MIN/MAX), `heatmap` (sfumatura continua cella), `data_bars` (barre orizzontali stile Excel).
+  - Ambito di calcolo: `leaves_only` (nodi foglia atomici di default, escludendo i padri per non falsare le scale), `level_aware`, o `all_nodes`.
+  - Temi cromatici: `emerald`, `ocean`, `sunset`, `stratum`.
+  - Gestione resiliente di valori negativi, 'Nuovo', stringhe numeriche e intervalli nulli.
+
+- **🎛️ Dedicated Explore Control Panel Section**:
+  - Nuova sezione `Sorting & Conditional Formatting` in Apache Superset Explore con controlli completi di configurazione predefinita.
+
+- **🧪 Comprehensive Unit Test Suite**:
+  - Aggiunti test completi in `test/sortingAndMinMax.test.ts` con 36/36 test Jest passati.
+
+
 ## [0.1.2] - 2026-08-20
 
 ### Added

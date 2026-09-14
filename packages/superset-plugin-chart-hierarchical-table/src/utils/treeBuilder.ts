@@ -1,5 +1,5 @@
 import { DataRecord } from '@superset-ui/core';
-import { TreeNode } from '../types';
+import { TreeNode, SortOrder, MinMaxScope, MinMaxBoundsMap } from '../types';
 import { rollupTreeMetrics } from './aggregations';
 
 /**
@@ -317,4 +317,226 @@ export function filterTreeBySearch(nodes: TreeNode[], searchTerm: string): TreeN
     }
   }
   return results;
+}
+
+/**
+ * Helper to extract or aggregate metric value for a node during sorting.
+ * In Pivot Matrix Mode, aggregates composite keys (e.g. 'sales___2023' + 'sales___2024' when sorting by 'sales').
+ */
+function getNodeMetricValue(node: TreeNode, sortColumn: string): any {
+  const directVal = node.metrics?.[sortColumn] ?? node.subtotals?.[sortColumn];
+  if (directVal !== undefined) {
+    return directVal;
+  }
+
+  // If sorting by base metric in Pivot Matrix Mode (e.g. 'sales' when keys are 'sales___2023')
+  const pivotPrefix = `${sortColumn}___`;
+  const allKeys = new Set([
+    ...Object.keys(node.metrics || {}),
+    ...Object.keys(node.subtotals || {}),
+  ]);
+  const matchingKeys = Array.from(allKeys).filter(k => k.startsWith(pivotPrefix));
+  if (matchingKeys.length > 0) {
+    let sum = 0;
+    let hasNum = false;
+    for (const k of matchingKeys) {
+      const rawV = node.metrics?.[k] ?? node.subtotals?.[k];
+      const v =
+        typeof rawV === 'number' && Number.isFinite(rawV)
+          ? rawV
+          : typeof rawV === 'string' && rawV.trim() !== '' && Number.isFinite(Number(rawV))
+          ? Number(rawV)
+          : NaN;
+      if (!isNaN(v)) {
+        sum += v;
+        hasNum = true;
+      }
+    }
+    if (hasNum) return sum;
+  }
+
+  return undefined;
+}
+
+/**
+ * Recursively sorts tree nodes sibling-by-sibling preserving parent-child tree hierarchy.
+ */
+export function sortTreeHierarchy(
+  nodes: TreeNode[],
+  sortColumn?: string,
+  sortOrder?: SortOrder,
+  dimensions?: string[],
+  grandTotalPosition: 'top' | 'bottom' = 'top',
+): TreeNode[] {
+  if (!nodes || nodes.length === 0) return [];
+  if (!sortColumn || !sortOrder || sortOrder === 'none') {
+    return nodes.map(node => ({
+      ...node,
+      children: node.children
+        ? sortTreeHierarchy(node.children, sortColumn, sortOrder, dimensions, grandTotalPosition)
+        : node.children,
+    }));
+  }
+
+  const isHierarchyCol =
+    sortColumn === '__hierarchy_tree__' ||
+    sortColumn === 'name' ||
+    sortColumn === 'hierarchy' ||
+    sortColumn === 'category' ||
+    Boolean(dimensions && dimensions.includes(sortColumn));
+
+  const sorted = [...nodes].sort((a, b) => {
+    // Keep Grand Total pinned at the top or bottom if present in nodes
+    const aIsGrandTotal = a.key === '__grand_total__' || a.id === '__grand_total__';
+    const bIsGrandTotal = b.key === '__grand_total__' || b.id === '__grand_total__';
+    if (aIsGrandTotal && bIsGrandTotal) return 0;
+    if (grandTotalPosition === 'bottom') {
+      if (aIsGrandTotal) return 1;
+      if (bIsGrandTotal) return -1;
+    } else {
+      if (aIsGrandTotal) return -1;
+      if (bIsGrandTotal) return 1;
+    }
+
+    if (isHierarchyCol) {
+      const nameA = a.name ?? '';
+      const nameB = b.name ?? '';
+      const cmp = nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+      return sortOrder === 'asc' ? cmp : -cmp;
+    }
+
+    const valA = getNodeMetricValue(a, sortColumn);
+    const valB = getNodeMetricValue(b, sortColumn);
+
+    const isANull = valA === null || valA === undefined || valA === '';
+    const isBNull = valB === null || valB === undefined || valB === '';
+
+    if (isANull && isBNull) return 0;
+    if (isANull) return 1; // nulls at the end
+    if (isBNull) return -1;
+
+    const numA =
+      typeof valA === 'number'
+        ? valA
+        : typeof valA === 'string' && valA.trim() !== ''
+        ? Number(valA)
+        : NaN;
+    const numB =
+      typeof valB === 'number'
+        ? valB
+        : typeof valB === 'string' && valB.trim() !== ''
+        ? Number(valB)
+        : NaN;
+
+    const isANum = Number.isFinite(numA);
+    const isBNum = Number.isFinite(numB);
+
+    if (isANum && isBNum) {
+      const diff = numA - numB;
+      return sortOrder === 'asc' ? diff : -diff;
+    }
+
+    // Numbers sort before non-numeric strings (e.g. 'Nuovo')
+    if (isANum && !isBNum) return -1;
+    if (!isANum && isBNum) return 1;
+
+    const strCmp = String(valA).localeCompare(String(valB), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    });
+    return sortOrder === 'asc' ? strCmp : -strCmp;
+  });
+
+  return sorted.map(node => ({
+    ...node,
+    children: node.children
+      ? sortTreeHierarchy(node.children, sortColumn, sortOrder, dimensions, grandTotalPosition)
+      : node.children,
+  }));
+}
+
+/**
+ * Calculates min and max metric values across a specified hierarchy scope.
+ * Subtotals and parent aggregations are excluded when scope is 'leaves_only'.
+ * Grand Total is always excluded.
+ */
+export function calculateMinMaxBounds(
+  nodes: TreeNode[],
+  metricKeys: string[],
+  scope: MinMaxScope = 'leaves_only',
+): MinMaxBoundsMap {
+  const globalBounds: Record<string, { min: number; max: number }> = {};
+  const byLevelBounds: Record<string, Record<number, { min: number; max: number }>> = {};
+
+  if (!nodes || !Array.isArray(nodes) || nodes.length === 0 || !metricKeys || !Array.isArray(metricKeys) || metricKeys.length === 0) {
+    return {
+      global: globalBounds,
+      byLevel: scope === 'level_aware' ? byLevelBounds : undefined,
+    };
+  }
+
+  if (scope === 'level_aware') {
+    for (const m of metricKeys) {
+      byLevelBounds[m] = {};
+    }
+  }
+
+  function traverse(nodeList: TreeNode[]) {
+    for (const node of nodeList) {
+      if (node.key === '__grand_total__' || node.id === '__grand_total__') {
+        continue;
+      }
+
+      const isLeaf = Boolean(node.isLeaf || !node.children || node.children.length === 0);
+      const inScope =
+        scope === 'all_nodes' ||
+        (scope === 'leaves_only' && isLeaf) ||
+        scope === 'level_aware';
+
+      if (inScope) {
+        for (const m of metricKeys) {
+          const rawVal = node.metrics?.[m] ?? node.subtotals?.[m];
+          const val =
+            typeof rawVal === 'number' && Number.isFinite(rawVal)
+              ? rawVal
+              : typeof rawVal === 'string' && rawVal.trim() !== '' && Number.isFinite(Number(rawVal))
+              ? Number(rawVal)
+              : null;
+
+          if (val !== null) {
+            if (scope !== 'level_aware') {
+              if (!globalBounds[m]) {
+                globalBounds[m] = { min: val, max: val };
+              } else {
+                if (val < globalBounds[m].min) globalBounds[m].min = val;
+                if (val > globalBounds[m].max) globalBounds[m].max = val;
+              }
+            } else {
+              const depth = node.depth ?? 0;
+              if (!byLevelBounds[m]) {
+                byLevelBounds[m] = {};
+              }
+              if (!byLevelBounds[m][depth]) {
+                byLevelBounds[m][depth] = { min: val, max: val };
+              } else {
+                if (val < byLevelBounds[m][depth].min) byLevelBounds[m][depth].min = val;
+                if (val > byLevelBounds[m][depth].max) byLevelBounds[m][depth].max = val;
+              }
+            }
+          }
+        }
+      }
+
+      if (node.children && node.children.length > 0) {
+        traverse(node.children);
+      }
+    }
+  }
+
+  traverse(nodes);
+
+  return {
+    global: globalBounds,
+    byLevel: scope === 'level_aware' ? byLevelBounds : undefined,
+  };
 }
