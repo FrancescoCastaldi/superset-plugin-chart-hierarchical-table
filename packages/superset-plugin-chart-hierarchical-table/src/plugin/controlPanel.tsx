@@ -144,6 +144,25 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'valueDisplayMode',
+            config: {
+              type: 'SelectControl',
+              label: t('Value Display Mode'),
+              default: 'all',
+              renderTrigger: true,
+              choices: [
+                ['all', t('All Levels (Default)')],
+                ['leaves_only', t('Leaves Only (Solo foglie)')],
+                ['parents_only', t('Parents Only (Solo padri / subtotali)')],
+              ],
+              description: t(
+                'Choose whether to display metric values on all levels, leaf nodes only, or parent totals only.',
+              ),
+            },
+          },
+        ],
+        [
+          {
             name: 'showSubtotals',
             config: {
               type: 'CheckboxControl',

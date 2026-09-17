@@ -17,6 +17,8 @@ export type MinMaxScope = 'leaves_only' | 'level_aware' | 'all_nodes';
 
 export type MinMaxColorTheme = 'emerald' | 'ocean' | 'sunset' | 'stratum';
 
+export type HierarchyValueDisplayMode = 'all' | 'leaves_only' | 'parents_only';
+
 export interface MinMaxBound {
   min: number;
   max: number;
@@ -51,6 +53,7 @@ export interface HierarchicalTableFormData extends QueryFormData {
 
   // Display & Hierarchy Options
   initialExpandDepth: number; // 0 = all collapsed, -1 = all expanded, N = expand up to level N
+  valueDisplayMode?: HierarchyValueDisplayMode;
   showSubtotals: boolean;
   showGrandTotal: boolean;
   grandTotalPosition?: 'top' | 'bottom';
@@ -130,6 +133,7 @@ export interface HierarchicalTableTransformedProps {
   metrics: string[];
   displayMetrics: string[];
   initialExpandDepth: number;
+  valueDisplayMode?: HierarchyValueDisplayMode;
   showSubtotals: boolean;
   showGrandTotal: boolean;
   grandTotalPosition?: 'top' | 'bottom';

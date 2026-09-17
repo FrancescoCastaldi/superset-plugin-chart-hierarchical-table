@@ -5,6 +5,7 @@ import {
   TreeNode,
   SortOrder,
   MinMaxBound,
+  HierarchyValueDisplayMode,
 } from '../types';
 import {
   filterTreeBySearch,
@@ -34,6 +35,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     metrics = [],
     dimensions = [],
     initialExpandDepth = 1,
+    valueDisplayMode = 'all',
     showGrandTotal = true,
     grandTotalPosition = 'top',
     grandTotalNode,
@@ -55,6 +57,26 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     onCrossFilter,
     onClearFilter,
   } = props;
+
+  const [activeDisplayMode, setActiveDisplayMode] = useState<HierarchyValueDisplayMode>(
+    valueDisplayMode || 'all',
+  );
+
+  useEffect(() => {
+    if (valueDisplayMode) {
+      setActiveDisplayMode(valueDisplayMode);
+    }
+  }, [valueDisplayMode]);
+
+  const shouldRenderMetricValue = useCallback(
+    (node: TreeNode, mode: HierarchyValueDisplayMode): boolean => {
+      const hasChildren = Boolean(node.children && node.children.length > 0);
+      if (mode === 'leaves_only') return !hasChildren;
+      if (mode === 'parents_only') return hasChildren;
+      return true;
+    },
+    [],
+  );
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilterMap, setSelectedFilterMap] = useState<
@@ -353,6 +375,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         ? [
             grandTotalNode.name,
             ...exportCols.map(c => {
+              if (activeDisplayMode === 'leaves_only') return '';
               const val = grandTotalNode.metrics?.[c.key] ?? grandTotalNode.subtotals?.[c.key];
               return val !== null && val !== undefined ? String(val) : '';
             }),
@@ -366,9 +389,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     function traverseForExport(nodes: TreeNode[]) {
       for (const node of nodes) {
         const indent = '  '.repeat(node.depth ?? 0);
+        const renderValues = shouldRenderMetricValue(node, activeDisplayMode);
         const nodeRow = [
           indent + node.name,
           ...exportCols.map(c => {
+            if (!renderValues) return '';
             const val = node.metrics?.[c.key] ?? node.subtotals?.[c.key];
             return val !== null && val !== undefined ? String(val) : '';
           }),
@@ -413,7 +438,16 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         URL.revokeObjectURL(url);
       }
     }
-  }, [displayCols, columns, showGrandTotal, grandTotalNode, grandTotalPosition, filteredData]);
+  }, [
+    displayCols,
+    columns,
+    showGrandTotal,
+    grandTotalNode,
+    grandTotalPosition,
+    filteredData,
+    activeDisplayMode,
+    shouldRenderMetricValue,
+  ]);
 
   return (
     <div className="superset-hierarchical-table-container" style={containerStyle}>
@@ -462,6 +496,19 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         </div>
 
         <div className="table-toolbar-right">
+          <div className="toolbar-display-mode-selector">
+            <span className="toolbar-label">Valori:</span>
+            <select
+              value={activeDisplayMode}
+              onChange={e => setActiveDisplayMode(e.target.value as HierarchyValueDisplayMode)}
+              className="toolbar-select"
+              aria-label="Modalità visualizzazione valori metriche"
+            >
+              <option value="all">Tutti i livelli</option>
+              <option value="leaves_only">Solo foglie</option>
+              <option value="parents_only">Solo padri</option>
+            </select>
+          </div>
           {enableExport && (
             <button
               type="button"
@@ -686,6 +733,9 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   <span className="node-name">{grandTotalNode.name}</span>
                 </td>
                 {displayCols.map(col => {
+                  if (activeDisplayMode === 'leaves_only') {
+                    return <td key={col.key} className="metric-cell empty-metric-cell" />;
+                  }
                   const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
                   const isDelta = col.key.toLowerCase().includes('delta');
                   const isNuovo = val === 'Nuovo';
@@ -771,6 +821,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
                   {/* Metric / Pivot Columns */}
                   {displayCols.map(col => {
+                    const renderValues = shouldRenderMetricValue(node, activeDisplayMode);
+                    if (!renderValues) {
+                      return <td key={col.key} className="metric-cell empty-metric-cell" />;
+                    }
+
                     const val = node.metrics?.[col.key] ?? node.subtotals?.[col.key];
                     const isDelta = col.key.toLowerCase().includes('delta');
                     const isNuovo = val === 'Nuovo';
@@ -879,6 +934,9 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   <span className="node-name">{grandTotalNode.name}</span>
                 </td>
                 {displayCols.map(col => {
+                  if (activeDisplayMode === 'leaves_only') {
+                    return <td key={col.key} className="metric-cell empty-metric-cell" />;
+                  }
                   const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
                   const isDelta = col.key.toLowerCase().includes('delta');
                   const isNuovo = val === 'Nuovo';

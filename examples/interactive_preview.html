@@ -265,6 +265,13 @@
         <option value="pnl">Financial P&L (Parent-Child)</option>
       </select>
 
+      <label for="valueDisplayModeSelect"><strong>Valori:</strong></label>
+      <select id="valueDisplayModeSelect" onchange="setValueDisplayMode(this.value)">
+        <option value="all">Tutti i livelli</option>
+        <option value="leaves_only">Solo foglie (Leaves Only)</option>
+        <option value="parents_only">Solo padri (Parents Only)</option>
+      </select>
+
       <button onclick="handleExpandAll()">Expand All</button>
       <button onclick="handleCollapseAll()">Collapse All</button>
     </div>
@@ -369,6 +376,12 @@
     let currentTree = [];
     let expandedKeys = new Set();
     let currentSearchTerm = '';
+    let currentValueDisplayMode = 'all';
+
+    function setValueDisplayMode(mode) {
+      currentValueDisplayMode = mode;
+      renderTable();
+    }
 
     // --- Core Algorithm Ported from TypeScript ---
     function buildMultiDimensionTree(records, dimensions, metrics) {
@@ -554,7 +567,7 @@
       let bodyHTML = `
         <tr class="grand-total-row">
           <td>${grandTotal.name}</td>
-          ${config.metrics.map(m => `<td class="numeric">${config.formatters[m](grandTotal.metrics[m])}</td>`).join('')}
+          ${config.metrics.map(m => `<td class="numeric">${currentValueDisplayMode === 'leaves_only' ? '' : config.formatters[m](grandTotal.metrics[m])}</td>`).join('')}
         </tr>
       `;
 
@@ -564,6 +577,10 @@
           const hasChildren = n.children && n.children.length > 0;
           const isExpanded = expandedKeys.has(n.key) || currentSearchTerm.length > 0;
           const indent = n.depth * 22;
+          const showMetric =
+            currentValueDisplayMode === 'all' ||
+            (currentValueDisplayMode === 'leaves_only' && !hasChildren) ||
+            (currentValueDisplayMode === 'parents_only' && hasChildren);
 
           bodyHTML += `
             <tr>
@@ -575,7 +592,7 @@
                   ${n.name}
                 </span>
               </td>
-              ${config.metrics.map(m => `<td class="numeric">${config.formatters[m](n.metrics[m])}</td>`).join('')}
+              ${config.metrics.map(m => `<td class="numeric">${showMetric ? config.formatters[m](n.metrics[m]) : ''}</td>`).join('')}
             </tr>
           `;
 
