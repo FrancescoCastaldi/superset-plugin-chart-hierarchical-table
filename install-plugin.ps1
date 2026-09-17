@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Automated installer script for Hierarchical Table / StratumTree Chart Plugin in Apache Superset.
 .DESCRIPTION
@@ -168,6 +168,21 @@ if (-not $SkipBuild) {
     Write-Color "=== FASE 1: Compilazione TypeScript del Plugin ===" "Cyan"
     $NpmCmd = Get-Command "npm" -ErrorAction SilentlyContinue
     if ($NpmCmd) {
+        $RootNodeModules = Join-Path $ResolvedPluginPath "node_modules"
+        $PkgNodeModules = Join-Path $PackageSrcDir "node_modules"
+        if (-not (Test-Path $RootNodeModules) -and -not (Test-Path $PkgNodeModules)) {
+            Write-Color "[INFO] 'node_modules' non trovato. Installazione automatica dipendenze monorepo (npm install)..." "Yellow"
+            $OrigLoc = Get-Location
+            try {
+                Set-Location $ResolvedPluginPath
+                & $NpmCmd.Source install
+            } catch {
+                Write-Color "[WARN] Avviso durante npm install: $_" "Yellow"
+            } finally {
+                Set-Location $OrigLoc
+            }
+        }
+
         Write-Color "[INFO] Esecuzione build in '$PackageSrcDir'..." "Yellow"
         $OrigLoc = Get-Location
         try {
