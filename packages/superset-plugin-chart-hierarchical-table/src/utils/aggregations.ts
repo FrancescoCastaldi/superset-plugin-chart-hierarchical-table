@@ -76,10 +76,10 @@ export function recomputeDerivedMetrics(
     const { base, suffix } = splitMetricKey(key);
     const mLower = base.toLowerCase();
 
-    // 1. Delta Richieste Percentage
+    // 1. Delta Richieste Percentage (richieste_corr / richieste_conf)
     if (
       mLower.includes('delta') &&
-      (mLower.includes('richieste') || mLower.includes('pct') || mLower.includes('diff'))
+      (mLower.includes('richieste') || mLower.includes('diff'))
     ) {
       const corrKey = `richieste_corr${suffix}`;
       const confKey = `richieste_conf${suffix}`;
@@ -95,15 +95,109 @@ export function recomputeDerivedMetrics(
           metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
         } else if (conf === 0 && corr > 0) {
           metrics[key] = 'Nuovo';
-        } else if (conf === 0 && corr === 0) {
-          metrics[key] = null;
         } else {
           metrics[key] = null;
         }
       }
     }
 
-    // 2. Prime Visite Percentage
+    // 1a. Delta Accesso Diretto Percentage (accesso_diretto / accesso_diretto_conf)
+    else if (mLower.includes('delta') && mLower.includes('accesso_diretto')) {
+      const corrKey = `accesso_diretto${suffix}`;
+      const confKey = `accesso_diretto_conf${suffix}`;
+      const rawCorr = metrics[corrKey];
+      const rawConf = metrics[confKey];
+      if (rawCorr !== undefined || rawConf !== undefined) {
+        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
+        const conf = typeof rawConf === 'number' ? rawConf : 0;
+        if (conf > 0) {
+          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
+        } else if (conf === 0 && corr > 0) {
+          metrics[key] = 'Nuovo';
+        } else {
+          metrics[key] = null;
+        }
+      }
+    }
+
+    // 1b. Delta Programmata Percentage (programmata / programmata_conf)
+    else if (mLower.includes('delta') && mLower.includes('programmata')) {
+      const corrKey = `programmata${suffix}`;
+      const confKey = `programmata_conf${suffix}`;
+      const rawCorr = metrics[corrKey];
+      const rawConf = metrics[confKey];
+      if (rawCorr !== undefined || rawConf !== undefined) {
+        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
+        const conf = typeof rawConf === 'number' ? rawConf : 0;
+        if (conf > 0) {
+          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
+        } else if (conf === 0 && corr > 0) {
+          metrics[key] = 'Nuovo';
+        } else {
+          metrics[key] = null;
+        }
+      }
+    }
+
+    // 1c. Delta Prime Visite Percentage — comparison period (prime_visite / prime_visite_conf)
+    else if (mLower.includes('delta') && mLower.includes('prime_visite')) {
+      const corrKey = `prime_visite${suffix}`;
+      const confKey = `prime_visite_conf${suffix}`;
+      const rawCorr = metrics[corrKey];
+      const rawConf = metrics[confKey];
+      if (rawCorr !== undefined || rawConf !== undefined) {
+        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
+        const conf = typeof rawConf === 'number' ? rawConf : 0;
+        if (conf > 0) {
+          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
+        } else if (conf === 0 && corr > 0) {
+          metrics[key] = 'Nuovo';
+        } else {
+          metrics[key] = null;
+        }
+      }
+    }
+
+    // 1d. Delta Controlli Percentage (controlli / controlli_conf)
+    else if (mLower.includes('delta') && mLower.includes('controlli')) {
+      const corrKey = `controlli${suffix}`;
+      const confKey = `controlli_conf${suffix}`;
+      const rawCorr = metrics[corrKey];
+      const rawConf = metrics[confKey];
+      if (rawCorr !== undefined || rawConf !== undefined) {
+        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
+        const conf = typeof rawConf === 'number' ? rawConf : 0;
+        if (conf > 0) {
+          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
+        } else if (conf === 0 && corr > 0) {
+          metrics[key] = 'Nuovo';
+        } else {
+          metrics[key] = null;
+        }
+      }
+    }
+
+    // 1e. Generic fallback: delta_X_pct — derive operand keys from metric name
+    else if (mLower.startsWith('delta_') && mLower.endsWith('_pct')) {
+      const base = mLower.slice(6, -4); // strip 'delta_' prefix and '_pct' suffix
+      const corrKey = `${base}${suffix}`;
+      const confKey = `${base}_conf${suffix}`;
+      const rawCorr = metrics[corrKey];
+      const rawConf = metrics[confKey];
+      if (rawCorr !== undefined || rawConf !== undefined) {
+        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
+        const conf = typeof rawConf === 'number' ? rawConf : 0;
+        if (conf > 0) {
+          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
+        } else if (conf === 0 && corr > 0) {
+          metrics[key] = 'Nuovo';
+        } else {
+          metrics[key] = null;
+        }
+      }
+    }
+
+    // 2. Prime Visite Ratio (% su totale richieste, non delta confronto)
     else if (mLower.includes('pct') && mLower.includes('prime_visite')) {
       const pvKey = `prime_visite${suffix}`;
       const totKey = `richieste_corr${suffix}`;

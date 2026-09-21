@@ -13,6 +13,16 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 - Integrazione drill-through a dashboard secondarie tramite Superset URL parameters.
 - Modalità Pivot dinamica a colonne per metriche temporali (Time Comparison / Period-over-Period).
 
+## [0.1.6] - 2026-09-21
+
+### Fixed
+
+- **`recomputeDerivedMetrics`: fix calcolo delta per metriche accesso_diretto, programmata, prime_visite, controlli**
+  - Rimossa la condizione generica `|| mLower.includes('pct')` nel Branch 1 che intercettava erroneamente tutte le metriche delta percentuali e le ricalcolava con le chiavi `richieste_corr`/`richieste_conf` (non presenti nei chart 442/444), lasciando i delta a `null`.
+  - Aggiunti Branch specifici (1a–1d) per `delta_accesso_diretto_pct`, `delta_programmata_pct`, `delta_prime_visite_pct`, `delta_controlli_pct` che cercano i corretti operandi (`accesso_diretto`/`accesso_diretto_conf`, ecc.).
+  - Aggiunto Branch 1e come fallback generico `delta_X_pct` che deriva automaticamente i nomi degli operandi dal nome della metrica.
+  - Risultato: badge `NUOVO` (verde), colorazione `+X%` verde / `-X%` rosso e calcolo rollup sui nodi padre ora funzionanti su tutti i chart che usano metriche salvate Dataset 70.
+
 ## [0.1.5] - 2026-09-14
 
 ### Added
