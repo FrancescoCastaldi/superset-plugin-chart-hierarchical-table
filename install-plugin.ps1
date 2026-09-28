@@ -171,11 +171,11 @@ if (-not $SkipBuild) {
         $RootNodeModules = Join-Path $ResolvedPluginPath "node_modules"
         $PkgNodeModules = Join-Path $PackageSrcDir "node_modules"
         if (-not (Test-Path $RootNodeModules) -and -not (Test-Path $PkgNodeModules)) {
-            Write-Color "[INFO] 'node_modules' non trovato. Installazione automatica dipendenze monorepo (npm install)..." "Yellow"
+            Write-Color "[INFO] 'node_modules' non trovato. Installazione automatica dipendenze (npm install --legacy-peer-deps)..." "Yellow"
             $OrigLoc = Get-Location
             try {
                 Set-Location $ResolvedPluginPath
-                & $NpmCmd.Source install
+                & $NpmCmd.Source install --legacy-peer-deps
             } catch {
                 Write-Color "[WARN] Avviso durante npm install: $_" "Yellow"
             } finally {
