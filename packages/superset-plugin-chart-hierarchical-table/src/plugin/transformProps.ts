@@ -7,6 +7,7 @@ import {
 } from '../types';
 import { buildMultiDimensionTree, buildParentChildTree } from '../utils/treeBuilder';
 import { computeGrandTotal } from '../utils/aggregations';
+import { computeTreeTimeComparison } from '../utils/timeComparison';
 import { formatMetricValue } from '../utils/formatters';
 
 export default function transformProps(
@@ -64,6 +65,7 @@ export default function transformProps(
     min_max_color_theme,
     enableExport = true,
     enable_export,
+    showVarianceDelta,
   } = mergedFormData;
 
   const dataRecords: DataRecord[] = queriesData?.[0]?.data || [];
@@ -112,6 +114,16 @@ export default function transformProps(
     treeData = buildParentChildTree(dataRecords, idColStr, parentIdColStr, labelColStr, metrics);
   }
 
+  if (showVarianceDelta && hierarchyType === 'multi_dimension' && dimensions.length > 0) {
+    computeTreeTimeComparison(treeData, metrics);
+    // Push the delta keys to metrics array so they get rendered
+    for (const m of [...metrics]) {
+      if (!m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
+        metrics.push(`${m}___delta`);
+      }
+    }
+  }
+
   // Create columns definition
   const columns: TableColumn[] = [
     {
@@ -147,15 +159,22 @@ export default function transformProps(
 
     // 2. Build multi-level header structure: Metric (top level) -> Pivot Value (bottom level)
     for (const m of metrics) {
-      pivotHeaderGroups.push({
-        title: m,
-        key: m,
-        colSpan: pivotValues.length,
-      });
+      if (!((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione'))) {
+        pivotHeaderGroups.push({
+          title: m,
+          key: m,
+          colSpan: pivotValues.length,
+        });
+      }
 
       for (const pVal of pivotValues) {
         const compositeKey = `${m}___${pVal}`;
         allMetricKeysToCompute.push(compositeKey);
+        
+        if ((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
+          continue;
+        }
+
         columns.push({
           key: compositeKey,
           title: pVal,
@@ -172,9 +191,14 @@ export default function transformProps(
   } else {
     for (const m of metrics) {
       allMetricKeysToCompute.push(m);
+      
+      if ((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
+        continue;
+      }
+
       columns.push({
         key: m,
-        title: m,
+        title: m.endsWith('___delta') ? `Δ% ${m.replace('___delta', '')}` : m,
         dataIndex: m,
         isMetric: true,
         align: 'right',
