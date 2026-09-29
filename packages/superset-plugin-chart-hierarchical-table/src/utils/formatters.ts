@@ -52,8 +52,12 @@ export function formatMetricValue(
 
   // 5. Percentage Variation / Delta with sign (+/- X.X%)
   if (
-    (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
-    (mName.includes('%') || mName.includes('pct') || mName.includes('percent'))
+    mName.includes('___delta') ||
+    mName.includes('δ') ||
+    (metricName || '').includes('Δ') ||
+    mName.includes('delta %') ||
+    ((mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
+      (mName.includes('%') || mName.includes('pct') || mName.includes('percent')))
   ) {
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(1)}%`;
