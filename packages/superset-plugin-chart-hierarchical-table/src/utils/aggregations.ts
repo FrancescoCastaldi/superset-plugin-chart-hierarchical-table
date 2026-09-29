@@ -32,6 +32,8 @@ export function isDerivedMetric(metricName: string): boolean {
   const m = metricName.toLowerCase();
   return (
     m.includes('delta') ||
+    m.includes('diff') ||
+    m.includes('variazione') ||
     m.includes('pct') ||
     m.includes('percent') ||
     m.includes('tasso')
@@ -47,7 +49,10 @@ export function isRateMetric(metricName: string): boolean {
     m.includes('lt_off') ||
     m.includes('acc_corr') ||
     m.includes('acc_conf') ||
-    m.includes('attesa')
+    m.includes('attesa') ||
+    m.includes('accettazione') ||
+    m.includes('tasso') ||
+    (m.includes('%') && !m.includes('delta') && !m.includes('variazione') && !m.includes('diff'))
   );
 }
 
@@ -216,9 +221,24 @@ export function recomputeDerivedMetrics(
     }
 
     // 3. Delta Acceptance (delta_acc = acc_corr - acc_conf)
-    else if (mLower.includes('delta') && mLower.includes('acc')) {
-      const accCorrKey = `acc_corr${suffix}`;
-      const accConfKey = `acc_conf${suffix}`;
+    else if (mLower.includes('delta') && (mLower.includes('acc') || mLower.includes('accettazione'))) {
+      const accCorrKey =
+        allMetricKeys.find(
+          k =>
+            (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione')) &&
+            (k.toLowerCase().includes('corr') || k.toLowerCase().includes('1ª') || k.toLowerCase().includes('1a')) &&
+            !k.toLowerCase().includes('delta') &&
+            k.endsWith(suffix),
+        ) || `acc_corr${suffix}`;
+
+      const accConfKey =
+        allMetricKeys.find(
+          k =>
+            (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione')) &&
+            (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
+            !k.toLowerCase().includes('delta') &&
+            k.endsWith(suffix),
+        ) || `acc_conf${suffix}`;
 
       const rawAccCorr = metrics[accCorrKey];
       const rawAccConf = metrics[accConfKey];
@@ -234,8 +254,24 @@ export function recomputeDerivedMetrics(
 
     // 4. Delta Lead Time (delta_lt_off = lt_off_corr - lt_off_conf)
     else if (mLower.includes('delta') && (mLower.includes('lt') || mLower.includes('attesa'))) {
-      const ltCorrKey = `lt_off_corr${suffix}`;
-      const ltConfKey = `lt_off_conf${suffix}`;
+      const ltCorrKey =
+        allMetricKeys.find(
+          k =>
+            (k.toLowerCase().includes('attesa') || k.toLowerCase().includes('lt')) &&
+            (k.toLowerCase().includes('corr') || k.toLowerCase().includes('media')) &&
+            !k.toLowerCase().includes('delta') &&
+            !k.toLowerCase().includes('conf') &&
+            k.endsWith(suffix),
+        ) || `lt_off_corr${suffix}`;
+
+      const ltConfKey =
+        allMetricKeys.find(
+          k =>
+            (k.toLowerCase().includes('attesa') || k.toLowerCase().includes('lt')) &&
+            (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
+            !k.toLowerCase().includes('delta') &&
+            k.endsWith(suffix),
+        ) || `lt_off_conf${suffix}`;
 
       const rawLtCorr = metrics[ltCorrKey];
       const rawLtConf = metrics[ltConfKey];
@@ -274,9 +310,15 @@ export function rollupTreeMetrics(
         // For rate/average metrics, compute weighted average using volume if possible
         if (isRateMetric(metric)) {
           const { suffix } = splitMetricKey(metric);
-          const weightKey = metric.toLowerCase().includes('conf')
-            ? `richieste_conf${suffix}`
-            : `richieste_corr${suffix}`;
+          const isConf = metric.toLowerCase().includes('conf') || metric.toLowerCase().includes('confronto');
+          const weightKey =
+            metricNames.find(
+              k =>
+                (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume')) &&
+                (isConf
+                  ? k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')
+                  : k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')),
+            ) || (isConf ? `richieste_conf${suffix}` : `richieste_corr${suffix}`);
 
           let weightedSum = 0;
           let totalWeight = 0;

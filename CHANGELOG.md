@@ -13,6 +13,15 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 - Integrazione drill-through a dashboard secondarie tramite Superset URL parameters.
 - Modalità Pivot dinamica a colonne per metriche temporali (Time Comparison / Period-over-Period).
 
+## [0.1.7] - 2026-09-29
+
+### Fixed
+
+- **Rollup e Medie Ponderate Nodi Padre per Metriche di Tasso/Accettazione (`aggregations.ts`)**:
+  - Esteso `isRateMetric` per includere `accettazione`, `tasso` e qualsiasi metrica con simbolo `%` non derivata da delta, evitando la somma aritmetica errata dei tassi sui nodi padre.
+  - Implementata risoluzione dinamica delle chiavi volume (`weightKey`) in `rollupTreeMetrics`: se non è presente una metrica di volume esplicita, calcola la media aritmetica anziché la somma.
+  - Risoluzione flessibile dei nomi di metrica in `recomputeDerivedMetrics` per Delta Accettazione (`delta_acc`) e Delta Lead Time (`delta_lt_off`): ora identifica correttamente gli operandi sia con etichette standard (`acc_corr`, `acc_conf`) sia con etichette semantiche cliniche adhoc (`Accettazione 1ª Disp. (%)`, `Accettazione Confronto (%)`).
+
 ## [0.1.6] - 2026-09-21
 
 ### Fixed
