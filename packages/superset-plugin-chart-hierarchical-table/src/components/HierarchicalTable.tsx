@@ -737,7 +737,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     return <td key={col.key} className="metric-cell empty-metric-cell" />;
                   }
                   const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
-                  const isDelta = col.key.toLowerCase().includes('delta');
+                  const isDelta =
+                    col.key.toLowerCase().includes('delta') ||
+                    col.key.toLowerCase().includes('variazione') ||
+                    col.key.toLowerCase().includes('diff') ||
+                    col.key.toLowerCase().includes('p.p.');
                   const isNuovo = val === 'Nuovo';
 
                   return (
@@ -827,7 +831,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     }
 
                     const val = node.metrics?.[col.key] ?? node.subtotals?.[col.key];
-                    const isDelta = col.key.toLowerCase().includes('delta');
+                    const isDelta =
+                    col.key.toLowerCase().includes('delta') ||
+                    col.key.toLowerCase().includes('variazione') ||
+                    col.key.toLowerCase().includes('diff') ||
+                    col.key.toLowerCase().includes('p.p.');
                     const isNuovo = val === 'Nuovo';
 
                     const inScope = isNodeInMinMaxScope(node);
@@ -938,7 +946,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     return <td key={col.key} className="metric-cell empty-metric-cell" />;
                   }
                   const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
-                  const isDelta = col.key.toLowerCase().includes('delta');
+                  const isDelta =
+                    col.key.toLowerCase().includes('delta') ||
+                    col.key.toLowerCase().includes('variazione') ||
+                    col.key.toLowerCase().includes('diff') ||
+                    col.key.toLowerCase().includes('p.p.');
                   const isNuovo = val === 'Nuovo';
 
                   return (

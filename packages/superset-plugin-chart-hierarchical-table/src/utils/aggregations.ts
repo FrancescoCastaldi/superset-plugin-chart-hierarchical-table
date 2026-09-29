@@ -71,6 +71,81 @@ function splitMetricKey(key: string): { base: string; suffix: string } {
 }
 
 /**
+ * Helper to find matching current and comparison metric keys for a given topic/domain.
+ */
+function findMetricPair(
+  allMetricKeys: string[],
+  domainKeywords: string[],
+  suffix: string,
+  fallbackCorr: string,
+  fallbackConf: string,
+): { corrKey: string; confKey: string } {
+  const isExcluded = (k: string) => {
+    const l = k.toLowerCase();
+    return l.includes('delta') || l.includes('variazione') || l.includes('diff');
+  };
+
+  const matchesDomain = (k: string) => {
+    const l = k.toLowerCase();
+    return domainKeywords.some(kw => l.includes(kw));
+  };
+
+  const corrKey =
+    allMetricKeys.find(
+      k =>
+        k.endsWith(suffix) &&
+        matchesDomain(k) &&
+        (k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')) &&
+        !isExcluded(k),
+    ) || fallbackCorr;
+
+  const confKey =
+    allMetricKeys.find(
+      k =>
+        k.endsWith(suffix) &&
+        matchesDomain(k) &&
+        (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
+        !isExcluded(k),
+    ) || fallbackConf;
+
+  return { corrKey, confKey };
+}
+
+/**
+ * Calculates percentage variation between current and comparison values:
+ * ((corr - conf) * 100) / conf
+ */
+function computePercentageVariation(
+  metrics: Record<string, number | string | null>,
+  key: string,
+  corrKey: string,
+  confKey: string,
+): void {
+  const rawCorr = metrics[corrKey];
+  const rawConf = metrics[confKey];
+
+  if (typeof rawCorr === 'number' && typeof rawConf === 'number') {
+    if (rawConf > 0) {
+      metrics[key] = Math.round(((rawCorr - rawConf) * 1000.0) / rawConf) / 10;
+    } else if (rawConf === 0 && rawCorr > 0) {
+      metrics[key] = 'Nuovo';
+    } else if (rawConf === 0 && rawCorr === 0) {
+      metrics[key] = 0;
+    } else {
+      metrics[key] = null;
+    }
+  } else if (typeof rawCorr === 'number' && rawConf === 0) {
+    if (rawCorr > 0) {
+      metrics[key] = 'Nuovo';
+    } else {
+      metrics[key] = 0;
+    }
+  } else if (metrics[key] === undefined) {
+    metrics[key] = null;
+  }
+}
+
+/**
  * Recomputes derived metrics for a node (leaf, parent, or grand total) based on its base metrics.
  */
 export function recomputeDerivedMetrics(
@@ -81,125 +156,89 @@ export function recomputeDerivedMetrics(
     const { base, suffix } = splitMetricKey(key);
     const mLower = base.toLowerCase();
 
-    // 1. Delta Richieste Percentage (richieste_corr / richieste_conf)
+    // 1. Delta / Variazione Richieste (Percentage)
     if (
-      mLower.includes('delta') &&
-      (mLower.includes('richieste') || mLower.includes('diff'))
+      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('richieste') || mLower.includes('volume'))
     ) {
-      const corrKey = `richieste_corr${suffix}`;
-      const confKey = `richieste_conf${suffix}`;
-
-      const rawCorr = metrics[corrKey];
-      const rawConf = metrics[confKey];
-
-      if (rawCorr !== undefined || rawConf !== undefined) {
-        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
-        const conf = typeof rawConf === 'number' ? rawConf : 0;
-
-        if (conf > 0) {
-          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
-        } else if (conf === 0 && corr > 0) {
-          metrics[key] = 'Nuovo';
-        } else {
-          metrics[key] = null;
-        }
-      }
+      const { corrKey, confKey } = findMetricPair(
+        allMetricKeys,
+        ['richieste', 'volume'],
+        suffix,
+        `richieste_corr${suffix}`,
+        `richieste_conf${suffix}`,
+      );
+      computePercentageVariation(metrics, key, corrKey, confKey);
     }
 
-    // 1a. Delta Accesso Diretto Percentage (accesso_diretto / accesso_diretto_conf)
-    else if (mLower.includes('delta') && mLower.includes('accesso_diretto')) {
-      const corrKey = `accesso_diretto${suffix}`;
-      const confKey = `accesso_diretto_conf${suffix}`;
-      const rawCorr = metrics[corrKey];
-      const rawConf = metrics[confKey];
-      if (rawCorr !== undefined || rawConf !== undefined) {
-        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
-        const conf = typeof rawConf === 'number' ? rawConf : 0;
-        if (conf > 0) {
-          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
-        } else if (conf === 0 && corr > 0) {
-          metrics[key] = 'Nuovo';
-        } else {
-          metrics[key] = null;
-        }
-      }
+    // 1a. Delta / Variazione Accesso Diretto (Percentage)
+    else if (
+      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('accesso') || mLower.includes('diretto'))
+    ) {
+      const { corrKey, confKey } = findMetricPair(
+        allMetricKeys,
+        ['accesso', 'diretto'],
+        suffix,
+        `accesso_diretto${suffix}`,
+        `accesso_diretto_conf${suffix}`,
+      );
+      computePercentageVariation(metrics, key, corrKey, confKey);
     }
 
-    // 1b. Delta Programmata Percentage (programmata / programmata_conf)
-    else if (mLower.includes('delta') && mLower.includes('programmata')) {
-      const corrKey = `programmata${suffix}`;
-      const confKey = `programmata_conf${suffix}`;
-      const rawCorr = metrics[corrKey];
-      const rawConf = metrics[confKey];
-      if (rawCorr !== undefined || rawConf !== undefined) {
-        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
-        const conf = typeof rawConf === 'number' ? rawConf : 0;
-        if (conf > 0) {
-          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
-        } else if (conf === 0 && corr > 0) {
-          metrics[key] = 'Nuovo';
-        } else {
-          metrics[key] = null;
-        }
-      }
+    // 1b. Delta / Variazione Programmata (Percentage)
+    else if (
+      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('programmata') || mLower.includes('programmazione'))
+    ) {
+      const { corrKey, confKey } = findMetricPair(
+        allMetricKeys,
+        ['programmata', 'programmazione'],
+        suffix,
+        `programmata${suffix}`,
+        `programmata_conf${suffix}`,
+      );
+      computePercentageVariation(metrics, key, corrKey, confKey);
     }
 
-    // 1c. Delta Prime Visite Percentage — comparison period (prime_visite / prime_visite_conf)
-    else if (mLower.includes('delta') && mLower.includes('prime_visite')) {
-      const corrKey = `prime_visite${suffix}`;
-      const confKey = `prime_visite_conf${suffix}`;
-      const rawCorr = metrics[corrKey];
-      const rawConf = metrics[confKey];
-      if (rawCorr !== undefined || rawConf !== undefined) {
-        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
-        const conf = typeof rawConf === 'number' ? rawConf : 0;
-        if (conf > 0) {
-          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
-        } else if (conf === 0 && corr > 0) {
-          metrics[key] = 'Nuovo';
-        } else {
-          metrics[key] = null;
-        }
-      }
+    // 1c. Delta / Variazione Prime Visite (Percentage)
+    else if (
+      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('prime') || mLower.includes('visite')) &&
+      !mLower.includes('su totale') &&
+      !mLower.includes('% su')
+    ) {
+      const { corrKey, confKey } = findMetricPair(
+        allMetricKeys,
+        ['prime', 'visite'],
+        suffix,
+        `prime_visite${suffix}`,
+        `prime_visite_conf${suffix}`,
+      );
+      computePercentageVariation(metrics, key, corrKey, confKey);
     }
 
-    // 1d. Delta Controlli Percentage (controlli / controlli_conf)
-    else if (mLower.includes('delta') && mLower.includes('controlli')) {
-      const corrKey = `controlli${suffix}`;
-      const confKey = `controlli_conf${suffix}`;
-      const rawCorr = metrics[corrKey];
-      const rawConf = metrics[confKey];
-      if (rawCorr !== undefined || rawConf !== undefined) {
-        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
-        const conf = typeof rawConf === 'number' ? rawConf : 0;
-        if (conf > 0) {
-          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
-        } else if (conf === 0 && corr > 0) {
-          metrics[key] = 'Nuovo';
-        } else {
-          metrics[key] = null;
-        }
-      }
+    // 1d. Delta / Variazione Controlli (Percentage)
+    else if (
+      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      mLower.includes('controlli')
+    ) {
+      const { corrKey, confKey } = findMetricPair(
+        allMetricKeys,
+        ['controlli'],
+        suffix,
+        `controlli${suffix}`,
+        `controlli_conf${suffix}`,
+      );
+      computePercentageVariation(metrics, key, corrKey, confKey);
     }
 
     // 1e. Generic fallback: delta_X_pct — derive operand keys from metric name
     else if (mLower.startsWith('delta_') && mLower.endsWith('_pct')) {
-      const base = mLower.slice(6, -4); // strip 'delta_' prefix and '_pct' suffix
-      const corrKey = `${base}${suffix}`;
-      const confKey = `${base}_conf${suffix}`;
-      const rawCorr = metrics[corrKey];
-      const rawConf = metrics[confKey];
-      if (rawCorr !== undefined || rawConf !== undefined) {
-        const corr = typeof rawCorr === 'number' ? rawCorr : 0;
-        const conf = typeof rawConf === 'number' ? rawConf : 0;
-        if (conf > 0) {
-          metrics[key] = Math.round(((corr - conf) * 1000.0) / conf) / 10;
-        } else if (conf === 0 && corr > 0) {
-          metrics[key] = 'Nuovo';
-        } else {
-          metrics[key] = null;
-        }
-      }
+      const baseName = mLower.slice(6, -4);
+      const corrKey = `${baseName}${suffix}`;
+      const confKey = `${baseName}_conf${suffix}`;
+      computePercentageVariation(metrics, key, corrKey, confKey);
     }
 
     // 2. Prime Visite Ratio (% su totale richieste, non delta confronto)
@@ -220,24 +259,31 @@ export function recomputeDerivedMetrics(
       }
     }
 
-    // 3. Delta Acceptance (delta_acc = acc_corr - acc_conf)
-    else if (mLower.includes('delta') && (mLower.includes('acc') || mLower.includes('accettazione'))) {
+    // 3. Delta Acceptance (delta_acc = acc_corr - acc_conf) in p.p.
+    else if (
+      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('acc') || mLower.includes('accettazione'))
+    ) {
       const accCorrKey =
         allMetricKeys.find(
           k =>
+            k.endsWith(suffix) &&
             (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione')) &&
             (k.toLowerCase().includes('corr') || k.toLowerCase().includes('1ª') || k.toLowerCase().includes('1a')) &&
             !k.toLowerCase().includes('delta') &&
-            k.endsWith(suffix),
+            !k.toLowerCase().includes('diff') &&
+            !k.toLowerCase().includes('conf'),
         ) || `acc_corr${suffix}`;
 
       const accConfKey =
         allMetricKeys.find(
           k =>
+            k.endsWith(suffix) &&
             (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione')) &&
             (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
             !k.toLowerCase().includes('delta') &&
-            k.endsWith(suffix),
+            !k.toLowerCase().includes('diff') &&
+            !k.toLowerCase().includes('corr'),
         ) || `acc_conf${suffix}`;
 
       const rawAccCorr = metrics[accCorrKey];
@@ -245,32 +291,37 @@ export function recomputeDerivedMetrics(
 
       if (typeof rawAccCorr === 'number' && typeof rawAccConf === 'number') {
         metrics[key] = Math.round((rawAccCorr - rawAccConf) * 10) / 10;
-      } else if (typeof rawAccCorr === 'number') {
-        metrics[key] = Math.round(rawAccCorr * 10) / 10;
-      } else {
+      } else if (metrics[key] === undefined) {
         metrics[key] = null;
       }
     }
 
-    // 4. Delta Lead Time (delta_lt_off = lt_off_corr - lt_off_conf)
-    else if (mLower.includes('delta') && (mLower.includes('lt') || mLower.includes('attesa'))) {
+    // 4. Delta Lead Time (delta_lt_off = lt_off_corr - lt_off_conf) in gg
+    else if (
+      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('attesa') || mLower.includes('lt_off') || mLower.includes('lead') || (mLower.includes('giorni') && !mLower.includes('settimana'))) &&
+      !mLower.includes('acc')
+    ) {
       const ltCorrKey =
         allMetricKeys.find(
           k =>
-            (k.toLowerCase().includes('attesa') || k.toLowerCase().includes('lt')) &&
+            k.endsWith(suffix) &&
+            (k.toLowerCase().includes('attesa') || k.toLowerCase().includes('lt_off') || k.toLowerCase().includes('lead')) &&
             (k.toLowerCase().includes('corr') || k.toLowerCase().includes('media')) &&
             !k.toLowerCase().includes('delta') &&
-            !k.toLowerCase().includes('conf') &&
-            k.endsWith(suffix),
+            !k.toLowerCase().includes('diff') &&
+            !k.toLowerCase().includes('conf'),
         ) || `lt_off_corr${suffix}`;
 
       const ltConfKey =
         allMetricKeys.find(
           k =>
-            (k.toLowerCase().includes('attesa') || k.toLowerCase().includes('lt')) &&
+            k.endsWith(suffix) &&
+            (k.toLowerCase().includes('attesa') || k.toLowerCase().includes('lt_off') || k.toLowerCase().includes('lead')) &&
             (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
             !k.toLowerCase().includes('delta') &&
-            k.endsWith(suffix),
+            !k.toLowerCase().includes('diff') &&
+            !k.toLowerCase().includes('corr'),
         ) || `lt_off_conf${suffix}`;
 
       const rawLtCorr = metrics[ltCorrKey];
@@ -278,10 +329,36 @@ export function recomputeDerivedMetrics(
 
       if (typeof rawLtCorr === 'number' && typeof rawLtConf === 'number') {
         metrics[key] = Math.round((rawLtCorr - rawLtConf) * 10) / 10;
-      } else if (typeof rawLtCorr === 'number') {
-        metrics[key] = Math.round(rawLtCorr * 10) / 10;
-      } else {
+      } else if (metrics[key] === undefined) {
         metrics[key] = null;
+      }
+    }
+
+    // 5. Generic fallback for ANY percentage variation
+    else if (
+      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('%') || mLower.includes('pct') || mLower.includes('percent'))
+    ) {
+      const corrKey =
+        allMetricKeys.find(
+          k =>
+            k.endsWith(suffix) &&
+            (k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')) &&
+            !k.toLowerCase().includes('delta') &&
+            !k.toLowerCase().includes('variazione') &&
+            !k.toLowerCase().includes('diff'),
+        );
+      const confKey =
+        allMetricKeys.find(
+          k =>
+            k.endsWith(suffix) &&
+            (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
+            !k.toLowerCase().includes('delta') &&
+            !k.toLowerCase().includes('variazione') &&
+            !k.toLowerCase().includes('diff'),
+        );
+      if (corrKey && confKey) {
+        computePercentageVariation(metrics, key, corrKey, confKey);
       }
     }
   }
@@ -376,6 +453,53 @@ export function rollupTreeMetrics(
       if (node.subtotals) {
         recomputeDerivedMetrics(node.subtotals, metricNames);
       }
+
+      // Fallback: for any derived metrics still missing (e.g. table without comparison column),
+      // compute a weighted average from children using a volume metric if available, else simple average.
+      for (const metric of metricNames) {
+        if (isDerivedMetric(metric) && (node.metrics[metric] === null || node.metrics[metric] === undefined)) {
+          const { suffix } = splitMetricKey(metric);
+          const weightKey =
+            metricNames.find(
+              k =>
+                (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume') || k.toLowerCase().includes('corr')) &&
+                !isDerivedMetric(k),
+            ) || `richieste_corr${suffix}`;
+
+          let weightedSum = 0;
+          let totalWeight = 0;
+          let unweightedSum = 0;
+          let count = 0;
+
+          for (const child of node.children) {
+            const cVal = child.metrics[metric];
+            if (typeof cVal === 'number' && !isNaN(cVal)) {
+              const weight =
+                typeof child.metrics[weightKey] === 'number'
+                  ? (child.metrics[weightKey] as number)
+                  : 0;
+              if (weight > 0) {
+                weightedSum += cVal * weight;
+                totalWeight += weight;
+              }
+              unweightedSum += cVal;
+              count++;
+            }
+          }
+
+          let derivedVal: number | null = null;
+          if (totalWeight > 0) {
+            derivedVal = Math.round((weightedSum / totalWeight) * 10) / 10;
+          } else if (count > 0) {
+            derivedVal = Math.round((unweightedSum / count) * 10) / 10;
+          }
+
+          if (derivedVal !== null) {
+            node.metrics[metric] = derivedVal;
+            if (node.subtotals) node.subtotals[metric] = derivedVal;
+          }
+        }
+      }
     } else {
       // Leaf node: ensure derived metrics are cleanly computed (e.g. 'Nuovo' when conf === 0)
       recomputeDerivedMetrics(node.metrics, metricNames);
@@ -450,6 +574,45 @@ export function computeGrandTotal(
 
   // Recalculate derived metrics for Grand Total
   recomputeDerivedMetrics(grandTotalMetrics, metricNames);
+
+  for (const metric of metricNames) {
+    if (isDerivedMetric(metric) && (grandTotalMetrics[metric] === null || grandTotalMetrics[metric] === undefined)) {
+      const { suffix } = splitMetricKey(metric);
+      const weightKey =
+        metricNames.find(
+          k =>
+            (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume') || k.toLowerCase().includes('corr')) &&
+            !isDerivedMetric(k),
+        ) || `richieste_corr${suffix}`;
+
+      let weightedSum = 0;
+      let totalWeight = 0;
+      let unweightedSum = 0;
+      let count = 0;
+
+      for (const root of rootNodes) {
+        const rVal = root.metrics[metric];
+        if (typeof rVal === 'number' && !isNaN(rVal)) {
+          const weight =
+            typeof root.metrics[weightKey] === 'number'
+              ? (root.metrics[weightKey] as number)
+              : 0;
+          if (weight > 0) {
+            weightedSum += rVal * weight;
+            totalWeight += weight;
+          }
+          unweightedSum += rVal;
+          count++;
+        }
+      }
+
+      if (totalWeight > 0) {
+        grandTotalMetrics[metric] = Math.round((weightedSum / totalWeight) * 10) / 10;
+      } else if (count > 0) {
+        grandTotalMetrics[metric] = Math.round((unweightedSum / count) * 10) / 10;
+      }
+    }
+  }
 
   return {
     key: '__grand_total__',

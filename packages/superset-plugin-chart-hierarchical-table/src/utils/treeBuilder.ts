@@ -1,6 +1,6 @@
 import { DataRecord } from '@superset-ui/core';
 import { TreeNode, SortOrder, MinMaxScope, MinMaxBoundsMap } from '../types';
-import { rollupTreeMetrics } from './aggregations';
+import { rollupTreeMetrics, isDerivedMetric } from './aggregations';
 
 /**
  * Builds a hierarchical tree from flat records using an ordered list of dimensions.
@@ -83,6 +83,9 @@ export function buildMultiDimensionTree(
         // If multiple records land on the same leaf path, sum up their metrics
         const existingNode = currentLevelMap.get(val);
         for (const m of metrics) {
+          if (isDerivedMetric(m)) {
+            continue;
+          }
           const rawM = record[m];
           const numVal =
             rawM === null || rawM === undefined

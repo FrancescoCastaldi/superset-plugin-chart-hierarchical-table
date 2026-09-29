@@ -13,6 +13,19 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 - Integrazione drill-through a dashboard secondarie tramite Superset URL parameters.
 - Modalità Pivot dinamica a colonne per metriche temporali (Time Comparison / Period-over-Period).
 
+## [0.1.8] - 2026-09-29
+
+### Fixed
+
+- **Ricalcolo e Rollup Variazioni (%) Nodi Padre (`aggregations.ts`)**:
+  - Implementata la funzione `findMetricPair` per risolvere dinamicamente gli operandi Corrente e Confronto sia per le chiavi SQL standard (`richieste_corr`/`richieste_conf`) sia per le etichette semantiche cliniche (`Richieste (Corrente)`, `Richieste (Confronto)`, `Prime Visite (Corrente)`, `Controlli (Corrente)`, `Accesso Diretto (Corrente)`, `Prestazione Programmata (Corrente)`).
+  - Esteso il riconoscimento di `recomputeDerivedMetrics` a tutte le variazioni percentuali contenenti `variazione`, `diff` o `delta`, evitando che i nodi padre rimanessero con valori indefiniti (`-`).
+  - Aggiunto fallback con media ponderata sui volumi dei figli per tabelle che espongono variazioni percentuali senza la colonna del confronto (es. chart mensili 470 e 471).
+  - Prevenuta la somma scorretta delle metriche derivate in caso di record duplicati sullo stesso path foglia (`treeBuilder.ts`).
+- **Formattazione e Stili Delta / Variazioni (`formatters.ts` & `HierarchicalTable.tsx`)**:
+  - Risolta la collisione semantica in `formatMetricValue`: la sottostringa `lt` presente nella parola `delta` causava l'errata formattazione di `Delta Accettazione (p.p.)` come giorni (`gg`); ora `Delta Accettazione` viene valutata prioritariamente con unità corretta `p.p.`, e il tempo di attesa usa match espliciti su `attesa` e `lt_off`.
+  - Estesa la formattazione percentuale con segno (`+X.X%`, `-X.X%`) e la colorazione condizionale verde/rosso (`delta-positive`/`delta-negative`) a tutte le colonne con prefisso `Variazione` e suffissi `%`.
+
 ## [0.1.7] - 2026-09-29
 
 ### Fixed

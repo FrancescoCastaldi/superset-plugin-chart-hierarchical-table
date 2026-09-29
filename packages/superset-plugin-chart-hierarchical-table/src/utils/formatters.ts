@@ -21,42 +21,50 @@ export function formatMetricValue(
 
   const mName = (metricName || '').toLowerCase();
 
-  // Percentage metrics
-  if (mName.includes('pct') || mName.includes('percent') || mName.includes('tasso')) {
-    if (mName.startsWith('delta') || mName.includes('delta_')) {
-      const sign = value > 0 ? '+' : '';
-      return `${sign}${value.toFixed(1)}%`;
-    }
+  // 1. Delta Acceptance in percentage points (p.p.)
+  if (
+    (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
+    (mName.includes('acc') || mName.includes('accettazione') || mName.includes('p.p.'))
+  ) {
+    const sign = value > 0 ? '+' : '';
+    return `${sign}${value.toFixed(1)} p.p.`;
+  }
+
+  // 2. Acceptance rate (percentage)
+  if (mName.includes('acc_corr') || mName.includes('acc_conf') || mName.includes('accettazione')) {
     return `${value.toFixed(1)}%`;
   }
 
-  // Delta Lead Time in days
+  // 3. Delta Lead Time in days (gg)
   if (
-    (mName.startsWith('delta') || mName.includes('delta_')) &&
-    (mName.includes('lt') || mName.includes('attesa') || mName.includes('giorni'))
+    (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
+    (mName.includes('attesa') || mName.includes('lt_off') || mName.includes('lead') || (mName.includes('giorni') && !mName.includes('settimana')) || /\blt\b/.test(mName))
   ) {
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(1)} gg`;
   }
 
-  // Lead Time in days
-  if (mName.includes('lt_off') || mName.includes('attesa')) {
+  // 4. Lead Time in days (gg)
+  if (mName.includes('lt_off') || mName.includes('attesa') || (mName.includes('giorni') && !mName.includes('settimana'))) {
     return `${value.toFixed(1)} gg`;
   }
 
-  // Delta Acceptance in percentage points
-  if ((mName.startsWith('delta') || mName.includes('delta_')) && mName.includes('acc')) {
+  // 5. Percentage Variation / Delta with sign (+/- X.X%)
+  if (
+    (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
+    (mName.includes('%') || mName.includes('pct') || mName.includes('percent'))
+  ) {
     const sign = value > 0 ? '+' : '';
-    return `${sign}${value.toFixed(1)} p.p.`;
+    return `${sign}${value.toFixed(1)}%`;
   }
 
-  // Acceptance rate
-  if (mName.includes('acc_corr') || mName.includes('acc_conf') || mName.includes('accettazione')) {
+  // 6. General percentage metrics (rate, ratio, share)
+  if (mName.includes('%') || mName.includes('pct') || mName.includes('percent') || mName.includes('tasso')) {
     return `${value.toFixed(1)}%`;
   }
 
-  // General delta with sign
-  if (mName.startsWith('delta') || mName.includes('delta_')) {
+  // 7. General delta with sign
+  if (mName.startsWith('delta') || mName.includes('delta_') || mName.includes('variazione') || mName.includes('diff')) {
     const sign = value > 0 ? '+' : '';
     return `${sign}${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(value)}`;
   }
