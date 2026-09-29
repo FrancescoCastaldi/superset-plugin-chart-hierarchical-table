@@ -13,6 +13,13 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/)
 - Integrazione drill-through a dashboard secondarie tramite Superset URL parameters.
 - Modalità Pivot dinamica a colonne per metriche temporali (Time Comparison / Period-over-Period).
 
+## [0.1.9] - 2026-09-29
+
+### Fixed
+
+- **Formattazione Unità Metriche Percentuali Accesso Diretto (`formatters.ts`)**:
+  - Raffinata la condizione di matching per Delta Accettazione escludendo esplicitamente le colonne relative ad "Accesso Diretto" (`!mName.includes('accesso')`), evitando che `Variazione Accesso Diretto (%)` ricevesse erroneamente l'unità di misura in punti percentuali (`p.p.`) invece del corretto formato percentuale con segno (`+X.X%`).
+
 ## [0.1.8] - 2026-09-29
 
 ### Fixed

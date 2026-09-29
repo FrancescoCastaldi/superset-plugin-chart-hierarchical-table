@@ -24,7 +24,8 @@ export function formatMetricValue(
   // 1. Delta Acceptance in percentage points (p.p.)
   if (
     (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
-    (mName.includes('acc') || mName.includes('accettazione') || mName.includes('p.p.'))
+    (mName.includes('accettazione') || mName.includes('p.p.') || /\bacc\b/.test(mName) || mName.includes('acc_')) &&
+    !mName.includes('accesso')
   ) {
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(1)} p.p.`;
