@@ -1,37 +1,67 @@
 {
-  "name": "superset-plugin-chart-stratumtree-monorepo",
-  "private": true,
-  "description": "StratumTree — Hierarchical Matrix Grid & Tree Table Chart Plugin for Apache Superset 6.1.0 Monorepo",
+  "name": "superset-plugin-chart-hierarchical-table",
+  "version": "0.2.2",
+  "description": "Apache Superset 6.1.0 Hierarchical Table & Matrix Grid Chart Plugin",
   "homepage": "https://francescocastaldi.github.io/superset-plugin-chart-hierarchical-table/",
   "repository": {
     "type": "git",
     "url": "https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table.git"
   },
-  "workspaces": [
-    "packages/*"
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml}\""
+    "build": "tsc --project tsconfig.json || node ../../node_modules/typescript/lib/tsc.js --project tsconfig.json || npx tsc --project tsconfig.json",
+    "clean": "rimraf dist",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "test": "node ../../node_modules/jest/bin/jest.js --preset=ts-jest",
+    "test:watch": "node ../../node_modules/jest/bin/jest.js --preset=ts-jest --watch"
   },
   "keywords": [
-    "stratum-tree",
-    "stratumtree",
     "superset",
     "apache-superset",
+    "superset-plugin",
+    "superset-chart",
     "superset-6",
     "hierarchical-table",
-    "matrix-grid",
-    "monorepo",
-    "chart-plugin"
+    "tree-table",
+    "pivot-grid",
+    "hierarchy"
   ],
   "author": "Francesco Castaldi",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@superset-ui/core": "*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.0.0",
+    "antd": "^5.12.0",
+    "classnames": "^2.3.2",
+    "d3-format": "^3.1.0",
+    "lodash": "^4.17.21"
+  },
   "devDependencies": {
-    "prettier": "^3.2.5"
+    "@superset-ui/core": "^0.20.4",
+    "@types/d3-format": "^3.0.4",
+    "@types/jest": "^29.5.12",
+    "@types/lodash": "^4.14.202",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "jest": "^29.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rimraf": "^5.0.5",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
   }
 }
+
