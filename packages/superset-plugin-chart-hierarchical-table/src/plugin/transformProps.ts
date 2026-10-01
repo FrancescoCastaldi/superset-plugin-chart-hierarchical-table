@@ -77,11 +77,16 @@ export default function transformProps(
 
   // Backward compat: support groupby, hierarchyDimensions, hierarchy_dimensions
   const rawDimensions = ensureIsArray(groupby || hierarchyDimensions || hierarchy_dimensions);
-  const dimensions: string[] = rawDimensions.map((d: any) =>
-    typeof d === 'string'
-      ? d
-      : d?.column_name || d?.label || d?.sqlExpression || String(d),
-  );
+  const dimToPhysicalMap: Record<string, string> = {};
+  const dimensions: string[] = rawDimensions.map((d: any) => {
+    if (typeof d === 'string') {
+      return d;
+    }
+    const physical = d?.sqlExpression || d?.column_name || d?.label || String(d);
+    const label = d?.label || d?.column_name || d?.sqlExpression || String(d);
+    dimToPhysicalMap[label] = physical;
+    return label;
+  });
 
   const idColStr = typeof idColumn === 'string' ? idColumn : idColumn?.column_name || idColumn?.label || '';
   const parentIdColStr = typeof parentIdColumn === 'string' ? parentIdColumn : parentIdColumn?.column_name || parentIdColumn?.label || '';
@@ -159,21 +164,15 @@ export default function transformProps(
 
     // 2. Build multi-level header structure: Metric (top level) -> Pivot Value (bottom level)
     for (const m of metrics) {
-      if (!((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione'))) {
-        pivotHeaderGroups.push({
-          title: m,
-          key: m,
-          colSpan: pivotValues.length,
-        });
-      }
+      pivotHeaderGroups.push({
+        title: m,
+        key: m,
+        colSpan: pivotValues.length,
+      });
 
       for (const pVal of pivotValues) {
         const compositeKey = `${m}___${pVal}`;
         allMetricKeysToCompute.push(compositeKey);
-        
-        if ((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
-          continue;
-        }
 
         columns.push({
           key: compositeKey,
@@ -191,10 +190,6 @@ export default function transformProps(
   } else {
     for (const m of metrics) {
       allMetricKeysToCompute.push(m);
-      
-      if ((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
-        continue;
-      }
 
       columns.push({
         key: m,
@@ -259,7 +254,7 @@ export default function transformProps(
         }
 
         const filters = Object.entries(dimValuesMap).map(([col, vals]) => ({
-          col,
+          col: dimToPhysicalMap[col] || col,
           op: 'IN' as const,
           val: vals,
         }));
@@ -292,9 +287,10 @@ export default function transformProps(
         });
       } else {
         const valArray = Array.isArray(value) ? value : [value];
+        const targetCol = dimToPhysicalMap[dimension] || dimension;
         const filters = [
           {
-            col: dimension,
+            col: targetCol,
             op: 'IN' as const,
             val: valArray,
           },

@@ -5,13 +5,12 @@ Tutte le modifiche rilevanti a questo progetto sono documentate in questo file.
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/),
 e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/).
 
-## [Unreleased]
+## [0.2.2] - 2026-10-01
 
-### Aggiunte pianificate
-
-- Supporto per esportazione Excel multi-livello con gruppi raggruppabili (native Excel grouping).
-- Integrazione drill-through a dashboard secondarie tramite Superset URL parameters.
-- Modalità Pivot dinamica a colonne per metriche temporali (Time Comparison / Period-over-Period).
+### Fixed
+- **Cross-Filtering con mapping colonne fisiche (`dimToPhysicalMap`)**: Risolto bug per cui il click sui nodi della tabella emetteva filtri basati sull'etichetta visualizzata anziché sulla colonna SQL fisica del database.
+- **Esposizione Colonne Confronto e Variazione**: Rimosso il filtro di soppressione che nascondeva le colonne di periodo precedente/confronto nelle tabelle gerarchiche.
+- **Installer istantaneo**: Aggiunto rilevamento bundle pre-compilato `dist/` in `install-plugin.ps1` per saltare `npm install` e installare istantaneamente.
 
 ## [0.1.9] - 2026-09-29
 
