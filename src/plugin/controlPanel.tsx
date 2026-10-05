@@ -102,6 +102,49 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'pivotTimeDeltaMode',
+            config: {
+              type: 'SelectControl',
+              label: t('Automatic Pivot Delta Mode (Calcolo Delta Nativato Colonne Pivot)'),
+              default: 'none',
+              renderTrigger: true,
+              choices: [
+                ['none', t('None (Nessun delta automatico)')],
+                ['absolute', t('Delta Assoluto (Δ = Valore - Periodo Prec.)')],
+                ['percentage', t('Delta Percentuale (Δ% = (Valore - Periodo Prec.) / Periodo Prec.)')],
+                ['both', t('Entrambi (Δ Assoluto + Δ% Percentuale)')],
+              ],
+              description: t(
+                'Calcola automaticamente il delta temporale rispetto al periodo precedente lungo le colonne pivot senza window functions SQL.',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+            },
+          },
+          {
+            name: 'pivotTimeDeltaLag',
+            config: {
+              type: 'SelectControl',
+              label: t('Delta Comparison Lag / Offset (Passo Temporale di Confronto)'),
+              default: 1,
+              renderTrigger: true,
+              choices: [
+                [1, t('1 Periodo (Es. Mese precedente / MoM, Anno precedente / YoY)')],
+                [2, t('2 Periodi')],
+                [3, t('3 Periodi (Es. Trimestre precedente / QoQ)')],
+                [12, t('12 Periodi (Es. Stesso mese anno precedente / MoM-YoY)')],
+              ],
+              description: t('Numero di periodi indietro da usare come confronto per il delta.'),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
+                controls?.pivotTimeDeltaMode?.value !== 'none',
+            },
+          },
+        ],
+        [
+          {
             name: 'idColumn',
             config: {
               ...sharedControls.entity,
@@ -435,49 +478,6 @@ const config: ControlPanelConfig = {
                 ['budget_target', t('Budget / Target Baseline (Target Pianificato)')],
               ],
               description: t('Baseline interval to compute delta and percentage variance.'),
-            },
-          },
-        ],
-        [
-          {
-            name: 'pivotTimeDeltaMode',
-            config: {
-              type: 'SelectControl',
-              label: t('Automatic Pivot Delta Mode (Calcolo Delta Nativato Colonne Pivot)'),
-              default: 'none',
-              renderTrigger: true,
-              choices: [
-                ['none', t('None (Nessun delta automatico)')],
-                ['absolute', t('Delta Assoluto (Δ = Valore - Periodo Prec.)')],
-                ['percentage', t('Delta Percentuale (Δ% = (Valore - Periodo Prec.) / Periodo Prec.)')],
-                ['both', t('Entrambi (Δ Assoluto + Δ% Percentuale)')],
-              ],
-              description: t(
-                'Calcola automaticamente il delta temporale rispetto al periodo precedente lungo le colonne pivot senza window functions SQL.',
-              ),
-              visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
-            },
-          },
-          {
-            name: 'pivotTimeDeltaLag',
-            config: {
-              type: 'SelectControl',
-              label: t('Delta Comparison Lag / Offset (Passo Temporale di Confronto)'),
-              default: 1,
-              renderTrigger: true,
-              choices: [
-                [1, t('1 Periodo (Es. Mese precedente / MoM, Anno precedente / YoY)')],
-                [2, t('2 Periodi')],
-                [3, t('3 Periodi (Es. Trimestre precedente / QoQ)')],
-                [12, t('12 Periodi (Es. Stesso mese anno precedente / MoM-YoY)')],
-              ],
-              description: t('Numero di periodi indietro da usare come confronto per il delta.'),
-              visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
-                controls?.pivotTimeDeltaMode?.value !== 'none',
             },
           },
         ],
