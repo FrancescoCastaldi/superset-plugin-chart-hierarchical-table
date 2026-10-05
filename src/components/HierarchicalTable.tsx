@@ -1,10 +1,13 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import classNames from 'classnames';
 import {
   HierarchicalTableTransformedProps,
   TreeNode,
   SortOrder,
   MinMaxBound,
+  MinMaxBoundsMap,
+  MinMaxDisplayMode,
+  MinMaxScope,
   HierarchyValueDisplayMode,
 } from '../types';
 import {
@@ -14,6 +17,14 @@ import {
 } from '../utils/treeBuilder';
 import { getNormalizedMetricValue, getHeatmapBgColor } from '../utils/formatters';
 import './HierarchicalTable.css';
+
+export interface ColumnMeta {
+  key: string;
+  title: string;
+  width?: number | string;
+  formatter?: (val: any) => string;
+  isDelta: boolean;
+}
 
 function isHierarchySortKey(key?: string, dims?: string[]): boolean {
   if (!key) return false;
@@ -25,6 +36,198 @@ function isHierarchySortKey(key?: string, dims?: string[]): boolean {
     Boolean(dims && dims.includes(key))
   );
 }
+
+interface HierarchicalTableRowProps {
+  node: TreeNode;
+  displayCols: any[];
+  columnMetaMap: Map<string, ColumnMeta>;
+  isExpanded: boolean;
+  isFilterSelected: boolean;
+  emitFilter: boolean;
+  activeDisplayMode: HierarchyValueDisplayMode;
+  minMaxDisplayMode: MinMaxDisplayMode;
+  minMaxScope: MinMaxScope;
+  minMaxBounds: MinMaxBoundsMap | null;
+  onToggleExpand: (key: string) => void;
+  onNodeClick: (node: TreeNode) => void;
+}
+
+const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
+  node,
+  displayCols,
+  columnMetaMap,
+  isExpanded,
+  isFilterSelected,
+  emitFilter,
+  activeDisplayMode,
+  minMaxDisplayMode,
+  minMaxScope,
+  minMaxBounds,
+  onToggleExpand,
+  onNodeClick,
+}: HierarchicalTableRowProps) {
+  const hasChildren = Boolean(node.children && node.children.length > 0);
+  const paddingLeft = node.depth * 20 + 8;
+  const hasMinMax = minMaxDisplayMode !== 'none' && Boolean(minMaxBounds);
+  const inScope = hasMinMax
+    ? minMaxScope === 'all_nodes' || minMaxScope === 'level_aware'
+      ? true
+      : Boolean(node.isLeaf || !hasChildren)
+    : false;
+
+  return (
+    <tr
+      className={classNames({
+        'parent-row': hasChildren,
+        'selected-filter-row': isFilterSelected,
+      })}
+    >
+      {/* Hierarchy Column */}
+      <td className="hierarchy-cell">
+        <div className="tree-cell-content" style={{ paddingLeft: `${paddingLeft}px` }}>
+          {emitFilter && (
+            <input
+              type="checkbox"
+              className="node-checkbox"
+              checked={isFilterSelected}
+              onChange={() => onNodeClick(node)}
+              aria-label={`Select ${node.name} for cross-filtering`}
+            />
+          )}
+          {hasChildren ? (
+            <button
+              type="button"
+              className="tree-toggle-btn"
+              onClick={() => onToggleExpand(node.key)}
+              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+            >
+              {isExpanded ? '−' : '+'}
+            </button>
+          ) : (
+            <span className="tree-spacer" />
+          )}
+          <span
+            className={classNames('node-name', {
+              'node-parent': hasChildren,
+              'node-filter-active': isFilterSelected,
+            })}
+            onClick={() => onNodeClick(node)}
+            title={`Click to ${isFilterSelected ? 'remove from filter' : 'filter dashboard by ' + node.name} (${node.path.join(' > ')})`}
+          >
+            {node.name}
+          </span>
+        </div>
+      </td>
+
+      {/* Metric / Pivot Columns */}
+      {displayCols.map(col => {
+        const renderValues =
+          activeDisplayMode === 'all'
+            ? true
+            : activeDisplayMode === 'leaves_only'
+            ? !hasChildren
+            : hasChildren;
+
+        if (!renderValues) {
+          return <td key={col.key} className="metric-cell empty-metric-cell" />;
+        }
+
+        const meta = columnMetaMap.get(col.key);
+        const val = node.metrics?.[col.key] ?? node.subtotals?.[col.key];
+        const isDelta = meta?.isDelta ?? false;
+        const isNuovo = val === 'Nuovo';
+
+        const bound =
+          inScope && hasMinMax
+            ? minMaxScope === 'level_aware'
+              ? minMaxBounds?.byLevel?.[col.key]?.[node.depth ?? 0]
+              : minMaxBounds?.global[col.key]
+            : undefined;
+
+        const numericVal =
+          typeof val === 'number' && Number.isFinite(val)
+            ? val
+            : typeof val === 'string' && val.trim() !== '' && Number.isFinite(Number(val))
+            ? Number(val)
+            : null;
+        const isNumeric = numericVal !== null;
+        const range = bound && bound.max > bound.min ? bound.max - bound.min : 0;
+        const normalized =
+          isNumeric && bound && range > 0
+            ? getNormalizedMetricValue(numericVal, bound)
+            : 0;
+
+        const isMin = inScope && isNumeric && bound && range > 0 && numericVal === bound.min;
+        const isMax = inScope && isNumeric && bound && range > 0 && numericVal === bound.max;
+
+        // Base metric content
+        const baseContent = isNuovo ? (
+          <span className="badge-delta-nuovo">Nuovo</span>
+        ) : isDelta && typeof val === 'number' ? (
+          <span
+            className={
+              val > 0
+                ? 'delta-positive'
+                : val < 0
+                ? 'delta-negative'
+                : 'delta-neutral'
+            }
+          >
+            {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+          </span>
+        ) : col?.formatter ? (
+          col.formatter(val)
+        ) : (
+          String(val ?? '-')
+        );
+
+        // Cell heatmap background style
+        const cellStyle: React.CSSProperties = {};
+        if (minMaxDisplayMode === 'heatmap' && inScope && isNumeric && range > 0) {
+          cellStyle.backgroundColor = getHeatmapBgColor(normalized, 'stratum');
+        }
+
+        return (
+          <td key={col.key} className="metric-cell" style={cellStyle}>
+            {minMaxDisplayMode === 'badges' ? (
+              <div className="metric-cell-badges-wrapper">
+                <span className="metric-val">{baseContent}</span>
+                {isMax && (
+                  <span
+                    className="minmax-badge minmax-max theme-stratum"
+                    title={`Maximum value: ${val}`}
+                  >
+                    MAX
+                  </span>
+                )}
+                {isMin && (
+                  <span
+                    className="minmax-badge minmax-min theme-stratum"
+                    title={`Minimum value: ${val}`}
+                  >
+                    MIN
+                  </span>
+                )}
+              </div>
+            ) : minMaxDisplayMode === 'data_bars' ? (
+              <div className="data-bar-container">
+                {inScope && isNumeric && range > 0 && (
+                  <div
+                    className="data-bar-fill theme-stratum"
+                    style={{ width: `${Math.round(normalized * 100)}%` }}
+                  />
+                )}
+                <span className="data-bar-value">{baseContent}</span>
+              </div>
+            ) : (
+              baseContent
+            )}
+          </td>
+        );
+      })}
+    </tr>
+  );
+});
 
 export default function HierarchicalTable(props: HierarchicalTableTransformedProps) {
   const {
@@ -50,7 +253,6 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     compactMode = false,
     stripedRows = true,
     emitFilter = true,
-    // filterState is available via props if needed in the future
     onCrossFilter,
     onClearFilter,
   } = props;
@@ -75,7 +277,16 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     [],
   );
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const [selectedFilterMap, setSelectedFilterMap] = useState<
     Map<string, { key: string; dimension: string; value: string; pathMap?: Record<string, string> }>
   >(new Map());
@@ -205,8 +416,8 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
   // Filtered data tree based on search
   const filteredData = useMemo(() => {
-    return filterTreeBySearch(sortedData, searchTerm);
-  }, [sortedData, searchTerm]);
+    return filterTreeBySearch(sortedData, debouncedSearch);
+  }, [sortedData, debouncedSearch]);
 
   // Handle Node Click for Multi-Selection Cross-Filtering
   const handleNodeClick = useCallback(
@@ -282,12 +493,13 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   // Flatten visible tree nodes according to expanded state
   const visibleRows = useMemo(() => {
     const rows: TreeNode[] = [];
+    const hasSearch = debouncedSearch.trim().length > 0;
 
     function traverse(nodes: TreeNode[]) {
       for (const node of nodes) {
         rows.push(node);
-        const hasChildren = node.children && node.children.length > 0;
-        const isExpanded = expandedKeys.has(node.key) || searchTerm.trim().length > 0;
+        const hasChildren = Boolean(node.children && node.children.length > 0);
+        const isExpanded = expandedKeys.has(node.key) || hasSearch;
 
         if (hasChildren && isExpanded) {
           traverse(node.children!);
@@ -297,19 +509,32 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
     traverse(filteredData);
     return rows;
-  }, [filteredData, expandedKeys, searchTerm]);
-
-  if (!data || data.length === 0) {
-    return (
-      <div className="superset-hierarchical-table-container" style={containerStyle}>
-        <div className="empty-state">No data available for hierarchical table.</div>
-      </div>
-    );
-  }
+  }, [filteredData, expandedKeys, debouncedSearch]);
 
   const displayCols = useMemo(() => {
     return columns.filter(c => c.isMetric);
   }, [columns]);
+
+  // Pre-computed column metadata (avoids 10k+ string checks during rendering)
+  const columnMetaMap = useMemo(() => {
+    const map = new Map<string, ColumnMeta>();
+    for (const col of displayCols) {
+      const k = col.key.toLowerCase();
+      const isDelta =
+        k.includes('delta') ||
+        k.includes('variazione') ||
+        k.includes('diff') ||
+        k.includes('p.p.');
+      map.set(col.key, {
+        key: col.key,
+        title: col.title,
+        width: col.width,
+        formatter: col.formatter,
+        isDelta,
+      });
+    }
+    return map;
+  }, [displayCols]);
 
   // Min/Max bounds calculation for conditional formatting
   const minMaxBounds = useMemo(() => {
@@ -317,27 +542,6 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     const metricKeys = displayCols.map(c => c.key);
     return calculateMinMaxBounds(data, metricKeys, minMaxScope);
   }, [data, displayCols, minMaxDisplayMode, minMaxScope]);
-
-  const isNodeInMinMaxScope = useCallback(
-    (node: TreeNode): boolean => {
-      if (minMaxScope === 'all_nodes') return true;
-      if (minMaxScope === 'level_aware') return true;
-      // leaves_only: exclude parent subtotals
-      return Boolean(node.isLeaf || !node.children || node.children.length === 0);
-    },
-    [minMaxScope],
-  );
-
-  const getBoundForNode = useCallback(
-    (node: TreeNode, colKey: string): MinMaxBound | undefined => {
-      if (!minMaxBounds) return undefined;
-      if (minMaxScope === 'level_aware') {
-        return minMaxBounds.byLevel?.[colKey]?.[node.depth ?? 0];
-      }
-      return minMaxBounds.global[colKey];
-    },
-    [minMaxBounds, minMaxScope],
-  );
 
   const renderSortIndicator = (columnKey: string) => {
     if (!enableHierarchicalSort) return null;
@@ -446,19 +650,42 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     shouldRenderMetricValue,
   ]);
 
+  if (!data || data.length === 0) {
+    return (
+      <div className="superset-hierarchical-table-container" style={containerStyle}>
+        <div className="empty-state">No data available for hierarchical table.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="superset-hierarchical-table-container" style={containerStyle}>
       {/* Toolbar */}
       <div className="superset-hierarchical-table-toolbar">
         <div className="table-toolbar-left">
           {enableSearch && (
-            <input
-              type="text"
-              placeholder="Search hierarchy..."
-              className="table-search-input"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
+            <div className="table-search-wrapper">
+              <input
+                type="text"
+                placeholder="Search hierarchy..."
+                className="table-search-input"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  className="table-search-clear-btn"
+                  onClick={() => {
+                    setSearchInput('');
+                    setDebouncedSearch('');
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           )}
 
           {/* Active Cross Filters Multi-Indicator */}
@@ -733,11 +960,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     return <td key={col.key} className="metric-cell empty-metric-cell" />;
                   }
                   const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
-                  const isDelta =
-                    col.key.toLowerCase().includes('delta') ||
-                    col.key.toLowerCase().includes('variazione') ||
-                    col.key.toLowerCase().includes('diff') ||
-                    col.key.toLowerCase().includes('p.p.');
+                  const isDelta = columnMetaMap.get(col.key)?.isDelta ?? false;
                   const isNuovo = val === 'Nuovo';
 
                   return (
@@ -767,167 +990,27 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               </tr>
             )}
 
-            {/* Tree Rows */}
+            {/* Tree Rows with React.memo optimization */}
             {visibleRows.map((node: TreeNode) => {
-              const hasChildren = node.children && node.children.length > 0;
-              const isExpanded = expandedKeys.has(node.key) || searchTerm.trim().length > 0;
+              const isExpanded = expandedKeys.has(node.key) || debouncedSearch.trim().length > 0;
               const isFilterSelected = selectedFilterMap.has(node.key);
-              const paddingLeft = node.depth * 20 + 8;
 
               return (
-                <tr
+                <HierarchicalTableRow
                   key={node.key}
-                  className={classNames({
-                    'parent-row': hasChildren,
-                    'selected-filter-row': isFilterSelected,
-                  })}
-                >
-                  {/* Hierarchy Column */}
-                  <td className="hierarchy-cell">
-                    <div className="tree-cell-content" style={{ paddingLeft: `${paddingLeft}px` }}>
-                      {emitFilter && (
-                        <input
-                          type="checkbox"
-                          className="node-checkbox"
-                          checked={isFilterSelected}
-                          onChange={() => handleNodeClick(node)}
-                          aria-label={`Select ${node.name} for cross-filtering`}
-                        />
-                      )}
-                      {hasChildren ? (
-                        <button
-                          type="button"
-                          className="tree-toggle-btn"
-                          onClick={() => toggleExpand(node.key)}
-                          aria-label={isExpanded ? 'Collapse' : 'Expand'}
-                        >
-                          {isExpanded ? '−' : '+'}
-                        </button>
-                      ) : (
-                        <span className="tree-spacer" />
-                      )}
-                      <span
-                        className={classNames('node-name', {
-                          'node-parent': hasChildren,
-                          'node-filter-active': isFilterSelected,
-                        })}
-                        onClick={() => handleNodeClick(node)}
-                        title={`Click to ${isFilterSelected ? 'remove from filter' : 'filter dashboard by ' + node.name} (${node.path.join(' > ')})`}
-                      >
-                        {node.name}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Metric / Pivot Columns */}
-                  {displayCols.map(col => {
-                    const renderValues = shouldRenderMetricValue(node, activeDisplayMode);
-                    if (!renderValues) {
-                      return <td key={col.key} className="metric-cell empty-metric-cell" />;
-                    }
-
-                    const val = node.metrics?.[col.key] ?? node.subtotals?.[col.key];
-                    const isDelta =
-                    col.key.toLowerCase().includes('delta') ||
-                    col.key.toLowerCase().includes('variazione') ||
-                    col.key.toLowerCase().includes('diff') ||
-                    col.key.toLowerCase().includes('p.p.');
-                    const isNuovo = val === 'Nuovo';
-
-                    const inScope = isNodeInMinMaxScope(node);
-                    const bound = inScope ? getBoundForNode(node, col.key) : undefined;
-                    const numericVal =
-                      typeof val === 'number' && Number.isFinite(val)
-                        ? val
-                        : typeof val === 'string' && val.trim() !== '' && Number.isFinite(Number(val))
-                        ? Number(val)
-                        : null;
-                    const isNumeric = numericVal !== null;
-                    const range = bound && bound.max > bound.min ? bound.max - bound.min : 0;
-                    const normalized =
-                      isNumeric && bound && range > 0
-                        ? getNormalizedMetricValue(numericVal, bound)
-                        : 0;
-
-                    const isMin =
-                      inScope && isNumeric && bound && range > 0 && numericVal === bound.min;
-                    const isMax =
-                      inScope && isNumeric && bound && range > 0 && numericVal === bound.max;
-
-                    // Base metric content
-                    const baseContent = isNuovo ? (
-                      <span className="badge-delta-nuovo">Nuovo</span>
-                    ) : isDelta && typeof val === 'number' ? (
-                      <span
-                        className={
-                          val > 0
-                            ? 'delta-positive'
-                            : val < 0
-                            ? 'delta-negative'
-                            : 'delta-neutral'
-                        }
-                      >
-                        {col?.formatter ? col.formatter(val) : String(val ?? '-')}
-                      </span>
-                    ) : col?.formatter ? (
-                      col.formatter(val)
-                    ) : (
-                      String(val ?? '-')
-                    );
-
-                    // Cell heatmap background style
-                    const cellStyle: React.CSSProperties = {};
-                    if (
-                      minMaxDisplayMode === 'heatmap' &&
-                      inScope &&
-                      isNumeric &&
-                      range > 0
-                    ) {
-                      cellStyle.backgroundColor = getHeatmapBgColor(
-                        normalized,
-                        'stratum',
-                      );
-                    }
-
-                    return (
-                      <td key={col.key} className="metric-cell" style={cellStyle}>
-                        {minMaxDisplayMode === 'badges' ? (
-                          <div className="metric-cell-badges-wrapper">
-                            <span className="metric-val">{baseContent}</span>
-                            {isMax && (
-                              <span
-                                className={`minmax-badge minmax-max theme-stratum`}
-                                title={`Maximum value: ${val}`}
-                              >
-                                MAX
-                              </span>
-                            )}
-                            {isMin && (
-                              <span
-                                className={`minmax-badge minmax-min theme-stratum`}
-                                title={`Minimum value: ${val}`}
-                              >
-                                MIN
-                              </span>
-                            )}
-                          </div>
-                        ) : minMaxDisplayMode === 'data_bars' ? (
-                          <div className="data-bar-container">
-                            {inScope && isNumeric && range > 0 && (
-                              <div
-                                className={`data-bar-fill theme-stratum`}
-                                style={{ width: `${Math.round(normalized * 100)}%` }}
-                              />
-                            )}
-                            <span className="data-bar-value">{baseContent}</span>
-                          </div>
-                        ) : (
-                          baseContent
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
+                  node={node}
+                  displayCols={displayCols}
+                  columnMetaMap={columnMetaMap}
+                  isExpanded={isExpanded}
+                  isFilterSelected={isFilterSelected}
+                  emitFilter={emitFilter}
+                  activeDisplayMode={activeDisplayMode}
+                  minMaxDisplayMode={minMaxDisplayMode}
+                  minMaxScope={minMaxScope}
+                  minMaxBounds={minMaxBounds}
+                  onToggleExpand={toggleExpand}
+                  onNodeClick={handleNodeClick}
+                />
               );
             })}
 
@@ -942,11 +1025,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     return <td key={col.key} className="metric-cell empty-metric-cell" />;
                   }
                   const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
-                  const isDelta =
-                    col.key.toLowerCase().includes('delta') ||
-                    col.key.toLowerCase().includes('variazione') ||
-                    col.key.toLowerCase().includes('diff') ||
-                    col.key.toLowerCase().includes('p.p.');
+                  const isDelta = columnMetaMap.get(col.key)?.isDelta ?? false;
                   const isNuovo = val === 'Nuovo';
 
                   return (
