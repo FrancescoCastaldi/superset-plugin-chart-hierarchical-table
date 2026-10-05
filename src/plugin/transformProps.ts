@@ -7,7 +7,7 @@ import {
 } from '../types';
 import { buildMultiDimensionTree, buildParentChildTree } from '../utils/treeBuilder';
 import { computeGrandTotal } from '../utils/aggregations';
-import { computeTreeTimeComparison } from '../utils/timeComparison';
+import { computeTreeTimeComparison, computePivotTimeDelta } from '../utils/timeComparison';
 import { formatMetricValue } from '../utils/formatters';
 
 export default function transformProps(
@@ -62,7 +62,20 @@ export default function transformProps(
     enableExport = true,
     enable_export,
     showVarianceDelta,
+    combineMetric = true,
+    combine_metric,
+    pivotSortOrder = 'desc',
+    pivot_sort_order,
+    pivotTimeDeltaMode = 'none',
+    pivot_time_delta_mode,
+    pivotTimeDeltaLag = 1,
+    pivot_time_delta_lag,
   } = mergedFormData;
+
+  const isCombineMetric = combineMetric ?? combine_metric ?? true;
+  const effectivePivotSortOrder = pivotSortOrder || pivot_sort_order || 'desc';
+  const effectivePivotDeltaMode = pivotTimeDeltaMode || pivot_time_delta_mode || 'none';
+  const effectivePivotDeltaLag = Number(pivotTimeDeltaLag || pivot_time_delta_lag || 1);
 
   const dataRecords: DataRecord[] = queriesData?.[0]?.data || [];
 
@@ -151,44 +164,208 @@ export default function transformProps(
       pivotValSet.add(parts.join(' - '));
     }
 
-    const pivotValues = Array.from(pivotValSet).sort();
+    const chronologicalPivotValues = Array.from(pivotValSet).sort();
 
-    // 2. Build multi-level header structure: Metric (top level) -> Pivot Value (bottom level)
-    for (const m of metrics) {
-      if (!((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione'))) {
-        pivotHeaderGroups.push({
-          title: m,
-          key: m,
-          colSpan: pivotValues.length,
-        });
+    // 2. Compute dynamic pivot delta if enabled
+    if (effectivePivotDeltaMode !== 'none') {
+      computePivotTimeDelta(
+        treeData,
+        metrics,
+        chronologicalPivotValues,
+        effectivePivotDeltaMode,
+        effectivePivotDeltaLag,
+      );
+    }
+
+    // 3. Determine display order for pivot columns
+    let displayPivotValues: string[];
+    if (effectivePivotSortOrder === 'desc') {
+      displayPivotValues = [...chronologicalPivotValues].reverse();
+    } else if (effectivePivotSortOrder === 'asc') {
+      displayPivotValues = [...chronologicalPivotValues];
+    } else {
+      displayPivotValues = Array.from(pivotValSet);
+    }
+
+    if (isCombineMetric) {
+      // 4A. Combined Metrics Layout: Pivot Value (top level) -> Metrics [Totale | Delta | Δ%] (bottom level)
+      for (const pVal of displayPivotValues) {
+        let subColsCount = 0;
+
+        for (const m of metrics) {
+          if (
+            (m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) &&
+            !m.toLowerCase().includes('delta') &&
+            !m.toLowerCase().includes('variazione')
+          ) {
+            continue;
+          }
+
+          const baseCompositeKey = `${m}___${pVal}`;
+          allMetricKeysToCompute.push(baseCompositeKey);
+          subColsCount++;
+
+          columns.push({
+            key: baseCompositeKey,
+            title: m,
+            dataIndex: baseCompositeKey,
+            isMetric: true,
+            pivotValue: pVal,
+            baseMetric: m,
+            align: 'right',
+            width: 130,
+            formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
+          });
+
+          // Absolute delta sub-column
+          if (effectivePivotDeltaMode === 'absolute' || effectivePivotDeltaMode === 'both') {
+            const deltaKey = `${m}___delta___${pVal}`;
+            allMetricKeysToCompute.push(deltaKey);
+            subColsCount++;
+
+            columns.push({
+              key: deltaKey,
+              title: metrics.length > 1 ? `Δ ${m}` : 'Delta',
+              dataIndex: deltaKey,
+              isMetric: true,
+              pivotValue: pVal,
+              baseMetric: `${m} Delta`,
+              align: 'right',
+              width: 120,
+              formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, 'delta'),
+            });
+          }
+
+          // Percentage delta sub-column
+          if (effectivePivotDeltaMode === 'percentage' || effectivePivotDeltaMode === 'both') {
+            const deltaPctKey = `${m}___delta_pct___${pVal}`;
+            allMetricKeysToCompute.push(deltaPctKey);
+            subColsCount++;
+
+            columns.push({
+              key: deltaPctKey,
+              title: metrics.length > 1 ? `Δ% ${m}` : 'Δ%',
+              dataIndex: deltaPctKey,
+              isMetric: true,
+              pivotValue: pVal,
+              baseMetric: `${m} Δ%`,
+              align: 'right',
+              width: 110,
+              formatter: (val: any) =>
+                val === null || val === undefined
+                  ? '-'
+                  : `${val > 0 ? '+' : ''}${val}%`,
+            });
+          }
+        }
+
+        if (subColsCount > 0) {
+          pivotHeaderGroups.push({
+            title: pVal,
+            key: pVal,
+            colSpan: subColsCount,
+          });
+        }
       }
-
-      for (const pVal of pivotValues) {
-        const compositeKey = `${m}___${pVal}`;
-        allMetricKeysToCompute.push(compositeKey);
-        
-        if ((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
+    } else {
+      // 4B. Traditional Separated Metrics Layout: Metric (top level) -> Pivot Values (bottom level)
+      for (const m of metrics) {
+        if (
+          (m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) &&
+          !m.toLowerCase().includes('delta') &&
+          !m.toLowerCase().includes('variazione')
+        ) {
           continue;
         }
 
-        columns.push({
-          key: compositeKey,
-          title: pVal,
-          dataIndex: compositeKey,
-          isMetric: true,
-          pivotValue: pVal,
-          baseMetric: m,
-          align: 'right',
-          width: 140,
-          formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
+        pivotHeaderGroups.push({
+          title: m,
+          key: m,
+          colSpan: displayPivotValues.length,
         });
+
+        for (const pVal of displayPivotValues) {
+          const compositeKey = `${m}___${pVal}`;
+          allMetricKeysToCompute.push(compositeKey);
+
+          columns.push({
+            key: compositeKey,
+            title: pVal,
+            dataIndex: compositeKey,
+            isMetric: true,
+            pivotValue: pVal,
+            baseMetric: m,
+            align: 'right',
+            width: 140,
+            formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
+          });
+        }
+
+        // Add delta group if absolute delta active
+        if (effectivePivotDeltaMode === 'absolute' || effectivePivotDeltaMode === 'both') {
+          pivotHeaderGroups.push({
+            title: `Delta ${m}`,
+            key: `delta___${m}`,
+            colSpan: displayPivotValues.length,
+          });
+
+          for (const pVal of displayPivotValues) {
+            const deltaKey = `${m}___delta___${pVal}`;
+            allMetricKeysToCompute.push(deltaKey);
+
+            columns.push({
+              key: deltaKey,
+              title: pVal,
+              dataIndex: deltaKey,
+              isMetric: true,
+              pivotValue: pVal,
+              baseMetric: `${m} Delta`,
+              align: 'right',
+              width: 120,
+              formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, 'delta'),
+            });
+          }
+        }
+
+        // Add percentage delta group if percentage delta active
+        if (effectivePivotDeltaMode === 'percentage' || effectivePivotDeltaMode === 'both') {
+          pivotHeaderGroups.push({
+            title: `Δ% ${m}`,
+            key: `delta_pct___${m}`,
+            colSpan: displayPivotValues.length,
+          });
+
+          for (const pVal of displayPivotValues) {
+            const deltaPctKey = `${m}___delta_pct___${pVal}`;
+            allMetricKeysToCompute.push(deltaPctKey);
+
+            columns.push({
+              key: deltaPctKey,
+              title: pVal,
+              dataIndex: deltaPctKey,
+              isMetric: true,
+              pivotValue: pVal,
+              baseMetric: `${m} Δ%`,
+              align: 'right',
+              width: 110,
+              formatter: (val: any) =>
+                val === null || val === undefined
+                  ? '-'
+                  : `${val > 0 ? '+' : ''}${val}%`,
+            });
+          }
+        }
       }
     }
   } else {
     for (const m of metrics) {
       allMetricKeysToCompute.push(m);
-      
-      if ((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
+
+      if (
+        (m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) &&
+        !m.toLowerCase().includes('delta') &&
+        !m.toLowerCase().includes('variazione')
+      ) {
         continue;
       }
 
@@ -208,6 +385,28 @@ export default function transformProps(
   let grandTotalNode: TreeNode | undefined;
   if (showGrandTotal && treeData.length > 0) {
     grandTotalNode = computeGrandTotal(treeData, allMetricKeysToCompute);
+    if (isPivotMode && effectivePivotDeltaMode !== 'none') {
+      const chronologicalPivotValues = Array.from(
+        new Set(
+          dataRecords.map(r => {
+            const parts: string[] = [];
+            for (const pDim of pivotDimensions) {
+              const rawP = r[pDim];
+              parts.push(rawP !== null && rawP !== undefined ? String(rawP) : '(Empty)');
+            }
+            return parts.join(' - ');
+          }),
+        ),
+      ).sort();
+
+      computePivotTimeDelta(
+        [grandTotalNode],
+        metrics,
+        chronologicalPivotValues,
+        effectivePivotDeltaMode,
+        effectivePivotDeltaLag,
+      );
+    }
   }
 
   const isCrossFilterActive = Boolean(
@@ -338,6 +537,9 @@ export default function transformProps(
     columns,
     pivotHeaderGroups,
     isPivotMode,
+    combineMetric: Boolean(isCombineMetric),
+    pivotSortOrder: effectivePivotSortOrder,
+    pivotTimeDeltaMode: effectivePivotDeltaMode,
     formData,
     hierarchyType,
     dimensions,

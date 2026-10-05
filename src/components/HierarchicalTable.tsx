@@ -520,11 +520,17 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     const map = new Map<string, ColumnMeta>();
     for (const col of displayCols) {
       const k = col.key.toLowerCase();
+      const t = (col.title || '').toLowerCase();
       const isDelta =
         k.includes('delta') ||
         k.includes('variazione') ||
         k.includes('diff') ||
-        k.includes('p.p.');
+        k.includes('p.p.') ||
+        t.includes('delta') ||
+        t.includes('variazione') ||
+        t.includes('diff') ||
+        t.includes('δ') ||
+        (col.title || '').includes('Δ');
       map.set(col.key, {
         key: col.key,
         title: col.title,

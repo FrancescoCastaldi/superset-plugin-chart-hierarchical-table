@@ -67,6 +67,41 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'combineMetric',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Combine Metrics by Column (Affianca Metriche per Colonna Pivot)'),
+              renderTrigger: true,
+              default: true,
+              description: t(
+                'Display all metrics side-by-side under each pivot column value (e.g., [Ott 2026 > Totale | Delta]) instead of separating metrics into distinct column groups.',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+            },
+          },
+          {
+            name: 'pivotSortOrder',
+            config: {
+              type: 'SelectControl',
+              label: t('Pivot Columns Order (Ordinamento Colonne Pivot)'),
+              default: 'desc',
+              renderTrigger: true,
+              choices: [
+                ['desc', t('Descending / Più recente prima (e.g. Ott 2026 -> Gen 2026)')],
+                ['asc', t('Ascending / Cronologico (e.g. Gen 2026 -> Ott 2026)')],
+                ['none', t('Appearance / Query Order')],
+              ],
+              description: t('Order in which pivot columns appear across the table.'),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+            },
+          },
+        ],
+        [
+          {
             name: 'idColumn',
             config: {
               ...sharedControls.entity,
@@ -400,6 +435,49 @@ const config: ControlPanelConfig = {
                 ['budget_target', t('Budget / Target Baseline (Target Pianificato)')],
               ],
               description: t('Baseline interval to compute delta and percentage variance.'),
+            },
+          },
+        ],
+        [
+          {
+            name: 'pivotTimeDeltaMode',
+            config: {
+              type: 'SelectControl',
+              label: t('Automatic Pivot Delta Mode (Calcolo Delta Nativato Colonne Pivot)'),
+              default: 'none',
+              renderTrigger: true,
+              choices: [
+                ['none', t('None (Nessun delta automatico)')],
+                ['absolute', t('Delta Assoluto (Δ = Valore - Periodo Prec.)')],
+                ['percentage', t('Delta Percentuale (Δ% = (Valore - Periodo Prec.) / Periodo Prec.)')],
+                ['both', t('Entrambi (Δ Assoluto + Δ% Percentuale)')],
+              ],
+              description: t(
+                'Calcola automaticamente il delta temporale rispetto al periodo precedente lungo le colonne pivot senza window functions SQL.',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+            },
+          },
+          {
+            name: 'pivotTimeDeltaLag',
+            config: {
+              type: 'SelectControl',
+              label: t('Delta Comparison Lag / Offset (Passo Temporale di Confronto)'),
+              default: 1,
+              renderTrigger: true,
+              choices: [
+                [1, t('1 Periodo (Es. Mese precedente / MoM, Anno precedente / YoY)')],
+                [2, t('2 Periodi')],
+                [3, t('3 Periodi (Es. Trimestre precedente / QoQ)')],
+                [12, t('12 Periodi (Es. Stesso mese anno precedente / MoM-YoY)')],
+              ],
+              description: t('Numero di periodi indietro da usare come confronto per il delta.'),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
+                controls?.pivotTimeDeltaMode?.value !== 'none',
             },
           },
         ],

@@ -15,7 +15,11 @@ export type MinMaxDisplayMode = 'none' | 'badges' | 'heatmap' | 'data_bars';
 
 export type MinMaxScope = 'leaves_only' | 'level_aware' | 'all_nodes';
 
-  export type HierarchyValueDisplayMode = 'all' | 'leaves_only' | 'parents_only';
+export type HierarchyValueDisplayMode = 'all' | 'leaves_only' | 'parents_only';
+
+export type PivotTimeDeltaMode = 'none' | 'absolute' | 'percentage' | 'both';
+
+export type PivotSortOrder = 'desc' | 'asc' | 'none';
 
 export interface MinMaxBound {
   min: number;
@@ -48,6 +52,12 @@ export interface HierarchicalTableFormData extends QueryFormData {
   parentIdColumn?: string;
   labelColumn?: string;
   metrics: any;
+
+  // Pivot & Matrix Options
+  combineMetric?: boolean;
+  pivotSortOrder?: PivotSortOrder;
+  pivotTimeDeltaMode?: PivotTimeDeltaMode;
+  pivotTimeDeltaLag?: number;
 
   // Display & Hierarchy Options
   initialExpandDepth: number; // 0 = all collapsed, -1 = all expanded, N = expand up to level N
@@ -121,6 +131,9 @@ export interface HierarchicalTableTransformedProps {
   columns: TableColumn[];
   pivotHeaderGroups?: PivotHeaderGroup[];
   isPivotMode?: boolean;
+  combineMetric?: boolean;
+  pivotSortOrder?: PivotSortOrder;
+  pivotTimeDeltaMode?: PivotTimeDeltaMode;
   formData: HierarchicalTableFormData;
   hierarchyType: HierarchyType;
   dimensions: string[];
