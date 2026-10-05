@@ -14,7 +14,7 @@ echo ===========================================================================
 echo.
 
 :: 2. Esecuzione script PowerShell con passaggio esplicito della cartella sorgente
-powershell -NoProfile -ExecutionPolicy Bypass -File "%PLUGIN_DIR%\install-plugin.ps1" -PluginPath "%PLUGIN_DIR%" %*
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PLUGIN_DIR%\install-plugin.ps1" -PluginPath "%PLUGIN_DIR%" -SkipBuild %*
 
 if %ERRORLEVEL% neq 0 (
     echo.

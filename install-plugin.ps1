@@ -173,6 +173,9 @@ $DistDir = Join-Path $PackageSrcDir "dist"
 if (Test-Path $DistDir) {
     Write-Color "`n=== FASE 1: Bundle Pre-compilato 'dist' Rilevato ===" "Cyan"
     Write-Color "[OK] File compilati gia' pronti in dist/. Installazione istantanea senza download dipendenze." "Green"
+} elseif (Test-Path (Join-Path $PackageSrcDir "src\index.ts")) {
+    Write-Color "`n=== FASE 1: Sorgenti 'src/' Rilevati ===" "Cyan"
+    Write-Color "[OK] Sorgenti TypeScript pronti. Superset li compilera' direttamente tramite Webpack." "Green"
 } elseif (-not $SkipBuild) {
     Write-Color "=== FASE 1: Compilazione TypeScript del Plugin ===" "Cyan"
     $NpmCmd = Get-Command "npm" -ErrorAction SilentlyContinue
