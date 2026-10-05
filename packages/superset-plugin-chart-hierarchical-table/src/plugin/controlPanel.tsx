@@ -185,21 +185,6 @@ const config: ControlPanelConfig = {
         ],
         [
           {
-            name: 'indentSize',
-            config: {
-              type: 'SliderControl',
-              label: t('Tree Indentation Size (px)'),
-              renderTrigger: true,
-              min: 8,
-              max: 48,
-              step: 4,
-              default: 20,
-              description: t('Pixel indentation per hierarchy depth level.'),
-            },
-          },
-        ],
-        [
-          {
             name: 'stickyHeader',
             config: {
               type: 'CheckboxControl',
@@ -207,16 +192,6 @@ const config: ControlPanelConfig = {
               renderTrigger: true,
               default: true,
               description: t('Keep column headers fixed while scrolling.'),
-            },
-          },
-          {
-            name: 'stickyFirstColumn',
-            config: {
-              type: 'CheckboxControl',
-              label: t('Sticky Hierarchy Column'),
-              renderTrigger: true,
-              default: true,
-              description: t('Keep the tree hierarchy column fixed horizontally.'),
             },
           },
         ],
@@ -358,26 +333,7 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [
-          {
-            name: 'minMaxColorTheme',
-            config: {
-              type: 'SelectControl',
-              label: t('Min/Max Color Theme'),
-              default: 'stratum',
-              renderTrigger: true,
-              choices: [
-                ['stratum', t('Stratum Teal')],
-                ['emerald', t('Emerald Green')],
-                ['ocean', t('Ocean Blue')],
-                ['sunset', t('Sunset (Amber/Red)')],
-              ],
-              description: t(
-                'Color theme applied for heatmap gradients, data bars, and badges.',
-              ),
-            },
-          },
-        ],
+
       ],
     },
     {

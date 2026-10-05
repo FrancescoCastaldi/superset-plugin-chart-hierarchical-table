@@ -1,5 +1,5 @@
 import { getNumberFormatter } from '@superset-ui/core';
-import { MinMaxBound, MinMaxColorTheme } from '../types';
+import { MinMaxBound } from '../types';
 
 export function formatMetricValue(
   value: number | string | null | undefined,
@@ -52,8 +52,12 @@ export function formatMetricValue(
 
   // 5. Percentage Variation / Delta with sign (+/- X.X%)
   if (
-    (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
-    (mName.includes('%') || mName.includes('pct') || mName.includes('percent'))
+    mName.includes('___delta') ||
+    mName.includes('δ') ||
+    (metricName || '').includes('Δ') ||
+    mName.includes('delta %') ||
+    ((mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
+      (mName.includes('%') || mName.includes('pct') || mName.includes('percent')))
   ) {
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(1)}%`;
@@ -118,7 +122,7 @@ export function getNormalizedMetricValue(val: any, bound?: MinMaxBound): number 
  */
 export function getHeatmapBgColor(
   normalized: number,
-  theme: MinMaxColorTheme = 'stratum',
+  theme: string = 'stratum',
 ): string {
   if (normalized <= 0) return 'transparent';
   const alpha = (0.06 + Math.min(1, Math.max(0, normalized)) * 0.36).toFixed(3);
@@ -134,3 +138,4 @@ export function getHeatmapBgColor(
       return `rgba(13, 148, 136, ${alpha})`;
   }
 }
+

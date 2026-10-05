@@ -86,9 +86,11 @@ if (-not $PluginPath) {
 $ResolvedPluginPath = (Resolve-Path $PluginPath).Path
 $PackageSrcDir = $ResolvedPluginPath
 
-# Check if monorepo package folder exists
+# Prioritizza cartella root src/index.ts, altrimenti fallback su packages/
 $MonorepoPkg = Join-Path $ResolvedPluginPath "packages\superset-plugin-chart-hierarchical-table"
-if (Test-Path (Join-Path $MonorepoPkg "src\index.ts")) {
+if (Test-Path (Join-Path $ResolvedPluginPath "src\index.ts")) {
+    $PackageSrcDir = $ResolvedPluginPath
+} elseif (Test-Path (Join-Path $MonorepoPkg "src\index.ts")) {
     $PackageSrcDir = $MonorepoPkg
 }
 

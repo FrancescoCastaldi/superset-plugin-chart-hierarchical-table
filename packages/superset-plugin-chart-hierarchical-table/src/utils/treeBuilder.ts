@@ -114,7 +114,7 @@ export function buildMultiDimensionTree(
   // Recursive conversion from internal Map structure to TreeNode[]
   function mapToTreeNodes(map: Map<string, any>): TreeNode[] {
     const result: TreeNode[] = [];
-    for (const item of map.values()) {
+    for (const item of Array.from(map.values())) {
       const node: TreeNode = {
         key: item.key,
         id: item.id,
@@ -543,3 +543,4 @@ export function calculateMinMaxBounds(
     byLevel: scope === 'level_aware' ? byLevelBounds : undefined,
   };
 }
+

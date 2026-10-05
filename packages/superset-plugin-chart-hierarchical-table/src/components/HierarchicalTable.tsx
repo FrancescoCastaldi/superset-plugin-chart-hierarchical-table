@@ -40,16 +40,13 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     grandTotalPosition = 'top',
     grandTotalNode,
     stickyHeader = true,
-    stickyFirstColumn = true,
     enableSearch = true,
     enableHierarchicalSort = true,
     defaultSortColumn = '__hierarchy_tree__',
     defaultSortOrder = 'none',
     minMaxDisplayMode = 'none',
     minMaxScope = 'leaves_only',
-    minMaxColorTheme = 'stratum',
     enableExport = true,
-    indentSize = 20,
     compactMode = false,
     stripedRows = true,
     emitFilter = true,
@@ -533,7 +530,6 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         <table
           className={classNames('hierarchical-table', {
             'sticky-header': stickyHeader,
-            'sticky-first-col': stickyFirstColumn,
             compact: compactMode,
             striped: stripedRows,
             'pivot-matrix-mode': props.isPivotMode,
@@ -776,7 +772,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               const hasChildren = node.children && node.children.length > 0;
               const isExpanded = expandedKeys.has(node.key) || searchTerm.trim().length > 0;
               const isFilterSelected = selectedFilterMap.has(node.key);
-              const paddingLeft = node.depth * indentSize + 8;
+              const paddingLeft = node.depth * 20 + 8;
 
               return (
                 <tr
@@ -889,7 +885,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     ) {
                       cellStyle.backgroundColor = getHeatmapBgColor(
                         normalized,
-                        minMaxColorTheme,
+                        'stratum',
                       );
                     }
 
@@ -900,7 +896,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                             <span className="metric-val">{baseContent}</span>
                             {isMax && (
                               <span
-                                className={`minmax-badge minmax-max theme-${minMaxColorTheme}`}
+                                className={`minmax-badge minmax-max theme-stratum`}
                                 title={`Maximum value: ${val}`}
                               >
                                 MAX
@@ -908,7 +904,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                             )}
                             {isMin && (
                               <span
-                                className={`minmax-badge minmax-min theme-${minMaxColorTheme}`}
+                                className={`minmax-badge minmax-min theme-stratum`}
                                 title={`Minimum value: ${val}`}
                               >
                                 MIN
@@ -919,7 +915,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                           <div className="data-bar-container">
                             {inScope && isNumeric && range > 0 && (
                               <div
-                                className={`data-bar-fill theme-${minMaxColorTheme}`}
+                                className={`data-bar-fill theme-stratum`}
                                 style={{ width: `${Math.round(normalized * 100)}%` }}
                               />
                             )}

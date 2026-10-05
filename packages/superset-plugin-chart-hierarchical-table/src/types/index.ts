@@ -15,9 +15,7 @@ export type MinMaxDisplayMode = 'none' | 'badges' | 'heatmap' | 'data_bars';
 
 export type MinMaxScope = 'leaves_only' | 'level_aware' | 'all_nodes';
 
-export type MinMaxColorTheme = 'emerald' | 'ocean' | 'sunset' | 'stratum';
-
-export type HierarchyValueDisplayMode = 'all' | 'leaves_only' | 'parents_only';
+  export type HierarchyValueDisplayMode = 'all' | 'leaves_only' | 'parents_only';
 
 export interface MinMaxBound {
   min: number;
@@ -57,9 +55,7 @@ export interface HierarchicalTableFormData extends QueryFormData {
   showSubtotals: boolean;
   showGrandTotal: boolean;
   grandTotalPosition?: 'top' | 'bottom';
-  indentSize: number; // pixels
   stickyHeader: boolean;
-  stickyFirstColumn: boolean;
   enableSearch: boolean;
   enableSorting: boolean;
   enableHierarchicalSort?: boolean;
@@ -71,7 +67,6 @@ export interface HierarchicalTableFormData extends QueryFormData {
   defaultSortOrder?: SortOrder;
   minMaxDisplayMode?: MinMaxDisplayMode;
   minMaxScope?: MinMaxScope;
-  minMaxColorTheme?: MinMaxColorTheme;
 
   // Formatting & Aesthetics
   numberFormat?: string;
@@ -139,16 +134,13 @@ export interface HierarchicalTableTransformedProps {
   grandTotalPosition?: 'top' | 'bottom';
   grandTotalNode?: TreeNode;
   stickyHeader: boolean;
-  stickyFirstColumn: boolean;
   enableSearch: boolean;
   enableHierarchicalSort?: boolean;
   defaultSortColumn?: string;
   defaultSortOrder?: SortOrder;
   minMaxDisplayMode?: MinMaxDisplayMode;
   minMaxScope?: MinMaxScope;
-  minMaxColorTheme?: MinMaxColorTheme;
   enableExport?: boolean;
-  indentSize: number;
   compactMode: boolean;
   stripedRows: boolean;
   emitFilter: boolean;

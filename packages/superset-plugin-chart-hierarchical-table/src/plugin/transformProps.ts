@@ -37,9 +37,7 @@ export default function transformProps(
     showGrandTotal = true,
     grandTotalPosition = 'top',
     grand_total_position,
-    indentSize = 20,
     stickyHeader = true,
-    stickyFirstColumn = true,
     enableSearch = true,
     compactMode = false,
     stripedRows = true,
@@ -61,8 +59,6 @@ export default function transformProps(
     min_max_display_mode,
     minMaxScope = 'leaves_only',
     min_max_scope,
-    minMaxColorTheme = 'stratum',
-    min_max_color_theme,
     enableExport = true,
     enable_export,
     showVarianceDelta,
@@ -77,16 +73,11 @@ export default function transformProps(
 
   // Backward compat: support groupby, hierarchyDimensions, hierarchy_dimensions
   const rawDimensions = ensureIsArray(groupby || hierarchyDimensions || hierarchy_dimensions);
-  const dimToPhysicalMap: Record<string, string> = {};
-  const dimensions: string[] = rawDimensions.map((d: any) => {
-    if (typeof d === 'string') {
-      return d;
-    }
-    const physical = d?.sqlExpression || d?.column_name || d?.label || String(d);
-    const label = d?.label || d?.column_name || d?.sqlExpression || String(d);
-    dimToPhysicalMap[label] = physical;
-    return label;
-  });
+  const dimensions: string[] = rawDimensions.map((d: any) =>
+    typeof d === 'string'
+      ? d
+      : d?.column_name || d?.label || d?.sqlExpression || String(d),
+  );
 
   const idColStr = typeof idColumn === 'string' ? idColumn : idColumn?.column_name || idColumn?.label || '';
   const parentIdColStr = typeof parentIdColumn === 'string' ? parentIdColumn : parentIdColumn?.column_name || parentIdColumn?.label || '';
@@ -164,15 +155,21 @@ export default function transformProps(
 
     // 2. Build multi-level header structure: Metric (top level) -> Pivot Value (bottom level)
     for (const m of metrics) {
-      pivotHeaderGroups.push({
-        title: m,
-        key: m,
-        colSpan: pivotValues.length,
-      });
+      if (!((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione'))) {
+        pivotHeaderGroups.push({
+          title: m,
+          key: m,
+          colSpan: pivotValues.length,
+        });
+      }
 
       for (const pVal of pivotValues) {
         const compositeKey = `${m}___${pVal}`;
         allMetricKeysToCompute.push(compositeKey);
+        
+        if ((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
+          continue;
+        }
 
         columns.push({
           key: compositeKey,
@@ -190,6 +187,10 @@ export default function transformProps(
   } else {
     for (const m of metrics) {
       allMetricKeysToCompute.push(m);
+      
+      if ((m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) && !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
+        continue;
+      }
 
       columns.push({
         key: m,
@@ -254,7 +255,7 @@ export default function transformProps(
         }
 
         const filters = Object.entries(dimValuesMap).map(([col, vals]) => ({
-          col: dimToPhysicalMap[col] || col,
+          col,
           op: 'IN' as const,
           val: vals,
         }));
@@ -287,10 +288,9 @@ export default function transformProps(
         });
       } else {
         const valArray = Array.isArray(value) ? value : [value];
-        const targetCol = dimToPhysicalMap[dimension] || dimension;
         const filters = [
           {
-            col: targetCol,
+            col: dimension,
             op: 'IN' as const,
             val: valArray,
           },
@@ -351,7 +351,6 @@ export default function transformProps(
     grandTotalPosition: grandTotalPosition || grand_total_position || 'top',
     grandTotalNode,
     stickyHeader,
-    stickyFirstColumn,
     enableSearch,
     enableHierarchicalSort:
       enableHierarchicalSort ?? enable_hierarchical_sort ?? enableSorting ?? enable_sorting ?? true,
@@ -359,9 +358,7 @@ export default function transformProps(
     defaultSortOrder: defaultSortOrder || default_sort_order || 'none',
     minMaxDisplayMode: minMaxDisplayMode || min_max_display_mode || 'none',
     minMaxScope: minMaxScope || min_max_scope || 'leaves_only',
-    minMaxColorTheme: minMaxColorTheme || min_max_color_theme || 'stratum',
     enableExport: enableExport ?? enable_export ?? true,
-    indentSize,
     compactMode,
     stripedRows,
     emitFilter: isCrossFilterActive,
