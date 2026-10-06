@@ -21,6 +21,8 @@ export type PivotTimeDeltaMode = 'none' | 'absolute' | 'percentage' | 'both';
 
 export type PivotSortOrder = 'desc' | 'asc' | 'none';
 
+export type PivotRowTotalsPosition = 'left' | 'right' | 'none';
+
 export interface MinMaxBound {
   min: number;
   max: number;
@@ -56,6 +58,8 @@ export interface HierarchicalTableFormData extends QueryFormData {
   // Pivot & Matrix Options
   combineMetric?: boolean;
   pivotSortOrder?: PivotSortOrder;
+  pivotRowTotalsPosition?: PivotRowTotalsPosition;
+  pivotRowTotalsLabel?: string;
   pivotTimeDeltaMode?: PivotTimeDeltaMode;
   pivotTimeDeltaLag?: number;
 
@@ -133,6 +137,8 @@ export interface HierarchicalTableTransformedProps {
   isPivotMode?: boolean;
   combineMetric?: boolean;
   pivotSortOrder?: PivotSortOrder;
+  pivotRowTotalsPosition?: PivotRowTotalsPosition;
+  pivotRowTotalsLabel?: string;
   pivotTimeDeltaMode?: PivotTimeDeltaMode;
   formData: HierarchicalTableFormData;
   hierarchyType: HierarchyType;

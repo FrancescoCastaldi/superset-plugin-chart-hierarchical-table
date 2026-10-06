@@ -188,7 +188,13 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
         }
 
         return (
-          <td key={col.key} className="metric-cell" style={cellStyle}>
+          <td
+            key={col.key}
+            className={classNames('metric-cell', {
+              'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
+            })}
+            style={cellStyle}
+          >
             {minMaxDisplayMode === 'badges' ? (
               <div className="metric-cell-badges-wrapper">
                 <span className="metric-val">{baseContent}</span>
@@ -821,6 +827,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                         colSpan={group.colSpan}
                         className={classNames('metric-group-header', {
                           'sortable-header': isSortable,
+                          'pivot-row-totals-group': group.key === '__pivot_row_totals__',
                         })}
                         onClick={isSortable ? () => handleHeaderSort(group.key) : undefined}
                         tabIndex={isSortable ? 0 : undefined}
@@ -865,6 +872,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                         key={col.key}
                         className={classNames('metric-header pivot-sub-header', {
                           'sortable-header': isSortable,
+                          'pivot-row-totals-col': col.key.endsWith('___ROW_TOTAL'),
                         })}
                         onClick={
                           isSortable ? () => handleHeaderSort(col.key) : undefined
@@ -970,7 +978,12 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   const isNuovo = val === 'Nuovo';
 
                   return (
-                    <td key={col.key} className="metric-cell">
+                    <td
+                      key={col.key}
+                      className={classNames('metric-cell', {
+                        'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
+                      })}
+                    >
                       {isNuovo ? (
                         <span className="badge-delta-nuovo">Nuovo</span>
                       ) : isDelta && typeof val === 'number' ? (
@@ -1035,7 +1048,12 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   const isNuovo = val === 'Nuovo';
 
                   return (
-                    <td key={col.key} className="metric-cell">
+                    <td
+                      key={col.key}
+                      className={classNames('metric-cell', {
+                        'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
+                      })}
+                    >
                       {isNuovo ? (
                         <span className="badge-delta-nuovo">Nuovo</span>
                       ) : isDelta && typeof val === 'number' ? (

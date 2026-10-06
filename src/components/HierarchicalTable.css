@@ -701,4 +701,25 @@ th.sortable-header:hover .sort-indicator-inactive::after {
   user-select: none;
 }
 
+/* Two-Way Pivot Matrix: Row Totals Styles */
+.hierarchical-table.pivot-matrix-mode th.metric-group-header.pivot-row-totals-group {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+  border-right: 2px solid #cbd5e1;
+}
+
+.hierarchical-table.pivot-matrix-mode th.pivot-sub-header.pivot-row-totals-col {
+  background: #edf2f7;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.hierarchical-table.pivot-matrix-mode td.metric-cell.pivot-row-totals-cell {
+  background-color: rgba(241, 245, 249, 0.45);
+  font-weight: 600;
+  color: #0f172a;
+}
+
+
 

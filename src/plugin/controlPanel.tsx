@@ -102,6 +102,45 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'pivotRowTotalsPosition',
+            config: {
+              type: 'SelectControl',
+              label: t('Pivot Row Totals (Totali Orizzontali di Riga)'),
+              default: 'none',
+              renderTrigger: true,
+              choices: [
+                ['none', t('None (Nessun totale orizzontale)')],
+                ['left', t('Sinistra / Inizio (Stile Qlik Sense - Prima delle colonne pivot)')],
+                ['right', t('Destra / Fine (Stile Classico / Excel - In fondo alla tabella)')],
+              ],
+              description: t(
+                'Posiziona la macro-colonna dei totali orizzontali di riga a sinistra (stile Qlik Sense) o a destra.',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+            },
+          },
+          {
+            name: 'pivotRowTotalsLabel',
+            config: {
+              type: 'TextControl',
+              label: t('Pivot Row Totals Label (Etichetta Intestazione Totali)'),
+              default: 'Totals',
+              renderTrigger: true,
+              description: t(
+                'Testo visualizzato nell intestazione della colonna dei totali orizzontali (es. Totals, Totale Complessivo, Consuntivo).',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
+                controls?.pivotRowTotalsPosition?.value &&
+                controls?.pivotRowTotalsPosition?.value !== 'none',
+            },
+          },
+        ],
+        [
+          {
             name: 'pivotTimeDeltaMode',
             config: {
               type: 'SelectControl',

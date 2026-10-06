@@ -625,3 +625,68 @@ export function computeGrandTotal(
     subtotals: grandTotalMetrics,
   };
 }
+
+/**
+ * Computes horizontal row totals across all pivot values for each metric in the tree.
+ * Populates `${metric}___ROW_TOTAL` on each node (leaves, parents, and Grand Total).
+ */
+export function computeHorizontalRowTotals(
+  nodes: TreeNode[],
+  metrics: string[],
+  pivotValues: string[],
+): void {
+  if (!nodes || nodes.length === 0 || !metrics || metrics.length === 0 || !pivotValues || pivotValues.length === 0) {
+    return;
+  }
+
+  const rowTotalKeys: string[] = [];
+  for (const m of metrics) {
+    rowTotalKeys.push(`${m}___ROW_TOTAL`);
+  }
+
+  function traverse(nodeList: TreeNode[]) {
+    for (const node of nodeList) {
+      if (node.children && node.children.length > 0) {
+        traverse(node.children);
+      }
+
+      if (!node.metrics) {
+        node.metrics = {};
+      }
+
+      for (const m of metrics) {
+        if (isDerivedMetric(m)) {
+          continue;
+        }
+
+        let rowSum = 0;
+        let hasValue = false;
+
+        for (const pVal of pivotValues) {
+          const compKey = `${m}___${pVal}`;
+          const rawVal = node.metrics[compKey] ?? (node.subtotals ? node.subtotals[compKey] : null);
+
+          if (typeof rawVal === 'number' && Number.isFinite(rawVal)) {
+            rowSum += rawVal;
+            hasValue = true;
+          }
+        }
+
+        const finalVal = hasValue ? rowSum : null;
+        node.metrics[`${m}___ROW_TOTAL`] = finalVal;
+        if (node.subtotals) {
+          node.subtotals[`${m}___ROW_TOTAL`] = finalVal;
+        }
+      }
+
+      // Recompute derived metrics for ROW_TOTAL suffix
+      recomputeDerivedMetrics(node.metrics, rowTotalKeys);
+      if (node.subtotals) {
+        recomputeDerivedMetrics(node.subtotals, rowTotalKeys);
+      }
+    }
+  }
+
+  traverse(nodes);
+}
+

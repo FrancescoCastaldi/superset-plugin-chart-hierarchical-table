@@ -4,9 +4,10 @@ import {
   HierarchicalTableTransformedProps,
   TableColumn,
   TreeNode,
+  PivotHeaderGroup,
 } from '../types';
 import { buildMultiDimensionTree, buildParentChildTree } from '../utils/treeBuilder';
-import { computeGrandTotal } from '../utils/aggregations';
+import { computeGrandTotal, computeHorizontalRowTotals } from '../utils/aggregations';
 import { computeTreeTimeComparison, computePivotTimeDelta } from '../utils/timeComparison';
 import { formatMetricValue } from '../utils/formatters';
 
@@ -66,6 +67,10 @@ export default function transformProps(
     combine_metric,
     pivotSortOrder = 'desc',
     pivot_sort_order,
+    pivotRowTotalsPosition = 'none',
+    pivot_row_totals_position,
+    pivotRowTotalsLabel = 'Totals',
+    pivot_row_totals_label,
     pivotTimeDeltaMode = 'none',
     pivot_time_delta_mode,
     pivotTimeDeltaLag = 1,
@@ -74,6 +79,10 @@ export default function transformProps(
 
   const isCombineMetric = combineMetric ?? combine_metric ?? true;
   const effectivePivotSortOrder = pivotSortOrder || pivot_sort_order || 'desc';
+  const effectivePivotRowTotalsPosition =
+    pivotRowTotalsPosition || pivot_row_totals_position || 'none';
+  const effectivePivotRowTotalsLabel =
+    pivotRowTotalsLabel || pivot_row_totals_label || 'Totals';
   const effectivePivotDeltaMode = pivotTimeDeltaMode || pivot_time_delta_mode || 'none';
   const effectivePivotDeltaLag = Number(pivotTimeDeltaLag || pivot_time_delta_lag || 1);
 
@@ -177,6 +186,11 @@ export default function transformProps(
       );
     }
 
+    // 2B. Compute horizontal row totals across all pivot values if enabled
+    if (effectivePivotRowTotalsPosition !== 'none') {
+      computeHorizontalRowTotals(treeData, metrics, chronologicalPivotValues);
+    }
+
     // 3. Determine display order for pivot columns
     let displayPivotValues: string[];
     if (effectivePivotSortOrder === 'desc') {
@@ -187,8 +201,54 @@ export default function transformProps(
       displayPivotValues = Array.from(pivotValSet);
     }
 
+    // Prepare row totals sub-columns and header group
+    const rowTotalsCols: TableColumn[] = [];
+    if (effectivePivotRowTotalsPosition !== 'none') {
+      for (const m of metrics) {
+        if (
+          (m.toLowerCase().includes('confronto') || m.toLowerCase().includes('conf')) &&
+          !m.toLowerCase().includes('delta') &&
+          !m.toLowerCase().includes('variazione')
+        ) {
+          continue;
+        }
+
+        const rowTotalKey = `${m}___ROW_TOTAL`;
+        allMetricKeysToCompute.push(rowTotalKey);
+
+        rowTotalsCols.push({
+          key: rowTotalKey,
+          title: m,
+          dataIndex: rowTotalKey,
+          isMetric: true,
+          pivotValue: effectivePivotRowTotalsLabel,
+          baseMetric: `${effectivePivotRowTotalsLabel} ${m}`,
+          align: 'right',
+          width: 130,
+          formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
+        });
+      }
+    }
+
+    const rowTotalsHeaderGroup: PivotHeaderGroup | null =
+      effectivePivotRowTotalsPosition !== 'none' && rowTotalsCols.length > 0
+        ? {
+            title: effectivePivotRowTotalsLabel,
+            key: '__pivot_row_totals__',
+            colSpan: rowTotalsCols.length,
+          }
+        : null;
+
     if (isCombineMetric) {
       // 4A. Combined Metrics Layout: Pivot Value (top level) -> Metrics [Totale | Delta | Δ%] (bottom level)
+      // Inject Totals at the beginning if left-positioned
+      if (effectivePivotRowTotalsPosition === 'left' && rowTotalsHeaderGroup) {
+        pivotHeaderGroups.push(rowTotalsHeaderGroup);
+        for (const c of rowTotalsCols) {
+          columns.push(c);
+        }
+      }
+
       for (const pVal of displayPivotValues) {
         let subColsCount = 0;
 
@@ -267,6 +327,14 @@ export default function transformProps(
           });
         }
       }
+
+      // Inject Totals at the end if right-positioned
+      if (effectivePivotRowTotalsPosition === 'right' && rowTotalsHeaderGroup) {
+        pivotHeaderGroups.push(rowTotalsHeaderGroup);
+        for (const c of rowTotalsCols) {
+          columns.push(c);
+        }
+      }
     } else {
       // 4B. Traditional Separated Metrics Layout: Metric (top level) -> Pivot Values (bottom level)
       for (const m of metrics) {
@@ -278,11 +346,30 @@ export default function transformProps(
           continue;
         }
 
+        const hasRowTotal = effectivePivotRowTotalsPosition !== 'none';
+        const groupColSpan = displayPivotValues.length + (hasRowTotal ? 1 : 0);
+
         pivotHeaderGroups.push({
           title: m,
           key: m,
-          colSpan: displayPivotValues.length,
+          colSpan: groupColSpan,
         });
+
+        if (effectivePivotRowTotalsPosition === 'left') {
+          const rowTotalKey = `${m}___ROW_TOTAL`;
+          allMetricKeysToCompute.push(rowTotalKey);
+          columns.push({
+            key: rowTotalKey,
+            title: effectivePivotRowTotalsLabel,
+            dataIndex: rowTotalKey,
+            isMetric: true,
+            pivotValue: effectivePivotRowTotalsLabel,
+            baseMetric: `${effectivePivotRowTotalsLabel} ${m}`,
+            align: 'right',
+            width: 140,
+            formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
+          });
+        }
 
         for (const pVal of displayPivotValues) {
           const compositeKey = `${m}___${pVal}`;
@@ -295,6 +382,22 @@ export default function transformProps(
             isMetric: true,
             pivotValue: pVal,
             baseMetric: m,
+            align: 'right',
+            width: 140,
+            formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
+          });
+        }
+
+        if (effectivePivotRowTotalsPosition === 'right') {
+          const rowTotalKey = `${m}___ROW_TOTAL`;
+          allMetricKeysToCompute.push(rowTotalKey);
+          columns.push({
+            key: rowTotalKey,
+            title: effectivePivotRowTotalsLabel,
+            dataIndex: rowTotalKey,
+            isMetric: true,
+            pivotValue: effectivePivotRowTotalsLabel,
+            baseMetric: `${effectivePivotRowTotalsLabel} ${m}`,
             align: 'right',
             width: 140,
             formatter: (val: any) => formatMetricValue(val, numberFormat, currencySymbol, m),
@@ -539,6 +642,8 @@ export default function transformProps(
     isPivotMode,
     combineMetric: Boolean(isCombineMetric),
     pivotSortOrder: effectivePivotSortOrder,
+    pivotRowTotalsPosition: effectivePivotRowTotalsPosition,
+    pivotRowTotalsLabel: effectivePivotRowTotalsLabel,
     pivotTimeDeltaMode: effectivePivotDeltaMode,
     formData,
     hierarchyType,
