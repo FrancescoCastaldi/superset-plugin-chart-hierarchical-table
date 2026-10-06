@@ -721,5 +721,20 @@ th.sortable-header:hover .sort-indicator-inactive::after {
   color: #0f172a;
 }
 
+/* Two-Way Pivot Matrix: Column Subtotals Styles (Qlik-like) */
+.hierarchical-table.pivot-matrix-mode th.pivot-sub-header.pivot-subtotal-col {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 700;
+  border-right: 1px solid #cbd5e1;
+}
+
+.hierarchical-table.pivot-matrix-mode td.metric-cell.pivot-subtotal-cell {
+  background-color: rgba(248, 250, 252, 0.6);
+  font-weight: 600;
+  color: #0f172a;
+  border-right: 1px solid #e2e8f0;
+}
+
 
 

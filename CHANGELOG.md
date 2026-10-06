@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-10-06
+### Added
+- **Two-Way Hierarchical Pivot Columns (Due Colonne Pivot a Incrocio Gerarchico Stile Qlik Sense)**: Architettura universale per la suddivisione multidimensionale orizzontale in presenza di due dimensioni pivot (es. Fascia Oraria e Canale), con mantenimento dell'aggregazione corretta e isolata per ciascuna colonna foglia.
+- **Subtotali Intermedi di Colonna (`showPivotColumnSubtotals`)**: Controllo per abilitare la colonna subtotale (`Totale`) all'interno di ciascun gruppo pivot di primo livello, calcolata come aggregazione chiusa delle colonne figlie.
+- **Etichetta Personalizzabile Subtotale Colonne (`pivotColumnSubtotalLabel`)**: Campo di testo per personalizzare l'etichetta del subtotale di colonna (default `Totale`).
+- **Scomposizione Macro-Blocco Totals per Canale**: Espansione del gruppo Totali Orizzontali di Riga (`Totals`) per includere sia il Grand Total complessivo sia i totali aggregati per ciascun valore della seconda dimensione pivot lungo tutte le fasce.
+- **Stili CSS Dedicati per Subtotali di Colonna**: Classi `.pivot-subtotal-col` e `.pivot-subtotal-cell` per la formattazione distinta delle colonne di subtotale rispetto alle celle foglia e ai totali di riga.
+- **Suite di Test Dedicata `test/multiPivotColumns.test.ts`**: Test Jest completi per la costruzione dell'albero a due dimensioni pivot, quadratura contabile su Grand Total ed emissione corretta di intestazioni a due livelli.
+
+### Changed
+- **Pannello Controlli Explore**: Integrati i controlli per i subtotali di colonna pivot direttamente nel flusso di configurazione query.
+
 ## [0.2.7] - 2026-10-06
 ### Added
 - **Two-Way Pivot Matrix Grid (Griglia Bidimensionale a Incrocio Stile Qlik/Excel)**: Architettura universale per il calcolo automatico dei Totali Orizzontali di Riga (`computeHorizontalRowTotals`) per ciascun nodo (foglie, subtotali intermedi e Grand Total).

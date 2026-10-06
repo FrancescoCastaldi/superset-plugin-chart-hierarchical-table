@@ -141,6 +141,39 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'showPivotColumnSubtotals',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Show Pivot Column Subtotals (Subtotale Colonne Pivot)'),
+              renderTrigger: true,
+              default: true,
+              description: t(
+                'Mostra la colonna subtotale per ciascun gruppo pivot di primo livello (e nel blocco Totals) affiancata ai singoli valori della seconda dimensione pivot.',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+            },
+          },
+          {
+            name: 'pivotColumnSubtotalLabel',
+            config: {
+              type: 'TextControl',
+              label: t('Pivot Column Subtotal Label (Etichetta Subtotale Colonne)'),
+              default: 'Totale',
+              renderTrigger: true,
+              description: t(
+                'Testo per la colonna del subtotale di colonna (es. Totale, Subtotale, Somma).',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
+                controls?.showPivotColumnSubtotals?.value !== false,
+            },
+          },
+        ],
+        [
+          {
             name: 'pivotTimeDeltaMode',
             config: {
               type: 'SelectControl',

@@ -25,6 +25,9 @@ export function buildMultiDimensionTree(
 
     // Construct pivot key for this record if pivotDimensions are present
     let pivotKey = '';
+    const isMultiPivot = isPivot && pivotDimensions.length >= 2;
+    let pVal1 = '';
+    let pVal2 = '';
     if (isPivot) {
       const pivotParts: string[] = [];
       for (const pDim of pivotDimensions) {
@@ -32,6 +35,10 @@ export function buildMultiDimensionTree(
         pivotParts.push(rawP !== null && rawP !== undefined ? String(rawP) : '(Empty)');
       }
       pivotKey = pivotParts.join(' - ');
+      if (isMultiPivot) {
+        pVal1 = pivotParts[0];
+        pVal2 = pivotParts[1];
+      }
     }
 
     for (let i = 0; i < dimensions.length; i++) {
@@ -69,9 +76,17 @@ export function buildMultiDimensionTree(
                 : isNaN(parseFloat(String(rawM)))
                 ? null
                 : parseFloat(String(rawM));
-            if (isPivot && pivotKey) {
-              const compositeMetricKey = `${m}___${pivotKey}`;
-              nodeObj.metrics[compositeMetricKey] = numVal;
+            if (isPivot) {
+              if (isMultiPivot) {
+                nodeObj.metrics[`${m}___${pVal1}___${pVal2}`] = numVal;
+                nodeObj.metrics[`${m}___${pVal1}___SUBTOTAL`] = numVal;
+                nodeObj.metrics[`${m}___ROW_TOTAL___${pVal2}`] = numVal;
+                nodeObj.metrics[`${m}___ROW_TOTAL`] = numVal;
+                nodeObj.metrics[`${m}___${pivotKey}`] = numVal;
+              } else if (pivotKey) {
+                const compositeMetricKey = `${m}___${pivotKey}`;
+                nodeObj.metrics[compositeMetricKey] = numVal;
+              }
             } else {
               nodeObj.metrics[m] = numVal;
             }
@@ -95,11 +110,29 @@ export function buildMultiDimensionTree(
               : isNaN(parseFloat(String(rawM)))
               ? null
               : parseFloat(String(rawM));
-          const targetKey = isPivot && pivotKey ? `${m}___${pivotKey}` : m;
           if (numVal !== null) {
-            const existing = existingNode.metrics[targetKey];
-            existingNode.metrics[targetKey] =
-              typeof existing === 'number' ? existing + numVal : numVal;
+            if (isPivot) {
+              if (isMultiPivot) {
+                const addVal = (k: string) => {
+                  const curr = existingNode.metrics[k];
+                  existingNode.metrics[k] = typeof curr === 'number' ? curr + numVal : numVal;
+                };
+                addVal(`${m}___${pVal1}___${pVal2}`);
+                addVal(`${m}___${pVal1}___SUBTOTAL`);
+                addVal(`${m}___ROW_TOTAL___${pVal2}`);
+                addVal(`${m}___ROW_TOTAL`);
+                addVal(`${m}___${pivotKey}`);
+              } else if (pivotKey) {
+                const targetKey = `${m}___${pivotKey}`;
+                const existing = existingNode.metrics[targetKey];
+                existingNode.metrics[targetKey] =
+                  typeof existing === 'number' ? existing + numVal : numVal;
+              }
+            } else {
+              const existing = existingNode.metrics[m];
+              existingNode.metrics[m] =
+                typeof existing === 'number' ? existing + numVal : numVal;
+            }
           }
         }
       }

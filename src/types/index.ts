@@ -60,6 +60,8 @@ export interface HierarchicalTableFormData extends QueryFormData {
   pivotSortOrder?: PivotSortOrder;
   pivotRowTotalsPosition?: PivotRowTotalsPosition;
   pivotRowTotalsLabel?: string;
+  showPivotColumnSubtotals?: boolean;
+  pivotColumnSubtotalLabel?: string;
   pivotTimeDeltaMode?: PivotTimeDeltaMode;
   pivotTimeDeltaLag?: number;
 
@@ -125,6 +127,7 @@ export interface PivotHeaderGroup {
   title: string;
   key: string;
   colSpan: number;
+  subGroups?: PivotHeaderGroup[];
 }
 
 export interface HierarchicalTableTransformedProps {
@@ -139,6 +142,8 @@ export interface HierarchicalTableTransformedProps {
   pivotSortOrder?: PivotSortOrder;
   pivotRowTotalsPosition?: PivotRowTotalsPosition;
   pivotRowTotalsLabel?: string;
+  showPivotColumnSubtotals?: boolean;
+  pivotColumnSubtotalLabel?: string;
   pivotTimeDeltaMode?: PivotTimeDeltaMode;
   formData: HierarchicalTableFormData;
   hierarchyType: HierarchyType;

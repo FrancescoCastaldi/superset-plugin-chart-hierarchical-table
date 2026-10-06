@@ -664,7 +664,11 @@ export function computeHorizontalRowTotals(
 
         for (const pVal of pivotValues) {
           const compKey = `${m}___${pVal}`;
-          const rawVal = node.metrics[compKey] ?? (node.subtotals ? node.subtotals[compKey] : null);
+          const subtotalKey = `${m}___${pVal}___SUBTOTAL`;
+          const rawVal =
+            node.metrics[compKey] ??
+            node.metrics[subtotalKey] ??
+            (node.subtotals ? (node.subtotals[compKey] ?? node.subtotals[subtotalKey]) : null);
 
           if (typeof rawVal === 'number' && Number.isFinite(rawVal)) {
             rowSum += rawVal;
@@ -672,10 +676,16 @@ export function computeHorizontalRowTotals(
           }
         }
 
-        const finalVal = hasValue ? rowSum : null;
-        node.metrics[`${m}___ROW_TOTAL`] = finalVal;
-        if (node.subtotals) {
-          node.subtotals[`${m}___ROW_TOTAL`] = finalVal;
+        if (hasValue) {
+          node.metrics[`${m}___ROW_TOTAL`] = rowSum;
+          if (node.subtotals) {
+            node.subtotals[`${m}___ROW_TOTAL`] = rowSum;
+          }
+        } else if (node.metrics[`${m}___ROW_TOTAL`] === undefined) {
+          node.metrics[`${m}___ROW_TOTAL`] = null;
+          if (node.subtotals) {
+            node.subtotals[`${m}___ROW_TOTAL`] = null;
+          }
         }
       }
 

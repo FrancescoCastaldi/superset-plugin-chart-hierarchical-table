@@ -191,7 +191,8 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
           <td
             key={col.key}
             className={classNames('metric-cell', {
-              'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
+              'pivot-row-totals-cell': col.key.includes('___ROW_TOTAL'),
+              'pivot-subtotal-cell': col.key.includes('___SUBTOTAL'),
             })}
             style={cellStyle}
           >
@@ -872,7 +873,8 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                         key={col.key}
                         className={classNames('metric-header pivot-sub-header', {
                           'sortable-header': isSortable,
-                          'pivot-row-totals-col': col.key.endsWith('___ROW_TOTAL'),
+                          'pivot-row-totals-col': col.key.includes('___ROW_TOTAL'),
+                          'pivot-subtotal-col': col.key.includes('___SUBTOTAL'),
                         })}
                         onClick={
                           isSortable ? () => handleHeaderSort(col.key) : undefined
