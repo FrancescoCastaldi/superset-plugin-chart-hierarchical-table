@@ -482,33 +482,3 @@ Write-Color "  2. FONDAMENTALE: Esegui un Hard Refresh premendo CTRL + F5 (o apr
 Write-Color "     per forzare lo svuotamento della cache del browser e caricare i nuovi bundle." "Cyan"
 Write-Color "  3. Crea un nuovo grafico ('Create Chart') e cerca 'StratumTree' o 'Hierarchical'!" "White"
 Write-Color ""
-Write-Color "COMANDI DOCKER CONSIGLIATI:" "Yellow"
-Write-Color "  cd '$ResolvedSupersetPath'" "Cyan"
-Write-Color "  docker compose -f docker-compose-non-dev.yml restart superset" "Green"
-Write-Color "  oppure (se necessiti ricompilazione completa):" "White"
-Write-Color "  docker compose -f docker-compose-non-dev.yml up -d --build superset" "Green"
-Write-Color ""
-
-if (-not $RestartDocker -and -not $NoDocker -and -not $Force) {
-    $DockerCmd = Get-Command "docker" -ErrorAction SilentlyContinue
-    if ($DockerCmd) {
-        Write-Color "Vuoi eseguire automaticamente un'azione Docker adesso?" "Cyan"
-        Write-Color "  [1] docker compose -f docker-compose-non-dev.yml restart superset (Veloce - consigliato)" "White"
-        Write-Color "  [2] docker compose -f docker-compose-non-dev.yml up -d --build superset (Ricompilazione completa)" "White"
-        Write-Color "  [3] docker compose restart superset-node" "White"
-        Write-Color "  [4] Nessuna azione (eseguirò manualmente)" "White"
-        $Choice = Read-Host "Scelta [1/2/3/4, Default: 4]"
-        if ($Choice -eq "1") {
-            Set-Location $ResolvedSupersetPath
-            docker compose -f docker-compose-non-dev.yml restart superset
-        } elseif ($Choice -eq "2") {
-            Set-Location $ResolvedSupersetPath
-            docker compose -f docker-compose-non-dev.yml up -d --build superset
-        } elseif ($Choice -eq "3") {
-            Set-Location $ResolvedSupersetPath
-            docker compose restart superset-node
-        } else {
-            Write-Color "[INFO] Nessun comando Docker eseguito. Procedi manualmente quando pronto." "Gray"
-        }
-    }
-}
