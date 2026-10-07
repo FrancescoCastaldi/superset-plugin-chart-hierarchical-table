@@ -84,10 +84,7 @@ if ($PythonCmd) {
     }
 
     $DestDir = Join-Path $PluginsDir "superset-plugin-chart-hierarchical-table"
-    $SrcFrontend = Join-Path $PluginRoot "packages\superset-plugin-chart-hierarchical-table"
-    if (-not (Test-Path $SrcFrontend)) {
-        $SrcFrontend = Join-Path $PluginRoot "frontend"
-    }
+    $SrcFrontend = $PluginRoot
 
     # Copia sorgenti con supporto UPDATE automatico
     $isUpdate = Test-Path $DestDir
@@ -115,7 +112,7 @@ if ($PythonCmd) {
 
         $Content = Get-Content -Raw -Path $PresetPath
         $ImportStmt = "import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';"
-        $RegStmt = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register(),"
+        $RegStmt = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),"
 
         if (-not ($Content.Contains("HierarchicalTableChartPlugin"))) {
             $Content = "$ImportStmt`n$Content"

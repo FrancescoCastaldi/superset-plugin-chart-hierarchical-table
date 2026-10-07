@@ -9,6 +9,8 @@
     4. Safely parses and updates MainPreset.ts with backup and idempotency:
        - import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';
        - new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),
+       Legacy registration variants (`.register()` lines, odd indentation, duplicates)
+       are normalized to the canonical form instead of adding new lines.
     5. Cleans stale Webpack/Babel cache.
     6. Optionally prompts or restarts Docker containers.
 .PARAMETER SupersetPath
@@ -75,11 +77,9 @@ if (-not $PluginPath) {
     $CurrentDir = (Get-Location).Path
     if (Test-Path (Join-Path $CurrentDir "package.json")) {
         $PluginPath = $CurrentDir
-    } elseif (Test-Path (Join-Path $PSScriptRoot "packages\superset-plugin-chart-hierarchical-table\src\index.ts")) {
-        $PluginPath = $PSScriptRoot
     } elseif (Test-Path (Join-Path $PSScriptRoot "src\index.ts")) {
         $PluginPath = $PSScriptRoot
-    } elseif (Test-Path (Join-Path (Split-Path -Parent $PSScriptRoot) "packages\superset-plugin-chart-hierarchical-table\src\index.ts")) {
+    } elseif (Test-Path (Join-Path (Split-Path -Parent $PSScriptRoot) "src\index.ts")) {
         $PluginPath = Split-Path -Parent $PSScriptRoot
     } else {
         $PluginPath = $PSScriptRoot
@@ -88,14 +88,6 @@ if (-not $PluginPath) {
 
 $ResolvedPluginPath = (Resolve-Path $PluginPath).Path
 $PackageSrcDir = $ResolvedPluginPath
-
-# Prioritizza cartella root src/index.ts, altrimenti fallback su packages/
-$MonorepoPkg = Join-Path $ResolvedPluginPath "packages\superset-plugin-chart-hierarchical-table"
-if (Test-Path (Join-Path $ResolvedPluginPath "src\index.ts")) {
-    $PackageSrcDir = $ResolvedPluginPath
-} elseif (Test-Path (Join-Path $MonorepoPkg "src\index.ts")) {
-    $PackageSrcDir = $MonorepoPkg
-}
 
 if (-not (Test-Path (Join-Path $PackageSrcDir "package.json"))) {
     Write-Color "[ERRORE] Impossibile trovare package.json del plugin in '$PackageSrcDir'!" "Red"
@@ -299,10 +291,12 @@ $NL = if ($RawContent.Contains("`r`n")) { "`r`n" } else { "`n" }
 $TargetImport = "import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';"
 $TargetRegister = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),"
 
-# Verifica se il file e' gia' configurato
-$hasExactImport = $RawContent.Contains($TargetImport)
-$hasExactRegister = ($RawContent.Contains("new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register()") -or
-                     $RawContent.Contains("new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' })"))
+# Verifica se il file e' gia' configurato NELLA FORMA CANONICA (riga-esatta):
+# le varianti legacy (riga con `.register()`, indentazioni anomale, duplicati)
+# non contano come configurazione valida e vengono normalizzate dal ramo else.
+$PresetLineList = [System.Collections.Generic.List[string]]($RawContent -split "\r?\n")
+$hasExactImport = ($PresetLineList -contains $TargetImport)
+$hasExactRegister = ($PresetLineList -contains $TargetRegister)
 $importCount = ([regex]::Matches($RawContent, "from\s*['`"][^'`"]*superset-plugin-chart-hierarchical-table")).Count
 $registerCount = ([regex]::Matches($RawContent, "new\s+HierarchicalTableChartPlugin")).Count
 

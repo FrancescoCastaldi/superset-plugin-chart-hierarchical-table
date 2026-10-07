@@ -84,7 +84,7 @@ URL del sito pubblico: **https://francescocastaldi.github.io/superset-plugin-cha
 ## 📦 Rilascio e Tagging
 
 1. Aggiorna `CHANGELOG.md` con le nuove feature o bug fix.
-2. Incrementa la versione in `packages/superset-plugin-chart-hierarchical-table/package.json` e `packages/superset-hierarchical-table-backend/pyproject.toml`.
+2. Incrementa la versione in `package.json` (root del repository) e `packages/superset-hierarchical-table-backend/pyproject.toml`.
 3. Esegui il commit e crea il tag git:
    ```bash
    git tag -a v0.1.1 -m "Release v0.1.1"

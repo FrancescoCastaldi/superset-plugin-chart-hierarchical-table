@@ -34,8 +34,7 @@ npm install --save superset-plugin-chart-hierarchical-table
 Se stai sviluppando o testando modifiche locali:
 
 ```bash
-# Nella cartella del plugin frontend
-cd packages/superset-plugin-chart-hierarchical-table
+# Nella cartella del plugin frontend (root del repository)
 npm run build
 npm link
 

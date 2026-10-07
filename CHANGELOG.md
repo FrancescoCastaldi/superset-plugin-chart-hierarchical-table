@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-10-07
+### Fixed
+- **Idempotenza Rigida della Registrazione in `MainPreset.ts`**: La verifica di configurazione esistente in `install-plugin.ps1` e' ora riga-esatta sulla forma canonica `new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),`: le varianti legacy con `.register()`, le indentazioni anomale e i duplicati vengono normalizzati alla forma canonica invece di essere considerati gia' configurati.
+
+### Removed
+- **Copia Annidata Stale `packages/superset-plugin-chart-hierarchical-table` (v0.2.3)**: Eliminata la copia legacy del plugin in `packages/` (il plugin vive nella root del repository). Rimossi di conseguenza i fallback su `packages/` in `install-plugin.ps1` e il percorso sorgente in `scripts/install.ps1`, aggiornato il target `test-frontend` del `Makefile` per eseguire i test dalla root, eliminata la voce extraneous da `package-lock.json` e aggiornati i riferimenti in `MAINTAINER.md` e `docs/installation.md`. Il package Python `packages/superset-hierarchical-table-backend` resta intatto.
+
 ## [0.2.8] - 2026-10-06
 ### Added
 - **Two-Way Hierarchical Pivot Columns (Due Colonne Pivot a Incrocio Gerarchico Stile Qlik Sense)**: Architettura universale per la suddivisione multidimensionale orizzontale in presenza di due dimensioni pivot (es. Fascia Oraria e Canale), con mantenimento dell'aggregazione corretta e isolata per ciascuna colonna foglia.

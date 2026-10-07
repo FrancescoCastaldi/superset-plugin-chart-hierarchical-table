@@ -30,7 +30,7 @@ build:
 test: test-frontend test-backend
 
 test-frontend:
-	cd packages/superset-plugin-chart-hierarchical-table && $(NPM) test --if-present
+	$(NPM) test --if-present
 
 test-backend:
 	cd packages/superset-hierarchical-table-backend && $(PYTHON) -m pytest tests/ -v || true
