@@ -8,7 +8,7 @@
     3. Copies plugin files into superset-frontend/plugins/superset-plugin-chart-hierarchical-table.
     4. Safely parses and updates MainPreset.ts with backup and idempotency:
        - import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';
-       - new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register(),
+       - new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),
     5. Cleans stale Webpack/Babel cache.
     6. Optionally prompts or restarts Docker containers.
 .PARAMETER SupersetPath
@@ -297,7 +297,7 @@ $RawContent = [System.IO.File]::ReadAllText($PresetFile, [System.Text.Encoding]:
 $NL = if ($RawContent.Contains("`r`n")) { "`r`n" } else { "`n" }
 
 $TargetImport = "import { HierarchicalTableChartPlugin } from '../../../plugins/superset-plugin-chart-hierarchical-table/src';"
-$TargetRegister = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }).register(),"
+$TargetRegister = "        new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),"
 
 # Verifica se il file e' gia' configurato
 $hasExactImport = $RawContent.Contains($TargetImport)
