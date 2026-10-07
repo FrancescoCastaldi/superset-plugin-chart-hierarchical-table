@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.10] - 2026-10-08
+### Changed
+- **`transformProps.ts` Decomposed into Pure Modules**: The ~850-line monolithic function now only wires the pipeline. Option resolution (camelCase/snake_case aliases and defaults) lives in `src/plugin/formDataOptions.ts`, tree construction and variance deltas in `src/plugin/treeData.ts`, pivot value collection and ordering in `src/plugin/pivotOrdering.ts`, column/header construction for the flat, single-pivot (combined/separated) and two-way pivot layouts in `src/plugin/columnBuilders.ts` (orchestrated by `src/plugin/metricLayout.ts`), the grand total in `src/plugin/grandTotal.ts`, and the `onCrossFilter`/`onClearFilter` handlers with their data mask builders in `src/plugin/eventHandlers.ts`. Output shape, formulas and formats are unchanged.
+- **`HierarchicalTable.tsx` Column Metadata and CSV Export Extracted**: Display column selection and delta-column detection moved to `src/utils/tableColumns.ts` (`ColumnMeta` is still re-exported by the component); CSV row building, cell escaping, serialization and download moved to `src/utils/csvExport.ts`.
+
+### Added
+- **Direct Unit Tests for the Delta Engine (`test/aggregations.test.ts`)**: `recomputeDerivedMetrics` against the AGENTS.md §5.3 naming conventions (`delta_richieste_pct`, `delta_accesso_diretto_pct`, `delta_programmata_pct`, `delta_prime_visite_pct`, `delta_controlli_pct`, generic `delta_X_pct -> X / X_conf`, pivot suffixes, `Nuovo`/0/null edge cases, saved dataset metrics vs adhoc metrics with custom labels), `rollupTreeMetrics` (multi-level subtotals, weighted rate metrics, derived fallbacks) and `computeGrandTotal`.
+- **Characterization Snapshot of `transformProps`** (`test/transformProps.characterization.test.ts`): 15 representative fixtures (flat, snake_case options, variance delta, single and two-way pivot layouts, parent-child, empty data) recorded on the pre-refactor implementation, including formatter outputs and emitted cross-filter data masks.
+- **Unit Tests for the Extracted Modules**: `test/formDataOptions.test.ts`, `test/pivotOrdering.test.ts`, `test/columnBuilders.test.ts`, `test/transformPipeline.test.ts`, `test/eventHandlers.test.ts`, `test/tableExport.test.ts`.
+
 ## [0.2.9] - 2026-10-07
 ### Fixed
 - **Idempotenza Rigida della Registrazione in `MainPreset.ts`**: La verifica di configurazione esistente in `install-plugin.ps1` e' ora riga-esatta sulla forma canonica `new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),`: le varianti legacy con `.register()`, le indentazioni anomale e i duplicati vengono normalizzati alla forma canonica invece di essere considerati gia' configurati.

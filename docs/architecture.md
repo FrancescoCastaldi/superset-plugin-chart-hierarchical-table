@@ -64,6 +64,7 @@ graph TD
 - Applica il calcolo dei subtotali risalendo dai nodi foglia verso i nodi radice (Post-Order Traversal).
 - Calcola il nodo **Grand Total** se abilitato nelle opzioni.
 - Configura le intestazioni di colonna, larghezze minime e formattatori numerici/valuta con `d3-format`.
+- `transformProps.ts` orchestra moduli puri in `src/plugin/`: `formDataOptions.ts` (opzioni e alias snake_case), `treeData.ts` (albero e variance delta), `pivotOrdering.ts` (valori pivot e ordinamento), `columnBuilders.ts` + `metricLayout.ts` (colonne e header dei layout flat/pivot), `grandTotal.ts` (totale complessivo) ed `eventHandlers.ts` (cross-filter e data mask).
 
 ### Fase D: Rendering e Interattività (`HierarchicalTable.tsx`)
 

@@ -16,15 +16,11 @@ import {
   calculateMinMaxBounds,
 } from '../utils/treeBuilder';
 import { getNormalizedMetricValue, getHeatmapBgColor } from '../utils/formatters';
+import { ColumnMeta, buildColumnMetaMap, getDisplayColumns } from '../utils/tableColumns';
+import { buildCsvRows, downloadCsv, serializeCsv } from '../utils/csvExport';
 import './HierarchicalTable.css';
 
-export interface ColumnMeta {
-  key: string;
-  title: string;
-  width?: number | string;
-  formatter?: (val: any) => string;
-  isDelta: boolean;
-}
+export type { ColumnMeta } from '../utils/tableColumns';
 
 function isHierarchySortKey(key?: string, dims?: string[]): boolean {
   if (!key) return false;
@@ -274,16 +270,6 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     }
   }, [valueDisplayMode]);
 
-  const shouldRenderMetricValue = useCallback(
-    (node: TreeNode, mode: HierarchyValueDisplayMode): boolean => {
-      const hasChildren = Boolean(node.children && node.children.length > 0);
-      if (mode === 'leaves_only') return !hasChildren;
-      if (mode === 'parents_only') return hasChildren;
-      return true;
-    },
-    [],
-  );
-
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -518,36 +504,10 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     return rows;
   }, [filteredData, expandedKeys, debouncedSearch]);
 
-  const displayCols = useMemo(() => {
-    return columns.filter(c => c.isMetric);
-  }, [columns]);
+  const displayCols = useMemo(() => getDisplayColumns(columns), [columns]);
 
   // Pre-computed column metadata (avoids 10k+ string checks during rendering)
-  const columnMetaMap = useMemo(() => {
-    const map = new Map<string, ColumnMeta>();
-    for (const col of displayCols) {
-      const k = col.key.toLowerCase();
-      const t = (col.title || '').toLowerCase();
-      const isDelta =
-        k.includes('delta') ||
-        k.includes('variazione') ||
-        k.includes('diff') ||
-        k.includes('p.p.') ||
-        t.includes('delta') ||
-        t.includes('variazione') ||
-        t.includes('diff') ||
-        t.includes('δ') ||
-        (col.title || '').includes('Δ');
-      map.set(col.key, {
-        key: col.key,
-        title: col.title,
-        width: col.width,
-        formatter: col.formatter,
-        isDelta,
-      });
-    }
-    return map;
-  }, [displayCols]);
+  const columnMetaMap = useMemo(() => buildColumnMetaMap(displayCols), [displayCols]);
 
   // Min/Max bounds calculation for conditional formatting
   const minMaxBounds = useMemo(() => {
@@ -576,82 +536,16 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   };
 
   const handleExportCSV = useCallback(() => {
-    const exportCols = displayCols;
-    const headerRow = [
-      columns[0]?.title || 'Hierarchy',
-      ...exportCols.map(c => (c.baseMetric ? `${c.baseMetric} (${c.title || c.key})` : c.title || c.key)),
-    ];
-
-    const rows: string[][] = [headerRow];
-
-    const gtRow =
-      showGrandTotal && grandTotalNode
-        ? [
-            grandTotalNode.name,
-            ...exportCols.map(c => {
-              if (activeDisplayMode === 'leaves_only') return '';
-              const val = grandTotalNode.metrics?.[c.key] ?? grandTotalNode.subtotals?.[c.key];
-              return val !== null && val !== undefined ? String(val) : '';
-            }),
-          ]
-        : null;
-
-    if (gtRow && grandTotalPosition === 'top') {
-      rows.push(gtRow);
-    }
-
-    function traverseForExport(nodes: TreeNode[]) {
-      for (const node of nodes) {
-        const indent = '  '.repeat(node.depth ?? 0);
-        const renderValues = shouldRenderMetricValue(node, activeDisplayMode);
-        const nodeRow = [
-          indent + node.name,
-          ...exportCols.map(c => {
-            if (!renderValues) return '';
-            const val = node.metrics?.[c.key] ?? node.subtotals?.[c.key];
-            return val !== null && val !== undefined ? String(val) : '';
-          }),
-        ];
-        rows.push(nodeRow);
-        if (node.children && node.children.length > 0) {
-          traverseForExport(node.children);
-        }
-      }
-    }
-
-    traverseForExport(filteredData);
-
-    if (gtRow && grandTotalPosition === 'bottom') {
-      rows.push(gtRow);
-    }
-
-    const csvContent = rows
-      .map(row =>
-        row
-          .map(cell => {
-            const str = String(cell ?? '');
-            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-              return `"${str.replace(/"/g, '""')}"`;
-            }
-            return str;
-          })
-          .join(','),
-      )
-      .join('\r\n');
-
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'stratum_tree_export.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
-    }
+    const rows = buildCsvRows({
+      columns,
+      displayCols,
+      nodes: filteredData,
+      displayMode: activeDisplayMode,
+      showGrandTotal,
+      grandTotalNode,
+      grandTotalPosition,
+    });
+    downloadCsv(serializeCsv(rows));
   }, [
     displayCols,
     columns,
@@ -660,7 +554,6 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     grandTotalPosition,
     filteredData,
     activeDisplayMode,
-    shouldRenderMetricValue,
   ]);
 
   if (!data || data.length === 0) {
