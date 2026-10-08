@@ -108,6 +108,7 @@ export interface HierarchicalTableFormData extends QueryFormData {
   enableHierarchicalSort?: boolean;
   enableExport?: boolean;
   pageSize: number;
+  virtualizationThreshold?: number;
 
   // Sorting & Conditional Formatting
   defaultSortColumn?: SortExpression;

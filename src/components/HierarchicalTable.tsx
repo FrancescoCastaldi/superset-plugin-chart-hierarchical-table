@@ -23,6 +23,7 @@ import { GOAL_STATUS_LABELS, computeGoalDelta, formatGoalDelta } from '../utils/
 import { firstByPriority } from '../utils/conditionalFormatting';
 import { buildColumnConditionalFormat } from '../plugin/columnBuilders';
 import { getTheme, ResolvedTheme } from '../utils/themes';
+import { useFlatTreeVirtualization } from './useFlatTreeVirtualization';
 import './HierarchicalTable.css';
 
 export type { ColumnMeta } from '../utils/tableColumns';
@@ -567,6 +568,13 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     return rows;
   }, [filteredData, expandedKeys, debouncedSearch]);
 
+  const [scrollTop, setScrollTop] = useState(0);
+  const { renderWindow, rows } = useFlatTreeVirtualization(visibleRows, {
+    pageSize: props.formData?.pageSize,
+    threshold: props.formData?.virtualizationThreshold,
+    scrollTop,
+  });
+
   const displayCols = useMemo(() => getDisplayColumns(columns), [columns]);
 
   // Pre-computed column metadata (avoids 10k+ string checks during rendering)
@@ -632,6 +640,51 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
       </div>
     );
   }
+
+  const grandTotalRow = showGrandTotal && grandTotalNode && (
+    <tr className="grand-total-row">
+      <td className="hierarchy-cell">
+        <span className="node-name">{grandTotalNode.name}</span>
+      </td>
+      {displayCols.map(col => {
+        if (activeDisplayMode === 'leaves_only') {
+          return <td key={col.key} className="metric-cell empty-metric-cell" />;
+        }
+        const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
+        const isDelta = columnMetaMap.get(col.key)?.isDelta ?? false;
+        const isNuovo = val === 'Nuovo';
+
+        return (
+          <td
+            key={col.key}
+            className={classNames('metric-cell', {
+              'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
+            })}
+          >
+            {isNuovo ? (
+              <span className="badge-delta-nuovo">Nuovo</span>
+            ) : isDelta && typeof val === 'number' ? (
+              <span
+                className={
+                  val > 0
+                    ? 'delta-positive'
+                    : val < 0
+                    ? 'delta-negative'
+                    : 'delta-neutral'
+                }
+              >
+                {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+              </span>
+            ) : col?.formatter ? (
+              col.formatter(val)
+            ) : (
+              String(val ?? '-')
+            )}
+          </td>
+        );
+      })}
+    </tr>
+  );
 
   return (
     <div className="superset-hierarchical-table-container" style={containerStyle}>
@@ -728,7 +781,10 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
       </div>
 
       {/* Table Content */}
-      <div className="table-scroll-wrapper">
+      <div
+        className="table-scroll-wrapper"
+        onScroll={e => rows.length < visibleRows.length && setScrollTop(e.currentTarget.scrollTop)}
+      >
         <table
           className={classNames('hierarchical-table', {
             'sticky-header': stickyHeader,
@@ -927,54 +983,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             )}
           </thead>
           <tbody>
-            {/* Grand Total Row at Top if enabled and position is top */}
-            {showGrandTotal && grandTotalNode && grandTotalPosition === 'top' && (
-              <tr className="grand-total-row">
-                <td className="hierarchy-cell">
-                  <span className="node-name">{grandTotalNode.name}</span>
-                </td>
-                {displayCols.map(col => {
-                  if (activeDisplayMode === 'leaves_only') {
-                    return <td key={col.key} className="metric-cell empty-metric-cell" />;
-                  }
-                  const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
-                  const isDelta = columnMetaMap.get(col.key)?.isDelta ?? false;
-                  const isNuovo = val === 'Nuovo';
+            {grandTotalPosition === 'top' && grandTotalRow}
 
-                  return (
-                    <td
-                      key={col.key}
-                      className={classNames('metric-cell', {
-                        'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
-                      })}
-                    >
-                      {isNuovo ? (
-                        <span className="badge-delta-nuovo">Nuovo</span>
-                      ) : isDelta && typeof val === 'number' ? (
-                        <span
-                          className={
-                            val > 0
-                              ? 'delta-positive'
-                              : val < 0
-                              ? 'delta-negative'
-                              : 'delta-neutral'
-                          }
-                        >
-                          {col?.formatter ? col.formatter(val) : String(val ?? '-')}
-                        </span>
-                      ) : col?.formatter ? (
-                        col.formatter(val)
-                      ) : (
-                        String(val ?? '-')
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            )}
-
-            {/* Tree Rows with React.memo optimization */}
-            {visibleRows.map((node: TreeNode) => {
+            {renderWindow.padTop > 0 && <tr style={{ height: renderWindow.padTop }} />}
+            {/* Rows share the parent-level click handlers, so cross-filtering survives windowing */}
+            {rows.map((node: TreeNode) => {
               const isExpanded = expandedKeys.has(node.key) || debouncedSearch.trim().length > 0;
               const isFilterSelected = selectedFilterMap.has(node.key);
 
@@ -997,52 +1010,9 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                 />
               );
             })}
+            {renderWindow.padBottom > 0 && <tr style={{ height: renderWindow.padBottom }} />}
 
-            {/* Grand Total Row at Bottom if enabled and position is bottom */}
-            {showGrandTotal && grandTotalNode && grandTotalPosition === 'bottom' && (
-              <tr className="grand-total-row">
-                <td className="hierarchy-cell">
-                  <span className="node-name">{grandTotalNode.name}</span>
-                </td>
-                {displayCols.map(col => {
-                  if (activeDisplayMode === 'leaves_only') {
-                    return <td key={col.key} className="metric-cell empty-metric-cell" />;
-                  }
-                  const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
-                  const isDelta = columnMetaMap.get(col.key)?.isDelta ?? false;
-                  const isNuovo = val === 'Nuovo';
-
-                  return (
-                    <td
-                      key={col.key}
-                      className={classNames('metric-cell', {
-                        'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
-                      })}
-                    >
-                      {isNuovo ? (
-                        <span className="badge-delta-nuovo">Nuovo</span>
-                      ) : isDelta && typeof val === 'number' ? (
-                        <span
-                          className={
-                            val > 0
-                              ? 'delta-positive'
-                              : val < 0
-                              ? 'delta-negative'
-                              : 'delta-neutral'
-                          }
-                        >
-                          {col?.formatter ? col.formatter(val) : String(val ?? '-')}
-                        </span>
-                      ) : col?.formatter ? (
-                        col.formatter(val)
-                      ) : (
-                        String(val ?? '-')
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            )}
+            {grandTotalPosition === 'bottom' && grandTotalRow}
           </tbody>
         </table>
       </div>

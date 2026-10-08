@@ -794,7 +794,33 @@ const config: ControlPanelConfig = {
     {
       label: t('Performance & Limits'),
       expanded: false,
-      controlSetRows: [['row_limit']],
+      controlSetRows: [
+        ['row_limit'],
+        [
+          {
+            name: 'pageSize',
+            config: {
+              type: 'SliderControl',
+              label: t('Page Size'),
+              default: 100,
+              min: 50,
+              max: 2000,
+              step: 50,
+              renderTrigger: true,
+            },
+          },
+          {
+            name: 'virtualizationThreshold',
+            config: {
+              type: 'TextControl',
+              isInt: true,
+              label: t('Virtualize Above Rows'),
+              default: 500,
+              renderTrigger: true,
+            },
+          },
+        ],
+      ],
     },
   ],
 };
