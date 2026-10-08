@@ -59,6 +59,8 @@ export interface TransformOptions {
   comparisonReferencePeriod: ComparisonReferencePeriod;
   comparisonStrategy: ComparisonStrategy;
   goals: MetricGoal[];
+  /** Weight metric of the weighted_avg roll-up; empty for every other aggregation mode. */
+  weightColumn: string;
 }
 
 const TIME_GRAINS: readonly ComparisonTimeGrain[] = ['day', 'week', 'month', 'quarter', 'year'];
@@ -219,5 +221,9 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
       mergedFormData.comparisonType,
     ),
     goals: normalizeGoals(mergedFormData.goals),
+    weightColumn:
+      mergedFormData.aggregationMode === 'weighted_avg'
+        ? String(mergedFormData.weightColumn ?? '').trim()
+        : '',
   };
 }

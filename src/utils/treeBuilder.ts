@@ -1,6 +1,6 @@
 import { DataRecord } from '@superset-ui/core';
 import { TreeNode, SortOrder, MinMaxScope, MinMaxBoundsMap } from '../types';
-import { rollupTreeMetrics, isDerivedMetric } from './aggregations';
+import { rollupTreeMetrics, isDerivedMetric, rollupFunction } from './aggregations';
 
 /**
  * Builds a hierarchical tree from flat records using an ordered list of dimensions.
@@ -11,6 +11,7 @@ export function buildMultiDimensionTree(
   dimensions: string[],
   metrics: string[],
   pivotDimensions: string[] = [],
+  weightColumn = '',
 ): TreeNode[] {
   if (!records || records.length === 0 || !dimensions || dimensions.length === 0) {
     return [];
@@ -186,7 +187,7 @@ export function buildMultiDimensionTree(
   }
   collectKeys(tree);
 
-  rollupTreeMetrics(tree, Array.from(allMetricKeys));
+  rollupTreeMetrics(tree, Array.from(allMetricKeys), rollupFunction(weightColumn), weightColumn);
   return tree;
 }
 
@@ -200,6 +201,7 @@ export function buildParentChildTree(
   parentIdColumn: string,
   labelColumn: string,
   metrics: string[],
+  weightColumn = '',
 ): TreeNode[] {
   if (!records || records.length === 0 || !idColumn) {
     return [];
@@ -311,7 +313,7 @@ export function buildParentChildTree(
     }
   }
 
-  rollupTreeMetrics(roots, metrics);
+  rollupTreeMetrics(roots, metrics, rollupFunction(weightColumn), weightColumn);
   return roots;
 }
 

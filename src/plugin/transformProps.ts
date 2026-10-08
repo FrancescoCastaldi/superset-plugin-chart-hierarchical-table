@@ -39,6 +39,7 @@ export default function transformProps(
     pivotTimeDeltaMode: options.pivotTimeDeltaMode,
     pivotTimeDeltaLag: options.pivotTimeDeltaLag,
     timeDeltaStrategy: resolveTimeDeltaStrategy(options),
+    weightColumn: options.weightColumn,
   });
 
   return {

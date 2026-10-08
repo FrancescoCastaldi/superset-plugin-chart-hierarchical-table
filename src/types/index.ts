@@ -7,7 +7,7 @@ import {
 
 export type HierarchyType = 'multi_dimension' | 'parent_child';
 
-export type AggregationFunction = 'sum' | 'avg' | 'min' | 'max' | 'count';
+export type AggregationFunction = 'sum' | 'avg' | 'min' | 'max' | 'count' | 'weighted_avg';
 
 export type SortOrder = 'asc' | 'desc' | 'none';
 
@@ -102,6 +102,10 @@ export interface HierarchicalTableFormData extends QueryFormData {
   conditionalFormatting?: ConditionalFormattingRule[];
   stripedRows?: boolean;
   compactMode?: boolean;
+
+  // Advanced Rollup Calculations: weightColumn is the metric that weights the weighted_avg rollup.
+  aggregationMode?: AggregationFunction;
+  weightColumn?: string;
 
   // Goals (optional)
   goals?: { metricKey: string; target: number; direction: 'higher_is_better' | 'lower_is_better' }[];

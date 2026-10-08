@@ -653,6 +653,24 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'weightColumn',
+            config: {
+              type: 'TextControl',
+              label: t('Weight Metric'),
+              default: '',
+              renderTrigger: true,
+              description: t(
+                'Metric label used as weight (it must be one of the query metrics). Overrides the automatic volume weights; zero total weight falls back to the plain average.',
+              ),
+              visibility: ({ controls }: { controls: any }) => {
+                const aggregationMode = controls?.aggregationMode?.value;
+                return aggregationMode === 'weighted_avg';
+              },
+            },
+          },
+        ],
+        [
+          {
             name: 'emit_filter',
             config: {
               type: 'CheckboxControl',

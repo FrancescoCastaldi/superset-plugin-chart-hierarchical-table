@@ -70,6 +70,81 @@ function splitMetricKey(key: string): { base: string; suffix: string } {
   return { base: key, suffix: '' };
 }
 
+function numericValues(nodes: TreeNode[], metric: string): number[] {
+  const values: number[] = [];
+  for (const node of nodes) {
+    const val = node.metrics[metric];
+    if (typeof val === 'number' && !isNaN(val)) values.push(val);
+  }
+  return values;
+}
+
+/**
+ * Mean of `metric` over `nodes` weighted by `weightKey`. Values without a positive weight only
+ * count towards the arithmetic-mean fallback used when the weights sum to zero.
+ */
+function weightedMean(nodes: TreeNode[], metric: string, weightKey: string): number | null {
+  let weightedSum = 0;
+  let totalWeight = 0;
+  let unweightedSum = 0;
+  let count = 0;
+  for (const node of nodes) {
+    const val = node.metrics[metric];
+    if (typeof val === 'number' && !isNaN(val)) {
+      const weight = node.metrics[weightKey];
+      if (typeof weight === 'number' && weight > 0) {
+        weightedSum += val * weight;
+        totalWeight += weight;
+      }
+      unweightedSum += val;
+      count++;
+    }
+  }
+  if (totalWeight > 0) return weightedSum / totalWeight;
+  return count > 0 ? unweightedSum / count : null;
+}
+
+const roundTenth = (val: number | null): number | null =>
+  val === null ? null : Math.round(val * 10) / 10;
+
+/**
+ * Weighted average of `metric` over the children of `node`, weighted by the `weightColumn`
+ * metric with the same pivot suffix (`price___2024` is weighted by `qty___2024`).
+ * Falls back to the arithmetic mean when the weights sum to zero.
+ */
+export function weightedAvgOnNode(
+  node: TreeNode,
+  weightColumn: string,
+  metric: string,
+): number | null {
+  return weightedMean(node.children ?? [], metric, weightColumn + splitMetricKey(metric).suffix);
+}
+
+/** The other aggregation modes stay dormant: only a resolved weight column changes the roll-up. */
+export const rollupFunction = (weightColumn: string): AggregationFunction =>
+  weightColumn ? 'weighted_avg' : 'sum';
+
+/** weighted_avg roll-up of one metric: the weight metric itself is summed so it can weight the next level. */
+function explicitWeightedValue(nodes: TreeNode[], metric: string, weightColumn: string): number | null {
+  const { base, suffix } = splitMetricKey(metric);
+  return base === weightColumn
+    ? calculateAggregation(numericValues(nodes, metric), 'sum')
+    : weightedMean(nodes, metric, weightColumn + suffix);
+}
+
+/** Weight for derived metrics that could not be recomputed from their operands. */
+function derivedFallbackWeightKey(metric: string, metricNames: string[], explicitWeight: string): string {
+  const { suffix } = splitMetricKey(metric);
+  if (explicitWeight) return explicitWeight + suffix;
+  return (
+    metricNames.find(
+      k =>
+        (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume') || k.toLowerCase().includes('corr')) &&
+        !isDerivedMetric(k),
+    ) || `richieste_corr${suffix}`
+  );
+}
+
 /**
  * Helper to find matching current and comparison metric keys for a given topic/domain.
  */
@@ -371,11 +446,14 @@ export function rollupTreeMetrics(
   nodes: TreeNode[],
   metricNames: string[],
   aggFunc: AggregationFunction = 'sum',
+  weightColumn = '',
 ): void {
+  // An explicit weight metric replaces every volume-based weight heuristic below.
+  const explicitWeight = aggFunc === 'weighted_avg' ? weightColumn : '';
   for (const node of nodes) {
     if (node.children && node.children.length > 0) {
       // Rollup children first (post-order traversal)
-      rollupTreeMetrics(node.children, metricNames, aggFunc);
+      rollupTreeMetrics(node.children, metricNames, aggFunc, weightColumn);
 
       // Aggregate each metric for the current parent node
       for (const metric of metricNames) {
@@ -384,8 +462,11 @@ export function rollupTreeMetrics(
           continue;
         }
 
-        // For rate/average metrics, compute weighted average using volume if possible
-        if (isRateMetric(metric)) {
+        let aggregatedVal: number | null;
+        if (explicitWeight) {
+          aggregatedVal = explicitWeightedValue(node.children, metric, explicitWeight);
+        } else if (isRateMetric(metric)) {
+          // For rate/average metrics, compute weighted average using volume if possible
           const { suffix } = splitMetricKey(metric);
           const isConf = metric.toLowerCase().includes('conf') || metric.toLowerCase().includes('confronto');
           const weightKey =
@@ -396,51 +477,12 @@ export function rollupTreeMetrics(
                   ? k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')
                   : k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')),
             ) || (isConf ? `richieste_conf${suffix}` : `richieste_corr${suffix}`);
-
-          let weightedSum = 0;
-          let totalWeight = 0;
-          let unweightedSum = 0;
-          let count = 0;
-
-          for (const child of node.children) {
-            const val = child.metrics[metric];
-            if (typeof val === 'number' && !isNaN(val)) {
-              const weight =
-                typeof child.metrics[weightKey] === 'number'
-                  ? (child.metrics[weightKey] as number)
-                  : 0;
-              if (weight > 0) {
-                weightedSum += val * weight;
-                totalWeight += weight;
-              }
-              unweightedSum += val;
-              count++;
-            }
-          }
-
-          let rateVal: number | null = null;
-          if (totalWeight > 0) {
-            rateVal = Math.round((weightedSum / totalWeight) * 10) / 10;
-          } else if (count > 0) {
-            rateVal = Math.round((unweightedSum / count) * 10) / 10;
-          }
-
-          node.metrics[metric] = rateVal;
-          if (!node.subtotals) node.subtotals = {};
-          node.subtotals[metric] = rateVal;
-          continue;
+          aggregatedVal = roundTenth(weightedMean(node.children, metric, weightKey));
+        } else {
+          // Standard additive metric (e.g. volume, count)
+          aggregatedVal = calculateAggregation(numericValues(node.children, metric), aggFunc);
         }
 
-        // Standard additive metric (e.g. volume, count)
-        const childMetricValues: number[] = [];
-        for (const child of node.children) {
-          const val = child.metrics[metric];
-          if (typeof val === 'number' && !isNaN(val)) {
-            childMetricValues.push(val);
-          }
-        }
-
-        const aggregatedVal = calculateAggregation(childMetricValues, aggFunc);
         node.metrics[metric] = aggregatedVal;
         if (!node.subtotals) {
           node.subtotals = {};
@@ -458,41 +500,9 @@ export function rollupTreeMetrics(
       // compute a weighted average from children using a volume metric if available, else simple average.
       for (const metric of metricNames) {
         if (isDerivedMetric(metric) && (node.metrics[metric] === null || node.metrics[metric] === undefined)) {
-          const { suffix } = splitMetricKey(metric);
-          const weightKey =
-            metricNames.find(
-              k =>
-                (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume') || k.toLowerCase().includes('corr')) &&
-                !isDerivedMetric(k),
-            ) || `richieste_corr${suffix}`;
-
-          let weightedSum = 0;
-          let totalWeight = 0;
-          let unweightedSum = 0;
-          let count = 0;
-
-          for (const child of node.children) {
-            const cVal = child.metrics[metric];
-            if (typeof cVal === 'number' && !isNaN(cVal)) {
-              const weight =
-                typeof child.metrics[weightKey] === 'number'
-                  ? (child.metrics[weightKey] as number)
-                  : 0;
-              if (weight > 0) {
-                weightedSum += cVal * weight;
-                totalWeight += weight;
-              }
-              unweightedSum += cVal;
-              count++;
-            }
-          }
-
-          let derivedVal: number | null = null;
-          if (totalWeight > 0) {
-            derivedVal = Math.round((weightedSum / totalWeight) * 10) / 10;
-          } else if (count > 0) {
-            derivedVal = Math.round((unweightedSum / count) * 10) / 10;
-          }
+          const derivedVal = roundTenth(
+            weightedMean(node.children, metric, derivedFallbackWeightKey(metric, metricNames, explicitWeight)),
+          );
 
           if (derivedVal !== null) {
             node.metrics[metric] = derivedVal;
@@ -517,59 +527,27 @@ export function computeGrandTotal(
   rootNodes: TreeNode[],
   metricNames: string[],
   aggFunc: AggregationFunction = 'sum',
+  weightColumn = '',
 ): TreeNode {
   const grandTotalMetrics: Record<string, number | string | null> = {};
+  const explicitWeight = aggFunc === 'weighted_avg' ? weightColumn : '';
 
   for (const metric of metricNames) {
     if (isDerivedMetric(metric)) {
       continue;
     }
 
-    if (isRateMetric(metric)) {
+    if (explicitWeight) {
+      grandTotalMetrics[metric] = explicitWeightedValue(rootNodes, metric, explicitWeight);
+    } else if (isRateMetric(metric)) {
       const { suffix } = splitMetricKey(metric);
       const weightKey = metric.toLowerCase().includes('conf')
         ? `richieste_conf${suffix}`
         : `richieste_corr${suffix}`;
-
-      let weightedSum = 0;
-      let totalWeight = 0;
-      let unweightedSum = 0;
-      let count = 0;
-
-      for (const root of rootNodes) {
-        const val = root.metrics[metric];
-        if (typeof val === 'number' && !isNaN(val)) {
-          const weight =
-            typeof root.metrics[weightKey] === 'number'
-              ? (root.metrics[weightKey] as number)
-              : 0;
-          if (weight > 0) {
-            weightedSum += val * weight;
-            totalWeight += weight;
-          }
-          unweightedSum += val;
-          count++;
-        }
-      }
-
-      if (totalWeight > 0) {
-        grandTotalMetrics[metric] = Math.round((weightedSum / totalWeight) * 10) / 10;
-      } else if (count > 0) {
-        grandTotalMetrics[metric] = Math.round((unweightedSum / count) * 10) / 10;
-      } else {
-        grandTotalMetrics[metric] = null;
-      }
-      continue;
+      grandTotalMetrics[metric] = roundTenth(weightedMean(rootNodes, metric, weightKey));
+    } else {
+      grandTotalMetrics[metric] = calculateAggregation(numericValues(rootNodes, metric), aggFunc);
     }
-
-    const rootValues: number[] = [];
-    for (const root of rootNodes) {
-      const val = root.metrics[metric];
-      if (typeof val === 'number' && !isNaN(val)) {
-        rootValues.push(val);
-      }
-    }
-    grandTotalMetrics[metric] = calculateAggregation(rootValues, aggFunc);
   }
 
   // Recalculate derived metrics for Grand Total
@@ -577,39 +555,11 @@ export function computeGrandTotal(
 
   for (const metric of metricNames) {
     if (isDerivedMetric(metric) && (grandTotalMetrics[metric] === null || grandTotalMetrics[metric] === undefined)) {
-      const { suffix } = splitMetricKey(metric);
-      const weightKey =
-        metricNames.find(
-          k =>
-            (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume') || k.toLowerCase().includes('corr')) &&
-            !isDerivedMetric(k),
-        ) || `richieste_corr${suffix}`;
-
-      let weightedSum = 0;
-      let totalWeight = 0;
-      let unweightedSum = 0;
-      let count = 0;
-
-      for (const root of rootNodes) {
-        const rVal = root.metrics[metric];
-        if (typeof rVal === 'number' && !isNaN(rVal)) {
-          const weight =
-            typeof root.metrics[weightKey] === 'number'
-              ? (root.metrics[weightKey] as number)
-              : 0;
-          if (weight > 0) {
-            weightedSum += rVal * weight;
-            totalWeight += weight;
-          }
-          unweightedSum += rVal;
-          count++;
-        }
-      }
-
-      if (totalWeight > 0) {
-        grandTotalMetrics[metric] = Math.round((weightedSum / totalWeight) * 10) / 10;
-      } else if (count > 0) {
-        grandTotalMetrics[metric] = Math.round((unweightedSum / count) * 10) / 10;
+      const derivedVal = roundTenth(
+        weightedMean(rootNodes, metric, derivedFallbackWeightKey(metric, metricNames, explicitWeight)),
+      );
+      if (derivedVal !== null) {
+        grandTotalMetrics[metric] = derivedVal;
       }
     }
   }
