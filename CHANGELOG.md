@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- **Single Minified ESM Bundle via esbuild**: New `scripts/build.mjs` (`npm run build:esm`) bundles `src/index.ts` into `dist/index.esm.js` (ES2020 target, minified, linked source map without embedded sources since `src/` ships with the package). React, `@superset-ui/core`, `@superset-ui/chart-controls` and the modular `echarts/*` paths stay external so the host Superset build provides them; `HierarchicalTable.css` is minified and injected at runtime so the bundle is self-contained. `main` and `module` now both point to the bundle and `tsc` emits declarations only, which brings `dist/` from 329,032 B to about 232 KB.
+- **Build Chain**: `npm run build` keeps the `tsc || node ../../node_modules/typescript/lib/tsc.js || npx tsc` fallback chain (grouped so it also works under `cmd.exe`) and then runs `build:esm`. `esbuild` ^0.25 added to `devDependencies`.
+- **Package Metadata**: `@superset-ui/chart-controls` is now declared in `peerDependencies` (marked optional, the host Superset always provides it; the local type stub stays for standalone typechecks) and `sideEffects` is set to `["*.css"]` so bundlers can tree-shake every JS module while keeping the stylesheet import.
+- **Stricter TypeScript**: `noUnusedLocals` and `noUnusedParameters` enabled; the unused `MinMaxBound` import, the unused `metrics` destructuring in `HierarchicalTable.tsx`, the unused `thumbnail-dark.png` import and the unused cross-filter `pathMap` parameter name were cleaned up with no behavior change.
+
+### Removed
+- **Dead Runtime Dependencies `lodash`, `antd`, `@ant-design/icons`**: none of them is imported by `src/`; dropping them removes 62 packages from the install tree.
 
 ## [0.2.10] - 2026-10-08
 ### Changed

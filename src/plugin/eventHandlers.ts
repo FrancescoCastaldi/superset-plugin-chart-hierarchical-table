@@ -131,7 +131,7 @@ export function createCrossFilterHandler({
   setDataMask?: SetDataMask;
   onAddFilter?: AddFilter;
 }): CrossFilterHandler {
-  return (dimension, value, pathMap, isCurrentlySelected, allSelectedFilters) => {
+  return (dimension, value, _pathMap, isCurrentlySelected, allSelectedFilters) => {
     if (!isCrossFilterActive) return;
 
     if (setDataMask) {

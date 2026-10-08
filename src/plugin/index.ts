@@ -3,7 +3,6 @@ import buildQuery from './buildQuery';
 import controlPanel from './controlPanel';
 import transformProps from './transformProps';
 import thumbnail from '../images/thumbnail.png';
-import thumbnailDark from '../images/thumbnail-dark.png';
 import example from '../images/example.png';
 
 const t = (str: string) => str;
