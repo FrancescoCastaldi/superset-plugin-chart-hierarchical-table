@@ -1,4 +1,5 @@
-import { TableColumn } from '../types';
+import { MetricGoal, TableColumn } from '../types';
+import { findColumnGoal } from './goalBenchmark';
 
 export interface ColumnMeta {
   key: string;
@@ -6,6 +7,7 @@ export interface ColumnMeta {
   width?: number | string;
   formatter?: (val: any) => string;
   isDelta: boolean;
+  goal?: MetricGoal;
 }
 
 /**
@@ -37,16 +39,22 @@ export function isDeltaColumn(col: Pick<TableColumn, 'key' | 'title'>): boolean 
 /**
  * Pre-computed column metadata so that rows do not repeat string checks for every cell.
  */
-export function buildColumnMetaMap(displayCols: TableColumn[]): Map<string, ColumnMeta> {
+export function buildColumnMetaMap(
+  displayCols: TableColumn[],
+  goals: MetricGoal[] = [],
+): Map<string, ColumnMeta> {
   const map = new Map<string, ColumnMeta>();
   for (const col of displayCols) {
-    map.set(col.key, {
+    const meta: ColumnMeta = {
       key: col.key,
       title: col.title,
       width: col.width,
       formatter: col.formatter,
       isDelta: isDeltaColumn(col),
-    });
+    };
+    const goal = findColumnGoal(col, goals);
+    if (goal) meta.goal = goal;
+    map.set(col.key, meta);
   }
   return map;
 }

@@ -2,6 +2,7 @@ import { ensureIsArray } from '@superset-ui/core';
 import {
   HierarchyType,
   HierarchyValueDisplayMode,
+  MetricGoal,
   MinMaxDisplayMode,
   MinMaxScope,
   PivotRowTotalsPosition,
@@ -9,6 +10,7 @@ import {
   PivotTimeDeltaMode,
   SortOrder,
 } from '../types';
+import { normalizeGoals } from '../utils/goalBenchmark';
 
 /**
  * Normalized chart options. Every camelCase control has a legacy snake_case alias:
@@ -50,6 +52,7 @@ export interface TransformOptions {
   pivotColumnSubtotalLabel: string;
   pivotTimeDeltaMode: PivotTimeDeltaMode;
   pivotTimeDeltaLag: number;
+  goals: MetricGoal[];
 }
 
 export function getMetricNames(rawMetrics: any): string[] {
@@ -176,5 +179,6 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     pivotColumnSubtotalLabel: pivotColumnSubtotalLabel || pivot_column_subtotal_label || 'Totale',
     pivotTimeDeltaMode: pivotTimeDeltaMode || pivot_time_delta_mode || 'none',
     pivotTimeDeltaLag: Number(pivotTimeDeltaLag || pivot_time_delta_lag || 1),
+    goals: normalizeGoals(mergedFormData.goals),
   };
 }

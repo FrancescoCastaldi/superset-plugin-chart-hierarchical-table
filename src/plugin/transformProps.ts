@@ -78,6 +78,8 @@ export default function transformProps(
     compactMode: options.compactMode,
     stripedRows: options.stripedRows,
     emitFilter: options.isCrossFilterActive,
+    // Omitted when unset so charts without goals keep their previous props shape.
+    ...(options.goals.length > 0 ? { goals: options.goals } : {}),
     filterState,
     onCrossFilter: createCrossFilterHandler({
       isCrossFilterActive: options.isCrossFilterActive,

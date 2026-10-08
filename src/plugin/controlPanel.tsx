@@ -595,6 +595,25 @@ const config: ControlPanelConfig = {
           },
         ],
         [subsectionDivider()],
+        [subsectionHeader(t('Goals (optional)'))],
+        [
+          {
+            name: 'goals',
+            config: {
+              type: 'TextAreaControl',
+              language: 'json',
+              label: t('Metric Goals'),
+              default: '',
+              renderTrigger: true,
+              description: t(
+                'JSON list of per-metric targets, e.g. [{"metricKey": "revenue", "target": 1000, "direction": "higher_is_better"}]. ' +
+                  'direction is "higher_is_better" (default) or "lower_is_better". Each matching metric cell shows its ' +
+                  'deviation from the target and a status: achieved (>= 100% attainment), on track (>= 90%), at risk (>= 75%) or missed.',
+              ),
+            },
+          },
+        ],
+        [subsectionDivider()],
         [subsectionHeader(t('Advanced Rollup Calculations'))],
         [
           {

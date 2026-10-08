@@ -113,6 +113,7 @@ describe('controlPanel layout', () => {
   it('groups time comparison and rollup controls under Comparison & Analysis', () => {
     expect(subsectionHeadings(sectionByLabel('Comparison & Analysis'))).toEqual([
       'Time Comparison & Period-over-Period Variance',
+      'Goals (optional)',
       'Advanced Rollup Calculations',
     ]);
   });
@@ -143,6 +144,7 @@ describe('controlPanel layout', () => {
         'timeGrain',
         'referencePeriod',
         'comparisonType',
+        'goals',
         'aggregationMode',
         'emit_filter',
       ]),

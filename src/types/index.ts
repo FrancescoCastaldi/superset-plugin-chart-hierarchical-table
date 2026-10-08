@@ -91,9 +91,25 @@ export interface HierarchicalTableFormData extends QueryFormData {
   stripedRows?: boolean;
   compactMode?: boolean;
 
+  // Goals (optional)
+  goals?: { metricKey: string; target: number; direction: 'higher_is_better' | 'lower_is_better' }[];
+
   // Cross Filtering (Superset 6.1.0)
   emit_filter?: boolean;
   enableCrossFiltering?: boolean;
+}
+
+export type MetricGoal = NonNullable<HierarchicalTableFormData['goals']>[number];
+
+export type GoalDirection = MetricGoal['direction'];
+
+export type GoalStatus = 'achieved' | 'on_track' | 'at_risk' | 'missed';
+
+export interface GoalDelta {
+  deltaAbsolute: number;
+  /** Signed percentage of the target; null when the target is zero. */
+  deltaPct: number | null;
+  status: GoalStatus;
 }
 
 export interface TreeNode {
@@ -168,6 +184,7 @@ export interface HierarchicalTableTransformedProps {
   compactMode: boolean;
   stripedRows: boolean;
   emitFilter: boolean;
+  goals?: MetricGoal[];
   filterState?: {
     value?: any;
     selectedValues?: string[];

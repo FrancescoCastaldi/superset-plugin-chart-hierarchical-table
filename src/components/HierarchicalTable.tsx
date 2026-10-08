@@ -8,6 +8,7 @@ import {
   MinMaxDisplayMode,
   MinMaxScope,
   HierarchyValueDisplayMode,
+  MetricGoal,
 } from '../types';
 import {
   filterTreeBySearch,
@@ -17,9 +18,34 @@ import {
 import { getNormalizedMetricValue, getHeatmapBgColor } from '../utils/formatters';
 import { ColumnMeta, buildColumnMetaMap, getDisplayColumns } from '../utils/tableColumns';
 import { buildCsvRows, downloadCsv, serializeCsv } from '../utils/csvExport';
+import { GOAL_STATUS_LABELS, computeGoalDelta, formatGoalDelta } from '../utils/goalBenchmark';
 import './HierarchicalTable.css';
 
 export type { ColumnMeta } from '../utils/tableColumns';
+
+const NO_GOALS: MetricGoal[] = [];
+
+function GoalBadge({
+  value,
+  goal,
+  formatter,
+}: {
+  value: number;
+  goal: MetricGoal;
+  formatter?: (val: any) => string;
+}) {
+  const delta = computeGoalDelta(value, goal);
+  const comparison = formatGoalDelta(delta, formatter);
+  const target = formatter ? formatter(goal.target) : String(goal.target);
+  return (
+    <span
+      className={`goal-badge goal-${delta.status}`}
+      aria-label={`${GOAL_STATUS_LABELS[delta.status]}: ${comparison} vs target ${target}`}
+    >
+      {comparison}
+    </span>
+  );
+}
 
 function isHierarchySortKey(key?: string, dims?: string[]): boolean {
   if (!key) return false;
@@ -176,6 +202,16 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
           String(val ?? '-')
         );
 
+        const cellContent =
+          meta?.goal && isNumeric ? (
+            <>
+              {baseContent}
+              <GoalBadge value={numericVal} goal={meta.goal} formatter={meta.formatter} />
+            </>
+          ) : (
+            baseContent
+          );
+
         // Cell heatmap background style
         const cellStyle: React.CSSProperties = {};
         if (minMaxDisplayMode === 'heatmap' && inScope && isNumeric && range > 0) {
@@ -193,7 +229,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
           >
             {minMaxDisplayMode === 'badges' ? (
               <div className="metric-cell-badges-wrapper">
-                <span className="metric-val">{baseContent}</span>
+                <span className="metric-val">{cellContent}</span>
                 {isMax && (
                   <span
                     className="minmax-badge minmax-max theme-stratum"
@@ -219,10 +255,10 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
                     style={{ width: `${Math.round(normalized * 100)}%` }}
                   />
                 )}
-                <span className="data-bar-value">{baseContent}</span>
+                <span className="data-bar-value">{cellContent}</span>
               </div>
             ) : (
-              baseContent
+              cellContent
             )}
           </td>
         );
@@ -254,6 +290,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     compactMode = false,
     stripedRows = true,
     emitFilter = true,
+    goals = NO_GOALS,
     onCrossFilter,
     onClearFilter,
   } = props;
@@ -505,7 +542,10 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   const displayCols = useMemo(() => getDisplayColumns(columns), [columns]);
 
   // Pre-computed column metadata (avoids 10k+ string checks during rendering)
-  const columnMetaMap = useMemo(() => buildColumnMetaMap(displayCols), [displayCols]);
+  const columnMetaMap = useMemo(
+    () => buildColumnMetaMap(displayCols, goals),
+    [displayCols, goals],
+  );
 
   // Min/Max bounds calculation for conditional formatting
   const minMaxBounds = useMemo(() => {
