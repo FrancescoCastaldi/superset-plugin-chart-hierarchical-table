@@ -107,6 +107,17 @@ describe('controlPanel layout', () => {
       'Hierarchy & Tree Display Options',
       'Sorting & Conditional Formatting',
       'Formatting & Aesthetics',
+      'Theme & Palette',
+    ]);
+  });
+
+  it('nests the palette controls in Theme & Palette at the end of Formatting & Aesthetics', () => {
+    const customize = namesIn(sectionByLabel('Customize'));
+    expect(customize.slice(-4)).toEqual([
+      'themeProfile',
+      'customPositiveHex',
+      'customNegativeHex',
+      'customNeutralHex',
     ]);
   });
 

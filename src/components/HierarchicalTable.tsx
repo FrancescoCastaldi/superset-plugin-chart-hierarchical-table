@@ -22,12 +22,14 @@ import { buildCsvRows, downloadCsv, serializeCsv } from '../utils/csvExport';
 import { GOAL_STATUS_LABELS, computeGoalDelta, formatGoalDelta } from '../utils/goalBenchmark';
 import { firstByPriority } from '../utils/conditionalFormatting';
 import { buildColumnConditionalFormat } from '../plugin/columnBuilders';
+import { getTheme, ResolvedTheme } from '../utils/themes';
 import './HierarchicalTable.css';
 
 export type { ColumnMeta } from '../utils/tableColumns';
 
 const NO_GOALS: MetricGoal[] = [];
 const NO_RULES: ConditionalFormattingRule[] = [];
+const DEFAULT_THEME = getTheme();
 
 function GoalBadge({
   value,
@@ -73,6 +75,7 @@ interface HierarchicalTableRowProps {
   minMaxDisplayMode: MinMaxDisplayMode;
   minMaxScope: MinMaxScope;
   minMaxBounds: MinMaxBoundsMap | null;
+  theme: ResolvedTheme;
   onToggleExpand: (key: string) => void;
   onNodeClick: (node: TreeNode) => void;
 }
@@ -88,10 +91,14 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
   minMaxDisplayMode,
   minMaxScope,
   minMaxBounds,
+  theme,
   onToggleExpand,
   onNodeClick,
 }: HierarchicalTableRowProps) {
   const hasChildren = Boolean(node.children && node.children.length > 0);
+  const themeClass = `theme-${theme.style}`;
+  // Profiles map onto the theme-* CSS classes; only custom hex colours need inline overrides.
+  const isCustom = theme.name === 'custom';
   const paddingLeft = node.depth * 20 + 8;
   const hasMinMax = minMaxDisplayMode !== 'none' && Boolean(minMaxBounds);
   const inScope = hasMinMax
@@ -228,7 +235,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
         // Cell heatmap background style
         const cellStyle: React.CSSProperties = {};
         if (minMaxDisplayMode === 'heatmap' && inScope && isNumeric && range > 0) {
-          cellStyle.backgroundColor = getHeatmapBgColor(normalized, 'stratum');
+          cellStyle.backgroundColor = getHeatmapBgColor(normalized, theme.style);
         }
 
         return (
@@ -245,7 +252,8 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
                 <span className="metric-val">{cellContent}</span>
                 {isMax && (
                   <span
-                    className="minmax-badge minmax-max theme-stratum"
+                    className={`minmax-badge minmax-max ${themeClass}`}
+                    style={isCustom ? { background: theme.positive } : undefined}
                     title={`Maximum value: ${val}`}
                   >
                     MAX
@@ -253,7 +261,8 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
                 )}
                 {isMin && (
                   <span
-                    className="minmax-badge minmax-min theme-stratum"
+                    className={`minmax-badge minmax-min ${themeClass}`}
+                    style={isCustom ? { color: theme.negative, borderColor: theme.negative } : undefined}
                     title={`Minimum value: ${val}`}
                   >
                     MIN
@@ -264,8 +273,11 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
               <div className="data-bar-container">
                 {inScope && isNumeric && range > 0 && (
                   <div
-                    className="data-bar-fill theme-stratum"
-                    style={{ width: `${Math.round(normalized * 100)}%` }}
+                    className={`data-bar-fill ${themeClass}`}
+                    style={{
+                      width: `${Math.round(normalized * 100)}%`,
+                      ...(isCustom ? { backgroundColor: theme.neutral } : {}),
+                    }}
                   />
                 )}
                 <span className="data-bar-value">{cellContent}</span>
@@ -305,6 +317,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     emitFilter = true,
     goals = NO_GOALS,
     conditionalFormatting = NO_RULES,
+    theme = DEFAULT_THEME,
     onCrossFilter,
     onClearFilter,
   } = props;
@@ -977,6 +990,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   minMaxDisplayMode={minMaxDisplayMode}
                   minMaxScope={minMaxScope}
                   minMaxBounds={minMaxBounds}
+                  theme={theme}
                   onToggleExpand={toggleExpand}
                   onNodeClick={handleNodeClick}
                 />

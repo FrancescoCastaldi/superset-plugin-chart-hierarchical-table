@@ -4,6 +4,7 @@ import {
   QueryFormData,
   DataRecord,
 } from '@superset-ui/core';
+import type { ResolvedTheme, ThemeProfileName } from '../utils/themes';
 
 export type HierarchyType = 'multi_dimension' | 'parent_child';
 
@@ -110,6 +111,12 @@ export interface HierarchicalTableFormData extends QueryFormData {
   stripedRows?: boolean;
   compactMode?: boolean;
 
+  // Theme & Palette: the hex overrides apply only to the custom profile.
+  themeProfile?: ThemeProfileName;
+  customPositiveHex?: string;
+  customNegativeHex?: string;
+  customNeutralHex?: string;
+
   // Advanced Rollup Calculations: weightColumn is the metric that weights the weighted_avg rollup.
   aggregationMode?: AggregationFunction;
   weightColumn?: string;
@@ -209,6 +216,7 @@ export interface HierarchicalTableTransformedProps {
   emitFilter: boolean;
   goals?: MetricGoal[];
   conditionalFormatting?: ConditionalFormattingRule[];
+  theme?: ResolvedTheme;
   filterState?: {
     value?: any;
     selectedValues?: string[];

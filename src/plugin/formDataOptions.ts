@@ -16,6 +16,7 @@ import {
 } from '../types';
 import { normalizeConditionalFormatting } from '../utils/conditionalFormatting';
 import { normalizeGoals } from '../utils/goalBenchmark';
+import { getTheme, ResolvedTheme } from '../utils/themes';
 
 /**
  * Normalized chart options. Every camelCase control has a legacy snake_case alias:
@@ -64,6 +65,7 @@ export interface TransformOptions {
   conditionalFormatting: ConditionalFormattingRule[];
   /** Weight metric of the weighted_avg roll-up; empty for every other aggregation mode. */
   weightColumn: string;
+  theme: ResolvedTheme;
 }
 
 const TIME_GRAINS: readonly ComparisonTimeGrain[] = ['day', 'week', 'month', 'quarter', 'year'];
@@ -229,5 +231,6 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
       mergedFormData.aggregationMode === 'weighted_avg'
         ? String(mergedFormData.weightColumn ?? '').trim()
         : '',
+    theme: getTheme(mergedFormData.themeProfile, mergedFormData),
   };
 }

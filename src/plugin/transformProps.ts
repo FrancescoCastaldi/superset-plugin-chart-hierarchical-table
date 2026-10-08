@@ -85,6 +85,7 @@ export default function transformProps(
     ...(options.conditionalFormatting.length > 0
       ? { conditionalFormatting: options.conditionalFormatting }
       : {}),
+    ...(options.theme.name !== 'standard' ? { theme: options.theme } : {}),
     filterState,
     onCrossFilter: createCrossFilterHandler({
       isCrossFilterActive: options.isCrossFilterActive,

@@ -3,6 +3,7 @@ import {
   sharedControls,
   D3_FORMAT_OPTIONS,
 } from '@superset-ui/chart-controls';
+import { isValidHex } from '../utils/themes';
 
 const t = (str: string) => str;
 
@@ -43,6 +44,19 @@ function ArrayControl({
     </label>
   );
 }
+
+const customHexControl = (name: string, label: string) => ({
+  name,
+  config: {
+    type: 'TextControl',
+    label,
+    renderTrigger: true,
+    default: '',
+    description: t('#RRGGBB or empty for the standard color; keep 3:1 contrast on white.'),
+    validators: [(v: string) => (!v || isValidHex(v) ? false : t('Use the #RRGGBB format'))],
+    visibility: ({ controls }: { controls: any }) => controls?.themeProfile?.value === 'custom',
+  },
+});
 
 // The time comparison reads its periods from the values of a single pivot column.
 const isSinglePivot = ({ controls }: { controls: any }) =>
@@ -579,6 +593,29 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [subsectionHeader(t('Theme & Palette'))],
+        [
+          {
+            name: 'themeProfile',
+            config: {
+              type: 'SelectControl',
+              label: t('Palette'),
+              renderTrigger: true,
+              default: 'standard',
+              choices: [
+                ['standard', t('Standard (teal)')],
+                ['colorblind', t('Colorblind safe (blue)')],
+                ['stratum-warm', t('Stratum warm (sunset)')],
+                ['stratum-cool', t('Stratum cool (emerald)')],
+                ['custom', t('Custom colors')],
+              ],
+              description: t('Colors of the min/max badges, heatmap and data bars.'),
+            },
+          },
+        ],
+        [customHexControl('customPositiveHex', t('Positive / MAX badge'))],
+        [customHexControl('customNegativeHex', t('Negative / MIN badge'))],
+        [customHexControl('customNeutralHex', t('Neutral / data bars'))],
       ],
     },
     {
