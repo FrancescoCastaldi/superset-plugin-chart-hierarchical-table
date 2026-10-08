@@ -1,8 +1,14 @@
 import { PivotHeaderGroup, PivotRowTotalsPosition, PivotTimeDeltaMode, TableColumn } from '../types';
 import { formatMetricValue } from '../utils/formatters';
+import {
+  PERIOD_DELTA_PCT_SUFFIX,
+  PERIOD_DELTA_SUFFIX,
+  TimeDeltaStrategyConfig,
+} from '../utils/timeComparison';
 
 export const HIERARCHY_COLUMN_KEY = '__hierarchy_tree__';
 export const ROW_TOTALS_GROUP_KEY = '__pivot_row_totals__';
+export const PERIOD_COMPARISON_GROUP_KEY = '__period_comparison__';
 
 export interface ValueFormat {
   numberFormat: string;
@@ -462,6 +468,62 @@ function buildSeparatedPivotColumns(
         });
       }
     }
+  }
+}
+
+function periodComparisonTitle({ strategy, referencePeriod }: TimeDeltaStrategyConfig): string {
+  if (strategy === 'budget_target') return 'Δ vs budget target';
+  if (strategy === 'prev_year_same_period') return 'Δ vs same period last year';
+  return referencePeriod === 'ytd' ? 'Δ vs YTD average' : 'Δ vs previous period';
+}
+
+/**
+ * Appends, after every other column, the absolute and percentage delta of the current period
+ * against the baseline of the time comparison strategy, under one header group.
+ */
+export function appendPeriodComparisonColumns(
+  layout: ColumnLayout,
+  metrics: string[],
+  config: TimeDeltaStrategyConfig,
+  format: ValueFormat,
+): void {
+  const multiple = metrics.length > 1;
+  let count = 0;
+  for (const m of metrics) {
+    if (isComparisonOperandMetric(m)) continue;
+    const deltaKey = `${m}${PERIOD_DELTA_SUFFIX}`;
+    const deltaPctKey = `${m}${PERIOD_DELTA_PCT_SUFFIX}`;
+    layout.metricKeys.push(deltaKey, deltaPctKey);
+    layout.columns.push(
+      {
+        key: deltaKey,
+        title: multiple ? `Δ ${m}` : 'Δ',
+        dataIndex: deltaKey,
+        isMetric: true,
+        baseMetric: `${m} Δ period`,
+        align: 'right',
+        width: 120,
+        formatter: createMetricFormatter(format, 'delta'),
+      },
+      {
+        key: deltaPctKey,
+        title: multiple ? `Δ% ${m}` : 'Δ%',
+        dataIndex: deltaPctKey,
+        isMetric: true,
+        baseMetric: `${m} Δ% period`,
+        align: 'right',
+        width: 110,
+        formatter: formatSignedPercent,
+      },
+    );
+    count += 2;
+  }
+  if (count > 0) {
+    layout.pivotHeaderGroups.push({
+      title: periodComparisonTitle(config),
+      key: PERIOD_COMPARISON_GROUP_KEY,
+      colSpan: count,
+    });
   }
 }
 

@@ -8,7 +8,7 @@ import { buildHierarchyColumn } from './columnBuilders';
 import { createClearFilterHandler, createCrossFilterHandler } from './eventHandlers';
 import { resolveTransformOptions } from './formDataOptions';
 import { buildGrandTotalNode } from './grandTotal';
-import { buildMetricLayout } from './metricLayout';
+import { buildMetricLayout, resolveTimeDeltaStrategy } from './metricLayout';
 import { buildTreeData } from './treeData';
 
 export default function transformProps(
@@ -38,6 +38,7 @@ export default function transformProps(
     pivotDimensions: options.pivotDimensions,
     pivotTimeDeltaMode: options.pivotTimeDeltaMode,
     pivotTimeDeltaLag: options.pivotTimeDeltaLag,
+    timeDeltaStrategy: resolveTimeDeltaStrategy(options),
   });
 
   return {

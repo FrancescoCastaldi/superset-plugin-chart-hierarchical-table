@@ -23,6 +23,12 @@ export type PivotSortOrder = 'desc' | 'asc' | 'none';
 
 export type PivotRowTotalsPosition = 'left' | 'right' | 'none';
 
+export type ComparisonTimeGrain = 'day' | 'week' | 'month' | 'quarter' | 'year';
+
+export type ComparisonReferencePeriod = 'current' | 'previous' | 'ytd';
+
+export type ComparisonStrategy = 'prev_period' | 'prev_year_same_period' | 'budget_target';
+
 export interface MinMaxBound {
   min: number;
   max: number;
@@ -64,6 +70,12 @@ export interface HierarchicalTableFormData extends QueryFormData {
   pivotColumnSubtotalLabel?: string;
   pivotTimeDeltaMode?: PivotTimeDeltaMode;
   pivotTimeDeltaLag?: number;
+
+  // Time Comparison: saved charts store these under the timeGrain, referencePeriod and
+  // comparisonType control names, resolved to these fields in formDataOptions.ts.
+  comparisonTimeGrain?: ComparisonTimeGrain;
+  comparisonReferencePeriod?: ComparisonReferencePeriod;
+  comparisonStrategy?: ComparisonStrategy;
 
   // Display & Hierarchy Options
   initialExpandDepth: number; // 0 = all collapsed, -1 = all expanded, N = expand up to level N

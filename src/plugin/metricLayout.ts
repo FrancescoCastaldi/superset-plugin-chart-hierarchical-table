@@ -1,9 +1,14 @@
 import { DataRecord } from '@superset-ui/core';
 import { TreeNode } from '../types';
 import { computeHorizontalRowTotals } from '../utils/aggregations';
-import { computePivotTimeDelta } from '../utils/timeComparison';
+import {
+  TimeDeltaStrategyConfig,
+  computePivotTimeDelta,
+  computeTreeTimeDeltaByStrategy,
+} from '../utils/timeComparison';
 import {
   ColumnLayout,
+  appendPeriodComparisonColumns,
   buildFlatColumns,
   buildMultiPivotColumns,
   buildSinglePivotColumns,
@@ -17,9 +22,33 @@ import {
 } from './pivotOrdering';
 
 /**
+ * Time comparison of the single pivot layout, whose pivot keys are the periods. Null when it
+ * cannot apply or adds nothing: the default current/prev_period pair always yields 0, and
+ * budget_target needs at least one goal.
+ */
+export function resolveTimeDeltaStrategy(
+  options: Pick<
+    TransformOptions,
+    | 'isPivotMode'
+    | 'pivotDimensions'
+    | 'comparisonTimeGrain'
+    | 'comparisonReferencePeriod'
+    | 'comparisonStrategy'
+    | 'goals'
+  >,
+): TimeDeltaStrategyConfig | null {
+  const { comparisonStrategy: strategy, comparisonReferencePeriod: referencePeriod } = options;
+  if (!options.isPivotMode || options.pivotDimensions.length !== 1) return null;
+  if (strategy === 'prev_period' && referencePeriod === 'current') return null;
+  if (strategy === 'budget_target' && options.goals.length === 0) return null;
+  return { timeGrain: options.comparisonTimeGrain, referencePeriod, strategy, goals: options.goals };
+}
+
+/**
  * Builds the metric columns for the active layout (flat, single pivot, two-way pivot).
- * In pivot mode it also enriches `treeData` in place with the pivot time deltas and the
- * horizontal row totals, which must exist before the grand total is computed.
+ * In pivot mode it also enriches `treeData` in place with the pivot time deltas, the time
+ * comparison deltas and the horizontal row totals, which must exist before the grand total is
+ * computed.
  */
 export function buildMetricLayout(
   treeData: TreeNode[],
@@ -74,7 +103,7 @@ export function buildMetricLayout(
     computeHorizontalRowTotals(treeData, metrics, chronologicalPivotValues);
   }
 
-  return buildSinglePivotColumns({
+  const layout = buildSinglePivotColumns({
     metrics,
     displayPivotValues: displayOrder(pivotKeys, options.pivotSortOrder),
     combineMetric: options.combineMetric,
@@ -83,4 +112,14 @@ export function buildMetricLayout(
     deltaMode: pivotTimeDeltaMode,
     format,
   });
+
+  const timeDeltaStrategy = resolveTimeDeltaStrategy(options);
+  if (
+    timeDeltaStrategy &&
+    computeTreeTimeDeltaByStrategy(treeData, metrics, chronologicalPivotValues, timeDeltaStrategy)
+  ) {
+    appendPeriodComparisonColumns(layout, metrics, timeDeltaStrategy, format);
+  }
+
+  return layout;
 }

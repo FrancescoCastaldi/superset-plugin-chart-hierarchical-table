@@ -11,6 +11,12 @@ const t = (str: string) => str;
 const subsectionHeader = (label: string) => <h4 className="section-header">{label}</h4>;
 const subsectionDivider = () => <hr />;
 
+// The time comparison reads its periods from the values of a single pivot column.
+const isSinglePivot = ({ controls }: { controls: any }) =>
+  controls?.hierarchyType?.value === 'multi_dimension' &&
+  Array.isArray(controls?.columns?.value) &&
+  controls.columns.value.length === 1;
+
 export const CUSTOM_D3_FORMAT_OPTIONS: [string, string][] = [
   ['SMART_NUMBER', 'Adaptive formatting (Smart Number)'],
   [',d', '1,234 (Integer)'],
@@ -558,7 +564,10 @@ const config: ControlPanelConfig = {
                 ['quarter', t('📊 Quarter (QoQ - Quarter-over-Quarter)')],
                 ['year', t('📈 Year (YoY - Year-over-Year)')],
               ],
-              description: t('Temporal resolution for period delta calculations.'),
+              description: t(
+                'Period length for the deltas. Periods come from the pivot column values (YYYY, YYYY-Qn, YYYY-MM, YYYY-MM-DD, timestamps).',
+              ),
+              visibility: isSinglePivot,
             },
           },
         ],
@@ -575,7 +584,12 @@ const config: ControlPanelConfig = {
                 ['previous', t('Previous Completed Period (Periodo Precedente)')],
                 ['ytd', t('Year-to-Date (YTD)')],
               ],
-              description: t('Primary active time interval to evaluate.'),
+              description: t(
+                'Baseline of the latest period: itself (no delta), the previous period, or the year-to-date average.',
+              ),
+              visibility: (state: { controls: any }) =>
+                isSinglePivot(state) &&
+                (state.controls?.comparisonType?.value ?? 'prev_period') === 'prev_period',
             },
           },
           {
@@ -590,7 +604,10 @@ const config: ControlPanelConfig = {
                 ['prev_year_same_period', t('Same Period in Prior Year (Stesso Periodo Anno Scorso)')],
                 ['budget_target', t('Budget / Target Baseline (Target Pianificato)')],
               ],
-              description: t('Baseline interval to compute delta and percentage variance.'),
+              description: t(
+                'Baseline for the latest period delta. Budget / Target uses the matching Metric Goals target.',
+              ),
+              visibility: isSinglePivot,
             },
           },
         ],

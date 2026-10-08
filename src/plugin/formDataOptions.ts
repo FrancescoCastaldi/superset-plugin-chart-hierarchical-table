@@ -1,5 +1,8 @@
 import { ensureIsArray } from '@superset-ui/core';
 import {
+  ComparisonReferencePeriod,
+  ComparisonStrategy,
+  ComparisonTimeGrain,
   HierarchyType,
   HierarchyValueDisplayMode,
   MetricGoal,
@@ -52,7 +55,24 @@ export interface TransformOptions {
   pivotColumnSubtotalLabel: string;
   pivotTimeDeltaMode: PivotTimeDeltaMode;
   pivotTimeDeltaLag: number;
+  comparisonTimeGrain: ComparisonTimeGrain;
+  comparisonReferencePeriod: ComparisonReferencePeriod;
+  comparisonStrategy: ComparisonStrategy;
   goals: MetricGoal[];
+}
+
+const TIME_GRAINS: readonly ComparisonTimeGrain[] = ['day', 'week', 'month', 'quarter', 'year'];
+const REFERENCE_PERIODS: readonly ComparisonReferencePeriod[] = ['current', 'previous', 'ytd'];
+const COMPARISON_STRATEGIES: readonly ComparisonStrategy[] = [
+  'prev_period',
+  'prev_year_same_period',
+  'budget_target',
+];
+
+/** First candidate that is one of the allowed choices, otherwise the fallback. */
+function pickChoice<T extends string>(allowed: readonly T[], fallback: T, ...candidates: unknown[]): T {
+  const match = candidates.find(c => allowed.includes(c as T));
+  return match === undefined ? fallback : (match as T);
 }
 
 export function getMetricNames(rawMetrics: any): string[] {
@@ -179,6 +199,25 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     pivotColumnSubtotalLabel: pivotColumnSubtotalLabel || pivot_column_subtotal_label || 'Totale',
     pivotTimeDeltaMode: pivotTimeDeltaMode || pivot_time_delta_mode || 'none',
     pivotTimeDeltaLag: Number(pivotTimeDeltaLag || pivot_time_delta_lag || 1),
+    // Saved charts keep the control names timeGrain / referencePeriod / comparisonType.
+    comparisonTimeGrain: pickChoice(
+      TIME_GRAINS,
+      'year',
+      mergedFormData.comparisonTimeGrain,
+      mergedFormData.timeGrain,
+    ),
+    comparisonReferencePeriod: pickChoice(
+      REFERENCE_PERIODS,
+      'current',
+      mergedFormData.comparisonReferencePeriod,
+      mergedFormData.referencePeriod,
+    ),
+    comparisonStrategy: pickChoice(
+      COMPARISON_STRATEGIES,
+      'prev_period',
+      mergedFormData.comparisonStrategy,
+      mergedFormData.comparisonType,
+    ),
     goals: normalizeGoals(mergedFormData.goals),
   };
 }
