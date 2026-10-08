@@ -5,6 +5,7 @@ jest.mock('@superset-ui/core', () => ({
 
 import {
   sortTreeHierarchy,
+  sortTreeByExpression,
   calculateMinMaxBounds,
   buildMultiDimensionTree,
   filterTreeBySearch,
@@ -14,6 +15,7 @@ import {
   getHeatmapBgColor,
 } from '../src/utils/formatters';
 import { TreeNode } from '../src/types';
+import controlPanel from '../src/plugin/controlPanel';
 
 describe('In-Tree Hierarchical Sorting & Min/Max Conditional Formatting', () => {
   const sampleRecords = [
@@ -738,6 +740,152 @@ describe('In-Tree Hierarchical Sorting & Min/Max Conditional Formatting', () => 
       expect(calculateMinMaxBounds([], ['sales'], 'level_aware')).toEqual({ global: {}, byLevel: {} });
       expect(calculateMinMaxBounds([{ key: '1', id: '1', name: 'A', depth: 0, path: ['A'], isLeaf: true, metrics: { sales: 10 } }], []))
         .toEqual({ global: {}, byLevel: undefined });
+    });
+  });
+
+  describe('R4. Expression sorting & nullHandling', () => {
+    const leaf = (name: string, metrics: TreeNode['metrics'], depth = 0): TreeNode => ({
+      key: name,
+      id: name,
+      name,
+      depth,
+      path: [name],
+      isLeaf: true,
+      metrics,
+    });
+    const names = (nodes: TreeNode[]) => nodes.map(n => n.name);
+
+    it('sortMapStateToProps exposes structural keys and delta percentage expressions', () => {
+      const rows = controlPanel.controlPanelSections.flatMap((s: any) => s.controlSetRows.flat());
+      const control = rows.find((c: any) => c?.name === 'defaultSortColumn');
+      const { choices } = control.config.mapStateToProps({
+        controls: { metrics: { value: ['richieste_corr', { label: 'richieste_conf' }, 'sales'] } },
+      });
+      const values = choices.map((c: [string, string]) => c[0]);
+      expect(values).toEqual([
+        '__hierarchy_tree__',
+        '__tree_level__',
+        '__leaf_count__',
+        'richieste_corr',
+        'richieste_conf',
+        'sales',
+        'delta_richieste_pct',
+      ]);
+      expect(control.config.mapStateToProps({}).choices.map((c: [string, string]) => c[0])).toEqual([
+        '__hierarchy_tree__',
+        '__tree_level__',
+        '__leaf_count__',
+      ]);
+
+      const nullRow = rows.find((c: any) => c?.name === 'nullHandling');
+      expect(nullRow.config.default).toBe('bottom');
+      expect(nullRow.config.choices.map((c: [string, string]) => c[0])).toEqual(['bottom', 'top', 'exclude']);
+    });
+
+    it('sort expression delta resolves delta_richieste_pct through recomputeDerivedMetrics', () => {
+      const nodes = [
+        leaf('Low', { richieste_corr: 90, richieste_conf: 100 }),
+        leaf('High', { richieste_corr: 150, richieste_conf: 100 }),
+        leaf('Mid', { richieste_corr: 110, richieste_conf: 100 }),
+        leaf('Missing', { richieste_corr: 5, richieste_conf: null }),
+      ];
+      expect(names(sortTreeByExpression(nodes, 'delta_richieste_pct', 'desc'))).toEqual([
+        'High',
+        'Mid',
+        'Low',
+        'Missing',
+      ]);
+      expect(names(sortTreeByExpression(nodes, 'delta_richieste_pct', 'asc'))).toEqual([
+        'Low',
+        'Mid',
+        'High',
+        'Missing',
+      ]);
+      // The sort reads the virtual key without writing it into the node metrics.
+      expect(nodes[0].metrics).not.toHaveProperty('delta_richieste_pct');
+    });
+
+    it('sort expression delta prefers an already computed delta metric', () => {
+      const nodes = [
+        leaf('A', { richieste_corr: 1, richieste_conf: 1, delta_richieste_pct: 30 }),
+        leaf('B', { richieste_corr: 1, richieste_conf: 1, delta_richieste_pct: -10 }),
+      ];
+      expect(names(sortTreeByExpression(nodes, 'delta_richieste_pct', 'asc'))).toEqual(['B', 'A']);
+    });
+
+    it('sorts by the __leaf_count__ and __tree_level__ structural keys', () => {
+      const sortedByLeaves = sortTreeByExpression(tree, '__leaf_count__', 'desc');
+      // East and West hold two leaves each, Central one; ties keep their original order.
+      expect(sortedByLeaves[sortedByLeaves.length - 1].name).toBe('Central');
+      expect(names(sortTreeByExpression(tree, '__leaf_count__', 'asc'))[0]).toBe('Central');
+
+      const mixed = [leaf('Deep', {}, 2), leaf('Root', {}, 0), leaf('Mid', {}, 1)];
+      expect(names(sortTreeByExpression(mixed, '__tree_level__', 'asc'))).toEqual(['Root', 'Mid', 'Deep']);
+      expect(names(sortTreeByExpression(mixed, '__tree_level__', 'desc'))).toEqual(['Deep', 'Mid', 'Root']);
+    });
+
+    describe('nullHandling', () => {
+      const withNulls = () => [
+        leaf('Null', { sales: null }),
+        leaf('Ten', { sales: 10 }),
+        leaf('NaN', { sales: NaN }),
+        leaf('Thirty', { sales: 30 }),
+        leaf('Undef', { sales: undefined as unknown as null }),
+        leaf('Twenty', { sales: 20 }),
+      ];
+
+      it('nullHandling unset keeps null, NaN and undefined at the bottom for asc and desc', () => {
+        expect(names(sortTreeByExpression(withNulls(), 'sales', 'asc'))).toEqual([
+          'Ten',
+          'Twenty',
+          'Thirty',
+          'Null',
+          'NaN',
+          'Undef',
+        ]);
+        expect(names(sortTreeByExpression(withNulls(), 'sales', 'desc'))).toEqual([
+          'Thirty',
+          'Twenty',
+          'Ten',
+          'Null',
+          'NaN',
+          'Undef',
+        ]);
+        expect(names(sortTreeByExpression(withNulls(), 'sales', 'desc', 'bottom'))).toEqual(
+          names(sortTreeByExpression(withNulls(), 'sales', 'desc')),
+        );
+      });
+
+      it('nullHandling top moves empty values first for asc and desc', () => {
+        expect(names(sortTreeByExpression(withNulls(), 'sales', 'asc', 'top'))).toEqual([
+          'Null',
+          'NaN',
+          'Undef',
+          'Ten',
+          'Twenty',
+          'Thirty',
+        ]);
+        expect(names(sortTreeByExpression(withNulls(), 'sales', 'desc', 'top'))).toEqual([
+          'Null',
+          'NaN',
+          'Undef',
+          'Thirty',
+          'Twenty',
+          'Ten',
+        ]);
+      });
+
+      it('nullHandling exclude drops empty values but keeps the Grand Total', () => {
+        const nodes = [...withNulls(), { ...leaf('Grand Total', { sales: null }), key: '__grand_total__' }];
+        expect(names(sortTreeByExpression(nodes, 'sales', 'asc', 'exclude'))).toEqual([
+          'Grand Total',
+          'Ten',
+          'Twenty',
+          'Thirty',
+        ]);
+        // Without an active sort the rows stay untouched.
+        expect(sortTreeByExpression(withNulls(), 'sales', 'none', 'exclude')).toHaveLength(6);
+      });
     });
   });
 });

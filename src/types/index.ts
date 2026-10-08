@@ -12,6 +12,17 @@ export type AggregationFunction = 'sum' | 'avg' | 'min' | 'max' | 'count' | 'wei
 
 export type SortOrder = 'asc' | 'desc' | 'none';
 
+/** A metric key, a hierarchy dimension, a structural key, or a derived delta percentage. */
+export type SortExpression =
+  | string
+  | '__hierarchy_tree__'
+  | '__tree_level__'
+  | '__leaf_count__'
+  | `delta_${string}_pct`;
+
+/** Placement of null, NaN and undefined sort values; unset behaves as 'bottom'. */
+export type NullHandling = 'bottom' | 'top' | 'exclude';
+
 export type MinMaxDisplayMode = 'none' | 'badges' | 'heatmap' | 'data_bars';
 
 export type MinMaxScope = 'leaves_only' | 'level_aware' | 'all_nodes';
@@ -99,8 +110,9 @@ export interface HierarchicalTableFormData extends QueryFormData {
   pageSize: number;
 
   // Sorting & Conditional Formatting
-  defaultSortColumn?: string;
+  defaultSortColumn?: SortExpression;
   defaultSortOrder?: SortOrder;
+  nullHandling?: NullHandling;
   minMaxDisplayMode?: MinMaxDisplayMode;
   minMaxScope?: MinMaxScope;
 
@@ -206,7 +218,7 @@ export interface HierarchicalTableTransformedProps {
   stickyHeader: boolean;
   enableSearch: boolean;
   enableHierarchicalSort?: boolean;
-  defaultSortColumn?: string;
+  defaultSortColumn?: SortExpression;
   defaultSortOrder?: SortOrder;
   minMaxDisplayMode?: MinMaxDisplayMode;
   minMaxScope?: MinMaxScope;

@@ -468,19 +468,25 @@ const config: ControlPanelConfig = {
               mapStateToProps: (explore: any) => {
                 const rawMetrics = explore?.controls?.metrics?.value || explore?.controls?.metric?.value || [];
                 const metrics = Array.isArray(rawMetrics) ? rawMetrics : rawMetrics ? [rawMetrics] : [];
-                const metricChoices = metrics.map((m: any) => {
-                  const val = typeof m === 'string' ? m : m?.label || m?.metric_name || String(m);
-                  return [val, val];
-                });
+                const names: string[] = metrics.map((m: any) =>
+                  typeof m === 'string' ? m : m?.label || m?.metric_name || String(m),
+                );
+                // A current-period metric `x_corr` offers its derived `delta_x_pct` expression.
+                const deltas = names
+                  .map(n => n.match(/^(.+)_corr$/)?.[1])
+                  .filter(Boolean)
+                  .map(b => `delta_${b}_pct`);
                 return {
                   choices: [
                     ['__hierarchy_tree__', t('Hierarchy Category (Name)')],
-                    ...metricChoices,
+                    ['__tree_level__', t('Tree Level')],
+                    ['__leaf_count__', t('Leaf Count')],
+                    ...[...names, ...deltas].map(v => [v, v]),
                   ],
                 };
               },
               description: t(
-                'Select Hierarchy Category or any configured metric for default sorting.',
+                'Hierarchy, structure, metric or delta % key for default sorting.',
               ),
             },
           },
@@ -497,6 +503,20 @@ const config: ControlPanelConfig = {
                 ['desc', t('Descending / Z-A')],
               ],
               description: t('Initial sort direction on chart load.'),
+            },
+          },
+          {
+            name: 'nullHandling',
+            config: {
+              type: 'SelectControl',
+              label: t('Empty Values'),
+              default: 'bottom',
+              renderTrigger: true,
+              choices: [
+                ['bottom', t('Bottom')],
+                ['top', t('Top')],
+                ['exclude', t('Exclude')],
+              ],
             },
           },
         ],

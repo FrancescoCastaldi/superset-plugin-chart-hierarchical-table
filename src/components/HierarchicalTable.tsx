@@ -13,7 +13,7 @@ import {
 } from '../types';
 import {
   filterTreeBySearch,
-  sortTreeHierarchy,
+  sortTreeByExpression,
   calculateMinMaxBounds,
 } from '../utils/treeBuilder';
 import { getNormalizedMetricValue, getHeatmapBgColor } from '../utils/formatters';
@@ -321,6 +321,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     onCrossFilter,
     onClearFilter,
   } = props;
+  const nullHandling = props.formData?.nullHandling;
 
   const [activeDisplayMode, setActiveDisplayMode] = useState<HierarchyValueDisplayMode>(
     valueDisplayMode || 'all',
@@ -466,8 +467,8 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     if (!enableHierarchicalSort || sortDirection === 'none' || !sortColumn) {
       return data;
     }
-    return sortTreeHierarchy(data, sortColumn, sortDirection, dimensions, grandTotalPosition);
-  }, [data, dimensions, enableHierarchicalSort, grandTotalPosition, sortColumn, sortDirection]);
+    return sortTreeByExpression(data, sortColumn, sortDirection, nullHandling, dimensions, grandTotalPosition);
+  }, [data, dimensions, enableHierarchicalSort, grandTotalPosition, nullHandling, sortColumn, sortDirection]);
 
   // Filtered data tree based on search
   const filteredData = useMemo(() => {

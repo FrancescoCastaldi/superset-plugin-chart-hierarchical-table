@@ -1,6 +1,6 @@
 import { DataRecord } from '@superset-ui/core';
-import { TreeNode, SortOrder, MinMaxScope, MinMaxBoundsMap } from '../types';
-import { rollupTreeMetrics, isDerivedMetric, rollupFunction } from './aggregations';
+import { TreeNode, SortOrder, MinMaxScope, MinMaxBoundsMap, NullHandling, SortExpression } from '../types';
+import { rollupTreeMetrics, isDerivedMetric, rollupFunction, recomputeDerivedMetrics } from './aggregations';
 
 /**
  * Builds a hierarchical tree from flat records using an ordered list of dimensions.
@@ -357,11 +357,16 @@ export function filterTreeBySearch(nodes: TreeNode[], searchTerm: string): TreeN
   return results;
 }
 
+const countLeaves = (node: TreeNode): number =>
+  node.children?.length ? node.children.reduce((n, c) => n + countLeaves(c), 0) : 1;
+
 /**
  * Helper to extract or aggregate metric value for a node during sorting.
  * In Pivot Matrix Mode, aggregates composite keys (e.g. 'sales___2023' + 'sales___2024' when sorting by 'sales').
  */
 function getNodeMetricValue(node: TreeNode, sortColumn: string): any {
+  if (sortColumn === '__tree_level__') return node.depth;
+  if (sortColumn === '__leaf_count__') return countLeaves(node);
   const directVal = node.metrics?.[sortColumn] ?? node.subtotals?.[sortColumn];
   if (directVal !== undefined) {
     return directVal;
@@ -393,27 +398,55 @@ function getNodeMetricValue(node: TreeNode, sortColumn: string): any {
     if (hasNum) return sum;
   }
 
+  if (/^delta_.+_pct$/.test(sortColumn)) {
+    // Virtual delta expressions are evaluated on a copy so the node metrics stay untouched.
+    const metrics = { ...node.subtotals, ...node.metrics };
+    recomputeDerivedMetrics(metrics, [...Object.keys(metrics), sortColumn]);
+    return metrics[sortColumn];
+  }
+
   return undefined;
 }
+
+const isEmptySortValue = (v: any) => v == null || v === '' || Number.isNaN(v);
+
+const isGrandTotal = (n: TreeNode) => n.key === '__grand_total__' || n.id === '__grand_total__';
 
 /**
  * Recursively sorts tree nodes sibling-by-sibling preserving parent-child tree hierarchy.
  */
-export function sortTreeHierarchy(
+export const sortTreeHierarchy = (
   nodes: TreeNode[],
-  sortColumn?: string,
+  sortColumn?: SortExpression,
   sortOrder?: SortOrder,
+  dimensions?: string[],
+  grandTotalPosition: 'top' | 'bottom' = 'top',
+): TreeNode[] =>
+  sortTreeByExpression(nodes, sortColumn, sortOrder, undefined, dimensions, grandTotalPosition);
+
+/**
+ * Sibling-aware recursive sort by a metric, hierarchy, structural key (`__tree_level__`,
+ * `__leaf_count__`) or virtual `delta_*_pct` expression. Empty values (null, NaN, undefined)
+ * go to the bottom in both directions unless nullHandling is 'top' or 'exclude'.
+ */
+export function sortTreeByExpression(
+  nodes: TreeNode[],
+  sortColumn?: SortExpression,
+  sortOrder?: SortOrder,
+  nullHandling?: NullHandling,
   dimensions?: string[],
   grandTotalPosition: 'top' | 'bottom' = 'top',
 ): TreeNode[] {
   if (!nodes || nodes.length === 0) return [];
-  if (!sortColumn || !sortOrder || sortOrder === 'none') {
-    return nodes.map(node => ({
+  const recurse = (list: TreeNode[]) =>
+    list.map(node => ({
       ...node,
       children: node.children
-        ? sortTreeHierarchy(node.children, sortColumn, sortOrder, dimensions, grandTotalPosition)
+        ? sortTreeByExpression(node.children, sortColumn, sortOrder, nullHandling, dimensions, grandTotalPosition)
         : node.children,
     }));
+  if (!sortColumn || !sortOrder || sortOrder === 'none') {
+    return recurse(nodes);
   }
 
   const isHierarchyCol =
@@ -422,11 +455,16 @@ export function sortTreeHierarchy(
     sortColumn === 'hierarchy' ||
     sortColumn === 'category' ||
     Boolean(dimensions && dimensions.includes(sortColumn));
+  const nullSign = nullHandling === 'top' ? -1 : 1;
 
-  const sorted = [...nodes].sort((a, b) => {
+  const sorted = (
+    nullHandling === 'exclude' && !isHierarchyCol
+      ? nodes.filter(n => isGrandTotal(n) || !isEmptySortValue(getNodeMetricValue(n, sortColumn)))
+      : [...nodes]
+  ).sort((a, b) => {
     // Keep Grand Total pinned at the top or bottom if present in nodes
-    const aIsGrandTotal = a.key === '__grand_total__' || a.id === '__grand_total__';
-    const bIsGrandTotal = b.key === '__grand_total__' || b.id === '__grand_total__';
+    const aIsGrandTotal = isGrandTotal(a);
+    const bIsGrandTotal = isGrandTotal(b);
     if (aIsGrandTotal && bIsGrandTotal) return 0;
     if (grandTotalPosition === 'bottom') {
       if (aIsGrandTotal) return 1;
@@ -446,12 +484,12 @@ export function sortTreeHierarchy(
     const valA = getNodeMetricValue(a, sortColumn);
     const valB = getNodeMetricValue(b, sortColumn);
 
-    const isANull = valA === null || valA === undefined || valA === '';
-    const isBNull = valB === null || valB === undefined || valB === '';
+    const isANull = isEmptySortValue(valA);
+    const isBNull = isEmptySortValue(valB);
 
     if (isANull && isBNull) return 0;
-    if (isANull) return 1; // nulls at the end
-    if (isBNull) return -1;
+    if (isANull) return nullSign;
+    if (isBNull) return -nullSign;
 
     const numA =
       typeof valA === 'number'
@@ -485,12 +523,7 @@ export function sortTreeHierarchy(
     return sortOrder === 'asc' ? strCmp : -strCmp;
   });
 
-  return sorted.map(node => ({
-    ...node,
-    children: node.children
-      ? sortTreeHierarchy(node.children, sortColumn, sortOrder, dimensions, grandTotalPosition)
-      : node.children,
-  }));
+  return recurse(sorted);
 }
 
 /**
@@ -521,7 +554,7 @@ export function calculateMinMaxBounds(
 
   function traverse(nodeList: TreeNode[]) {
     for (const node of nodeList) {
-      if (node.key === '__grand_total__' || node.id === '__grand_total__') {
+      if (isGrandTotal(node)) {
         continue;
       }
 
