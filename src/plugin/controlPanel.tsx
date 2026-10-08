@@ -6,6 +6,11 @@ import {
 
 const t = (str: string) => str;
 
+// Explore renders a React element placed in a control row as-is: this gives macro-sections
+// visual sub-groups while controlPanelSections stays a flat list of sections.
+const subsectionHeader = (label: string) => <h4 className="section-header">{label}</h4>;
+const subsectionDivider = () => <hr />;
+
 export const CUSTOM_D3_FORMAT_OPTIONS: [string, string][] = [
   ['SMART_NUMBER', 'Adaptive formatting (Smart Number)'],
   [',d', '1,234 (Integer)'],
@@ -20,7 +25,7 @@ export const CUSTOM_D3_FORMAT_OPTIONS: [string, string][] = [
 const config: ControlPanelConfig = {
   controlPanelSections: [
     {
-      label: t('Query Configuration'),
+      label: t('Data'),
       expanded: true,
       controlSetRows: [
         [
@@ -265,13 +270,13 @@ const config: ControlPanelConfig = {
           },
         ],
         ['adhoc_filters'],
-        ['row_limit'],
       ],
     },
     {
-      label: t('Hierarchy & Tree Display Options'),
+      label: t('Customize'),
       expanded: true,
       controlSetRows: [
+        [subsectionHeader(t('Hierarchy & Tree Display Options'))],
         [
           {
             name: 'initialExpandDepth',
@@ -393,12 +398,8 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-      ],
-    },
-    {
-      label: t('Sorting & Conditional Formatting'),
-      expanded: true,
-      controlSetRows: [
+        [subsectionDivider()],
+        [subsectionHeader(t('Sorting & Conditional Formatting'))],
         [
           {
             name: 'defaultSortColumn',
@@ -483,13 +484,53 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-
+        [subsectionDivider()],
+        [subsectionHeader(t('Formatting & Aesthetics'))],
+        [
+          {
+            name: 'numberFormat',
+            config: {
+              type: 'SelectControl',
+              freeForm: true,
+              label: t('Number Format'),
+              renderTrigger: true,
+              default: 'SMART_NUMBER',
+              choices: CUSTOM_D3_FORMAT_OPTIONS || D3_FORMAT_OPTIONS,
+              description: t('D3 format string for numerical metric values.'),
+            },
+          },
+        ],
+        [
+          {
+            name: 'currencySymbol',
+            config: {
+              type: 'TextControl',
+              label: t('Currency Symbol Prefix'),
+              renderTrigger: true,
+              default: '',
+              description: t('Optional prefix (e.g. €, $, £) for metrics.'),
+            },
+          },
+        ],
+        [
+          {
+            name: 'stripedRows',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Striped Alternating Rows'),
+              renderTrigger: true,
+              default: true,
+              description: t('Alternating background color for easier reading.'),
+            },
+          },
+        ],
       ],
     },
     {
-      label: t('Time Comparison & Period-over-Period Variance'),
+      label: t('Comparison & Analysis'),
       expanded: false,
       controlSetRows: [
+        [subsectionHeader(t('Time Comparison & Period-over-Period Variance'))],
         [
           {
             name: 'showVarianceDelta',
@@ -553,12 +594,8 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-      ],
-    },
-    {
-      label: t('Advanced Rollup Calculations'),
-      expanded: false,
-      controlSetRows: [
+        [subsectionDivider()],
+        [subsectionHeader(t('Advanced Rollup Calculations'))],
         [
           {
             name: 'aggregationMode',
@@ -595,48 +632,9 @@ const config: ControlPanelConfig = {
       ],
     },
     {
-      label: t('Formatting & Aesthetics'),
+      label: t('Performance & Limits'),
       expanded: false,
-      controlSetRows: [
-        [
-          {
-            name: 'numberFormat',
-            config: {
-              type: 'SelectControl',
-              freeForm: true,
-              label: t('Number Format'),
-              renderTrigger: true,
-              default: 'SMART_NUMBER',
-              choices: CUSTOM_D3_FORMAT_OPTIONS || D3_FORMAT_OPTIONS,
-              description: t('D3 format string for numerical metric values.'),
-            },
-          },
-        ],
-        [
-          {
-            name: 'currencySymbol',
-            config: {
-              type: 'TextControl',
-              label: t('Currency Symbol Prefix'),
-              renderTrigger: true,
-              default: '',
-              description: t('Optional prefix (e.g. €, $, £) for metrics.'),
-            },
-          },
-        ],
-        [
-          {
-            name: 'stripedRows',
-            config: {
-              type: 'CheckboxControl',
-              label: t('Striped Alternating Rows'),
-              renderTrigger: true,
-              default: true,
-              description: t('Alternating background color for easier reading.'),
-            },
-          },
-        ],
-      ],
+      controlSetRows: [['row_limit']],
     },
   ],
 };
