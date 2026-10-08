@@ -9,6 +9,7 @@ import {
   MinMaxScope,
   HierarchyValueDisplayMode,
   MetricGoal,
+  ConditionalFormattingRule,
 } from '../types';
 import {
   filterTreeBySearch,
@@ -19,11 +20,14 @@ import { getNormalizedMetricValue, getHeatmapBgColor } from '../utils/formatters
 import { ColumnMeta, buildColumnMetaMap, getDisplayColumns } from '../utils/tableColumns';
 import { buildCsvRows, downloadCsv, serializeCsv } from '../utils/csvExport';
 import { GOAL_STATUS_LABELS, computeGoalDelta, formatGoalDelta } from '../utils/goalBenchmark';
+import { firstByPriority } from '../utils/conditionalFormatting';
+import { buildColumnConditionalFormat } from '../plugin/columnBuilders';
 import './HierarchicalTable.css';
 
 export type { ColumnMeta } from '../utils/tableColumns';
 
 const NO_GOALS: MetricGoal[] = [];
+const NO_RULES: ConditionalFormattingRule[] = [];
 
 function GoalBadge({
   value,
@@ -96,6 +100,20 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
       : Boolean(node.isLeaf || !hasChildren)
     : false;
 
+  const renderValues =
+    activeDisplayMode === 'all'
+      ? true
+      : activeDisplayMode === 'leaves_only'
+      ? !hasChildren
+      : hasChildren;
+  const cellValue = (key: string) => node.metrics?.[key] ?? node.subtotals?.[key];
+  const cellFormats = displayCols.map(col =>
+    renderValues ? columnMetaMap.get(col.key)?.conditionalFormat?.(cellValue(col.key)) : null,
+  );
+  // A row-scoped match formats every metric cell of the row, competing by priority with the
+  // cell's own match.
+  const rowFormat = firstByPriority(cellFormats.filter(format => format?.scope === 'row'));
+
   return (
     <tr
       className={classNames({
@@ -141,20 +159,15 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
       </td>
 
       {/* Metric / Pivot Columns */}
-      {displayCols.map(col => {
-        const renderValues =
-          activeDisplayMode === 'all'
-            ? true
-            : activeDisplayMode === 'leaves_only'
-            ? !hasChildren
-            : hasChildren;
-
+      {displayCols.map((col, index) => {
         if (!renderValues) {
           return <td key={col.key} className="metric-cell empty-metric-cell" />;
         }
 
         const meta = columnMetaMap.get(col.key);
-        const val = node.metrics?.[col.key] ?? node.subtotals?.[col.key];
+        const val = cellValue(col.key);
+        // A matching rule replaces the heatmap background with its own colours.
+        const format = firstByPriority([rowFormat, cellFormats[index]]);
         const isDelta = meta?.isDelta ?? false;
         const isNuovo = val === 'Nuovo';
 
@@ -221,11 +234,11 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
         return (
           <td
             key={col.key}
-            className={classNames('metric-cell', {
+            className={classNames('metric-cell', format?.className, {
               'pivot-row-totals-cell': col.key.includes('___ROW_TOTAL'),
               'pivot-subtotal-cell': col.key.includes('___SUBTOTAL'),
             })}
-            style={cellStyle}
+            style={format ? format.style : cellStyle}
           >
             {minMaxDisplayMode === 'badges' ? (
               <div className="metric-cell-badges-wrapper">
@@ -291,6 +304,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     stripedRows = true,
     emitFilter = true,
     goals = NO_GOALS,
+    conditionalFormatting = NO_RULES,
     onCrossFilter,
     onClearFilter,
   } = props;
@@ -543,8 +557,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
   // Pre-computed column metadata (avoids 10k+ string checks during rendering)
   const columnMetaMap = useMemo(
-    () => buildColumnMetaMap(displayCols, goals),
-    [displayCols, goals],
+    () =>
+      buildColumnMetaMap(displayCols, goals, col =>
+        buildColumnConditionalFormat(col, conditionalFormatting),
+      ),
+    [displayCols, goals, conditionalFormatting],
   );
 
   // Min/Max bounds calculation for conditional formatting

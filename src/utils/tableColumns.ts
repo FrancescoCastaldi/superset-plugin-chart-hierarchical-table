@@ -1,4 +1,5 @@
 import { MetricGoal, TableColumn } from '../types';
+import type { CellConditionalFormat } from '../plugin/columnBuilders';
 import { findColumnGoal } from './goalBenchmark';
 
 export interface ColumnMeta {
@@ -8,6 +9,7 @@ export interface ColumnMeta {
   formatter?: (val: any) => string;
   isDelta: boolean;
   goal?: MetricGoal;
+  conditionalFormat?: CellConditionalFormat;
 }
 
 /**
@@ -38,10 +40,12 @@ export function isDeltaColumn(col: Pick<TableColumn, 'key' | 'title'>): boolean 
 
 /**
  * Pre-computed column metadata so that rows do not repeat string checks for every cell.
+ * `conditionalFormatFor` is buildColumnConditionalFormat bound to the chart rules.
  */
 export function buildColumnMetaMap(
   displayCols: TableColumn[],
   goals: MetricGoal[] = [],
+  conditionalFormatFor?: (col: TableColumn) => CellConditionalFormat | undefined,
 ): Map<string, ColumnMeta> {
   const map = new Map<string, ColumnMeta>();
   for (const col of displayCols) {
@@ -54,6 +58,8 @@ export function buildColumnMetaMap(
     };
     const goal = findColumnGoal(col, goals);
     if (goal) meta.goal = goal;
+    const conditionalFormat = conditionalFormatFor?.(col);
+    if (conditionalFormat) meta.conditionalFormat = conditionalFormat;
     map.set(col.key, meta);
   }
   return map;

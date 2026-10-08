@@ -11,6 +11,39 @@ const t = (str: string) => str;
 const subsectionHeader = (label: string) => <h4 className="section-header">{label}</h4>;
 const subsectionDivider = () => <hr />;
 
+// Explore also accepts a component as control type: the list is edited as JSON and stored in
+// the form data as a real array; text that does not parse to an array is not saved.
+function ArrayControl({
+  label,
+  description,
+  value,
+  onChange,
+}: {
+  label?: string;
+  description?: string;
+  value?: unknown[];
+  onChange?: (value: unknown[]) => void;
+}) {
+  return (
+    <label title={description}>
+      {label}
+      <textarea
+        rows={6}
+        style={{ width: '100%' }}
+        defaultValue={JSON.stringify(value ?? [], null, 2)}
+        onChange={e => {
+          try {
+            const parsed = JSON.parse(e.target.value);
+            if (Array.isArray(parsed)) onChange?.(parsed);
+          } catch {
+            // Incomplete JSON while typing: the last valid list stays saved.
+          }
+        }}
+      />
+    </label>
+  );
+}
+
 // The time comparison reads its periods from the values of a single pivot column.
 const isSinglePivot = ({ controls }: { controls: any }) =>
   controls?.hierarchyType?.value === 'multi_dimension' &&
@@ -486,6 +519,22 @@ const config: ControlPanelConfig = {
               ],
               description: t(
                 'Scope used to calculate min and max values. Leaf nodes only prevents parent aggregations from distorting scale.',
+              ),
+            },
+          },
+        ],
+        [
+          {
+            name: 'conditionalFormatting',
+            config: {
+              type: ArrayControl,
+              label: t('Conditional Formatting Rules'),
+              default: [],
+              renderTrigger: true,
+              description: t(
+                'JSON rules, e.g. [{"metric": "revenue", "operator": ">", "targetValue": 100, "priority": 1, "scope": "cell"}]. ' +
+                  'Operators < <= == >= > between (targetValue2) regex; scope cell, row, column (pivot value). ' +
+                  'Priority 1 wins (green, 2 amber, 3+ red).',
               ),
             },
           },

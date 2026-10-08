@@ -39,15 +39,22 @@ export interface MinMaxBoundsMap {
   byLevel?: Record<string, Record<number, MinMaxBound>>;
 }
 
+export type ConditionalFormattingScope = 'cell' | 'row' | 'column';
+
 export interface ConditionalFormattingRule {
   metric: string;
-  operator: '>' | '>=' | '<' | '<=' | '==' | 'between';
-  targetValue: number;
+  operator: '>' | '>=' | '<' | '<=' | '==' | 'between' | 'regex';
+  /** Threshold of the comparison operators, or the pattern of the regex operator. */
+  targetValue: number | string;
   targetValue2?: number;
   colorScheme: 'red_green' | 'green_red' | 'blues' | 'custom';
   backgroundColor?: string;
   textColor?: string;
   highlightRow?: boolean;
+  /** Conflict resolution: ascending, the first matching rule wins (1 is the highest). */
+  priority?: number;
+  /** Defaults to 'row' when highlightRow is set, 'cell' otherwise. */
+  scope?: ConditionalFormattingScope;
 }
 
 export interface HierarchicalTableFormData extends QueryFormData {
@@ -201,6 +208,7 @@ export interface HierarchicalTableTransformedProps {
   stripedRows: boolean;
   emitFilter: boolean;
   goals?: MetricGoal[];
+  conditionalFormatting?: ConditionalFormattingRule[];
   filterState?: {
     value?: any;
     selectedValues?: string[];

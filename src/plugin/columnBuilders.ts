@@ -1,4 +1,15 @@
-import { PivotHeaderGroup, PivotRowTotalsPosition, PivotTimeDeltaMode, TableColumn } from '../types';
+import {
+  ConditionalFormattingRule,
+  PivotHeaderGroup,
+  PivotRowTotalsPosition,
+  PivotTimeDeltaMode,
+  TableColumn,
+} from '../types';
+import {
+  ConditionalFormatMatch,
+  applyConditionalFormatting,
+  firstByPriority,
+} from '../utils/conditionalFormatting';
 import { formatMetricValue } from '../utils/formatters';
 import {
   PERIOD_DELTA_PCT_SUFFIX,
@@ -44,6 +55,32 @@ export function createMetricFormatter(format: ValueFormat, metricName: string) {
 
 export function formatSignedPercent(val: any): string {
   return val === null || val === undefined ? '-' : `${val > 0 ? '+' : ''}${val}%`;
+}
+
+/** Conditional format of one cell of a column from its value; null when no rule applies. */
+export type CellConditionalFormat = (value: unknown) => ConditionalFormatMatch | null;
+
+/**
+ * Conditional formatting metadata of a generated column, from the rules of its metric
+ * (`baseMetric` for pivot cells, the key otherwise). Column-scoped rules are resolved once,
+ * against the pivot value of the column (its key outside pivots); cell and row rules are
+ * resolved per cell value, and the two outcomes compete by priority.
+ */
+export function buildColumnConditionalFormat(
+  column: Pick<TableColumn, 'key' | 'pivotValue' | 'baseMetric'>,
+  rules: ConditionalFormattingRule[],
+): CellConditionalFormat | undefined {
+  const metricKey = column.baseMetric ?? column.key;
+  const own = rules.filter(rule => rule.metric === metricKey);
+  if (own.length === 0) return undefined;
+  const columnMatch = applyConditionalFormatting(
+    column.pivotValue ?? column.key,
+    metricKey,
+    own.filter(rule => rule.scope === 'column'),
+  );
+  const valueRules = own.filter(rule => rule.scope !== 'column');
+  return value =>
+    firstByPriority([applyConditionalFormatting(value, metricKey, valueRules), columnMatch]);
 }
 
 function includesAbsoluteDelta(mode: PivotTimeDeltaMode): boolean {

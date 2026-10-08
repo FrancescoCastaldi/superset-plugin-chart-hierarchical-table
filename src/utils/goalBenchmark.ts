@@ -63,7 +63,7 @@ export function formatGoalDelta(
   return `${delta.deltaAbsolute > 0 ? '+' : ''}${formatValue(delta.deltaAbsolute)}`;
 }
 
-function toFiniteNumber(value: unknown): number | null {
+export function toFiniteNumber(value: unknown): number | null {
   if (typeof value === 'number') return Number.isFinite(value) ? value : null;
   if (typeof value === 'string' && value.trim() !== '') {
     const parsed = Number(value);

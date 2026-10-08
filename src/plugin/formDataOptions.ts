@@ -3,6 +3,7 @@ import {
   ComparisonReferencePeriod,
   ComparisonStrategy,
   ComparisonTimeGrain,
+  ConditionalFormattingRule,
   HierarchyType,
   HierarchyValueDisplayMode,
   MetricGoal,
@@ -13,6 +14,7 @@ import {
   PivotTimeDeltaMode,
   SortOrder,
 } from '../types';
+import { normalizeConditionalFormatting } from '../utils/conditionalFormatting';
 import { normalizeGoals } from '../utils/goalBenchmark';
 
 /**
@@ -59,6 +61,7 @@ export interface TransformOptions {
   comparisonReferencePeriod: ComparisonReferencePeriod;
   comparisonStrategy: ComparisonStrategy;
   goals: MetricGoal[];
+  conditionalFormatting: ConditionalFormattingRule[];
   /** Weight metric of the weighted_avg roll-up; empty for every other aggregation mode. */
   weightColumn: string;
 }
@@ -221,6 +224,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
       mergedFormData.comparisonType,
     ),
     goals: normalizeGoals(mergedFormData.goals),
+    conditionalFormatting: normalizeConditionalFormatting(mergedFormData.conditionalFormatting),
     weightColumn:
       mergedFormData.aggregationMode === 'weighted_avg'
         ? String(mergedFormData.weightColumn ?? '').trim()

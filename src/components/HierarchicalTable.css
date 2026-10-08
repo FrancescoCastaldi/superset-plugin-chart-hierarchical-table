@@ -517,6 +517,22 @@
   border-color: #fca5a5;
 }
 
+/* Conditional formatting by rule priority: 1 success, 2 warning, 3 and beyond danger */
+.hierarchical-table td.ht-cond-1 {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.hierarchical-table td.ht-cond-2 {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.hierarchical-table td.ht-cond-3 {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
 /* Toolbar Export Button */
 .toolbar-export-btn {
   background: #f8fafc;
