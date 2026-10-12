@@ -39,7 +39,13 @@ export function buildMultiDimensionTree(
       const pivotParts: string[] = [];
       for (const pDim of pivotDimensions) {
         const rawP = record[pDim];
-        pivotParts.push(rawP !== null && rawP !== undefined ? String(rawP) : '(Empty)');
+        pivotParts.push(
+          rawP !== null && rawP !== undefined
+            ? typeof rawP === 'number' && rawP > 1e11 && rawP < 3e12
+              ? new Date(rawP).toISOString().slice(0, 10)
+              : String(rawP)
+            : '(Empty)',
+        );
       }
       pivotKey = pivotParts.join(' - ');
       if (isMultiPivot) {
@@ -51,7 +57,12 @@ export function buildMultiDimensionTree(
     for (let i = 0; i < dimensions.length; i++) {
       const dim = dimensions[i];
       const rawVal = record[dim];
-      const val = rawVal !== null && rawVal !== undefined ? String(rawVal) : '(Empty)';
+      const val =
+        rawVal !== null && rawVal !== undefined
+          ? typeof rawVal === 'number' && rawVal > 1e11 && rawVal < 3e12
+            ? new Date(rawVal).toISOString().slice(0, 10)
+            : String(rawVal)
+          : '(Empty)';
       currentPath.push(val);
 
       const pathKey = currentPath.join(' > ');
