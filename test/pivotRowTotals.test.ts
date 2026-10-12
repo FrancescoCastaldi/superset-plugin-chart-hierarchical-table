@@ -96,6 +96,61 @@ describe('Two-Way Pivot Matrix Grid & Horizontal Row Totals', () => {
       const sumSlot1 = (grandTotal.metrics['totale___01:00-02:00'] as number) || 0; // 19 + 26 = 45
       expect(sumSlot0 + sumSlot1).toBe(grandTotal.metrics['totale___ROW_TOTAL']); // 92 + 45 = 137
     });
+
+    it('computes level-aware ROW_TOTAL for Sportelli Attivi across pivot months (MAX per Sportello, SUM of distinct Sportelli per Sede)', () => {
+      const sportelliRecords: DataRecord[] = [
+        // Ascoli > SPORTELLO 1 attivo sia a Settembre (09) su due servizi che a Ottobre (10)
+        { SedeDescrizione: 'Ascoli Piceno', Sportello: 'SPORTELLO 1', ServizioDescrizione: 'Prelievi', Mese: '09', 'Sportelli Attivi': 1, Serviti: 100 },
+        { SedeDescrizione: 'Ascoli Piceno', Sportello: 'SPORTELLO 1', ServizioDescrizione: 'Accettazione', Mese: '09', 'Sportelli Attivi': 1, Serviti: 50 },
+        { SedeDescrizione: 'Ascoli Piceno', Sportello: 'SPORTELLO 1', ServizioDescrizione: 'Prelievi', Mese: '10', 'Sportelli Attivi': 1, Serviti: 120 },
+        // Ascoli > SPORTELLO 2 attivo solo a Settembre (09)
+        { SedeDescrizione: 'Ascoli Piceno', Sportello: 'SPORTELLO 2', ServizioDescrizione: 'Prelievi', Mese: '09', 'Sportelli Attivi': 1, Serviti: 80 },
+        // Ascoli > SPORTELLO 3 attivo solo a Ottobre (10)
+        { SedeDescrizione: 'Ascoli Piceno', Sportello: 'SPORTELLO 3', ServizioDescrizione: 'Prelievi', Mese: '10', 'Sportelli Attivi': 1, Serviti: 90 },
+        // Ascoli > ZEROCODA (0 sportelli attivi CUP)
+        { SedeDescrizione: 'Ascoli Piceno', Sportello: 'ZEROCODA', ServizioDescrizione: 'Prelievi ZC', Mese: '09', 'Sportelli Attivi': 0, Serviti: 70 },
+        { SedeDescrizione: 'Ascoli Piceno', Sportello: 'ZEROCODA', ServizioDescrizione: 'Prelievi ZC', Mese: '10', 'Sportelli Attivi': 0, Serviti: 69 },
+      ];
+      const hierDims = ['SedeDescrizione', 'Sportello', 'ServizioDescrizione'];
+      const spMetrics = ['Sportelli Attivi', 'Serviti'];
+      const months = ['09', '10'];
+
+      const tree = buildMultiDimensionTree(sportelliRecords, hierDims, spMetrics, ['Mese'], 'sum');
+      computeHorizontalRowTotals(tree, spMetrics, months, 'sum', hierDims);
+
+      const ascoli = tree[0];
+      const sp1 = ascoli.children!.find(c => c.name === 'SPORTELLO 1')!;
+      const sp2 = ascoli.children!.find(c => c.name === 'SPORTELLO 2')!;
+      const sp3 = ascoli.children!.find(c => c.name === 'SPORTELLO 3')!;
+      const zc = ascoli.children!.find(c => c.name === 'ZEROCODA')!;
+
+      // SPORTELLO 1: attivo in 09 (1) e in 10 (1) -> ROW_TOTAL = 1 (MAX, non 2)
+      expect(sp1.metrics['Sportelli Attivi___09']).toBe(1);
+      expect(sp1.metrics['Sportelli Attivi___10']).toBe(1);
+      expect(sp1.metrics['Sportelli Attivi___ROW_TOTAL']).toBe(1);
+      expect(sp1.metrics['Serviti___ROW_TOTAL']).toBe(270);
+
+      // SPORTELLO 2: attivo in 09 (1), assente in 10 -> ROW_TOTAL = 1
+      expect(sp2.metrics['Sportelli Attivi___09']).toBe(1);
+      expect(sp2.metrics['Sportelli Attivi___ROW_TOTAL']).toBe(1);
+
+      // SPORTELLO 3: assente in 09, attivo in 10 (1) -> ROW_TOTAL = 1
+      expect(sp3.metrics['Sportelli Attivi___10']).toBe(1);
+      expect(sp3.metrics['Sportelli Attivi___ROW_TOTAL']).toBe(1);
+
+      // ZEROCODA: 0 in entrambi -> ROW_TOTAL = 0
+      expect(zc.metrics['Sportelli Attivi___ROW_TOTAL']).toBe(0);
+      expect(zc.metrics['Serviti___ROW_TOTAL']).toBe(139);
+
+      // Ascoli Piceno (depth 0 < entityDepth 1):
+      // Mese 09: SP1 (1) + SP2 (1) + ZC (0) = 2 sportelli attivi
+      // Mese 10: SP1 (1) + SP3 (1) + ZC (0) = 2 sportelli attivi
+      // ROW_TOTAL complessivo nel bimestre: SP1 (1) + SP2 (1) + SP3 (1) + ZC (0) = 3 sportelli distinti attivi!
+      expect(ascoli.metrics['Sportelli Attivi___09']).toBe(2);
+      expect(ascoli.metrics['Sportelli Attivi___10']).toBe(2);
+      expect(ascoli.metrics['Sportelli Attivi___ROW_TOTAL']).toBe(3);
+      expect(ascoli.metrics['Serviti___ROW_TOTAL']).toBe(579);
+    });
   });
 
   describe('transformProps with pivotRowTotalsPosition', () => {

@@ -41,10 +41,11 @@ export function isDerivedMetric(metricName: string): boolean {
 }
 
 /**
- * Checks if a metric is an average or rate that should use weighted average rather than sum.
+ * Checks if a metric is an average, duration, or rate that should use weighted average rather than sum.
  */
 export function isRateMetric(metricName: string): boolean {
   const m = metricName.toLowerCase();
+  const isDelta = m.includes('delta') || m.includes('variazione') || m.includes('diff');
   return (
     m.includes('lt_off') ||
     m.includes('acc_corr') ||
@@ -52,7 +53,7 @@ export function isRateMetric(metricName: string): boolean {
     m.includes('attesa') ||
     m.includes('accettazione') ||
     m.includes('tasso') ||
-    (m.includes('%') && !m.includes('delta') && !m.includes('variazione') && !m.includes('diff'))
+    (!isDelta && (m.includes('%') || m.includes('tempo') || m.includes('durata') || m.includes('media')))
   );
 }
 
@@ -68,6 +69,73 @@ function splitMetricKey(key: string): { base: string; suffix: string } {
     };
   }
   return { base: key, suffix: '' };
+}
+
+/**
+ * Checks if a metric represents a count of distinct physical entities (e.g. 'Sportelli Attivi')
+ * that should roll up via MAX at and below the entity's hierarchy depth, and via SUM above it.
+ */
+export function isDistinctEntityMetric(metricName: string): boolean {
+  const { base } = splitMetricKey(metricName);
+  const m = base.toLowerCase().trim();
+  return (
+    m.includes('sportelli attivi') ||
+    m.includes('sportelli_attivi') ||
+    m.includes('sedi attive') ||
+    m.includes('sedi_attive') ||
+    m.includes('stanze attive') ||
+    m.includes('stanze_attive') ||
+    m.includes('punti attivi') ||
+    m.includes('punti_attivi') ||
+    m.startsWith('distinct_') ||
+    m.endsWith('_distinct')
+  );
+}
+
+/**
+ * Resolves the 0-based hierarchy depth corresponding to the entity counted by `metricName`
+ * (e.g. depth = 1 for 'Sportello' in ['SedeDescrizione', 'Sportello', 'ServizioDescrizione', ...]).
+ * Nodes with `depth >= entityDepth` represent a single entity (or its sub-slices) and roll up with MAX;
+ * nodes with `depth < entityDepth` aggregate disjoint child entities with SUM.
+ */
+export function resolveDistinctEntityDepth(
+  metricName: string,
+  dimensions?: string[],
+  nodes?: TreeNode[],
+): number {
+  const { base } = splitMetricKey(metricName);
+  const m = base.toLowerCase();
+  const targetKeywords =
+    m.includes('sedi') || m.includes('sede')
+      ? ['sede', 'presidio', 'struttura']
+      : ['sportell', 'stanz', 'idroom', 'punto'];
+
+  if (dimensions && dimensions.length > 0) {
+    const idx = dimensions.findIndex(d =>
+      targetKeywords.some(kw => d.toLowerCase().includes(kw)),
+    );
+    if (idx >= 0) return idx;
+    if (dimensions.length === 1) return 0;
+  }
+
+  if (nodes && nodes.length > 0) {
+    let curr: TreeNode | undefined = nodes[0];
+    while (curr) {
+      if (
+        curr.dimension &&
+        targetKeywords.some(kw => curr!.dimension!.toLowerCase().includes(kw))
+      ) {
+        return curr.depth;
+      }
+      curr = curr.children && curr.children.length > 0 ? curr.children[0] : undefined;
+    }
+    if (nodes.some(n => n.children && n.children.length > 0)) {
+      return 1;
+    }
+    return 0;
+  }
+
+  return 1;
 }
 
 function numericValues(nodes: TreeNode[], metric: string): number[] {
@@ -120,9 +188,11 @@ export function weightedAvgOnNode(
   return weightedMean(node.children ?? [], metric, weightColumn + splitMetricKey(metric).suffix);
 }
 
+const STANDARD_AGG_FUNCS = new Set(['sum', 'avg', 'min', 'max', 'count']);
+
 /** The other aggregation modes stay dormant: only a resolved weight column changes the roll-up. */
 export const rollupFunction = (weightColumn: string): AggregationFunction =>
-  weightColumn ? 'weighted_avg' : 'sum';
+  weightColumn && !STANDARD_AGG_FUNCS.has(weightColumn.toLowerCase()) ? 'weighted_avg' : 'sum';
 
 /** weighted_avg roll-up of one metric: the weight metric itself is summed so it can weight the next level. */
 function explicitWeightedValue(nodes: TreeNode[], metric: string, weightColumn: string): number | null {
@@ -447,77 +517,87 @@ export function rollupTreeMetrics(
   metricNames: string[],
   aggFunc: AggregationFunction = 'sum',
   weightColumn = '',
+  dimensions?: string[],
 ): void {
   // An explicit weight metric replaces every volume-based weight heuristic below.
   const explicitWeight = aggFunc === 'weighted_avg' ? weightColumn : '';
-  for (const node of nodes) {
-    if (node.children && node.children.length > 0) {
-      // Rollup children first (post-order traversal)
-      rollupTreeMetrics(node.children, metricNames, aggFunc, weightColumn);
 
-      // Aggregate each metric for the current parent node
-      for (const metric of metricNames) {
-        // Derived percentage/delta metrics will be recalculated afterwards, skip direct sum
-        if (isDerivedMetric(metric)) {
-          continue;
+  function rollupNodes(nodeList: TreeNode[]): void {
+    for (const node of nodeList) {
+      if (node.children && node.children.length > 0) {
+        // Rollup children first (post-order traversal)
+        rollupNodes(node.children);
+
+        // Aggregate each metric for the current parent node
+        for (const metric of metricNames) {
+          // Derived percentage/delta metrics will be recalculated afterwards, skip direct sum
+          if (isDerivedMetric(metric)) {
+            continue;
+          }
+
+          let aggregatedVal: number | null;
+          if (isDistinctEntityMetric(metric)) {
+            const entityDepth = resolveDistinctEntityDepth(metric, dimensions, nodes);
+            const effectiveAgg: AggregationFunction = node.depth >= entityDepth ? 'max' : 'sum';
+            aggregatedVal = calculateAggregation(numericValues(node.children, metric), effectiveAgg);
+          } else if (explicitWeight) {
+            aggregatedVal = explicitWeightedValue(node.children, metric, explicitWeight);
+          } else if (isRateMetric(metric)) {
+            // For rate/average metrics, compute weighted average using volume if possible
+            const { suffix } = splitMetricKey(metric);
+            const isConf = metric.toLowerCase().includes('conf') || metric.toLowerCase().includes('confronto');
+            const weightKey =
+              metricNames.find(
+                k =>
+                  (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume')) &&
+                  (isConf
+                    ? k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')
+                    : k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')),
+              ) || (isConf ? `richieste_conf${suffix}` : `richieste_corr${suffix}`);
+            aggregatedVal = roundTenth(weightedMean(node.children, metric, weightKey));
+          } else {
+            // Standard additive metric (e.g. volume, count)
+            aggregatedVal = calculateAggregation(numericValues(node.children, metric), aggFunc);
+          }
+
+          node.metrics[metric] = aggregatedVal;
+          if (!node.subtotals) {
+            node.subtotals = {};
+          }
+          node.subtotals[metric] = aggregatedVal;
         }
 
-        let aggregatedVal: number | null;
-        if (explicitWeight) {
-          aggregatedVal = explicitWeightedValue(node.children, metric, explicitWeight);
-        } else if (isRateMetric(metric)) {
-          // For rate/average metrics, compute weighted average using volume if possible
-          const { suffix } = splitMetricKey(metric);
-          const isConf = metric.toLowerCase().includes('conf') || metric.toLowerCase().includes('confronto');
-          const weightKey =
-            metricNames.find(
-              k =>
-                (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume')) &&
-                (isConf
-                  ? k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')
-                  : k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')),
-            ) || (isConf ? `richieste_conf${suffix}` : `richieste_corr${suffix}`);
-          aggregatedVal = roundTenth(weightedMean(node.children, metric, weightKey));
-        } else {
-          // Standard additive metric (e.g. volume, count)
-          aggregatedVal = calculateAggregation(numericValues(node.children, metric), aggFunc);
+        // Recalculate derived metrics on parent node from its aggregated totals
+        recomputeDerivedMetrics(node.metrics, metricNames);
+        if (node.subtotals) {
+          recomputeDerivedMetrics(node.subtotals, metricNames);
         }
 
-        node.metrics[metric] = aggregatedVal;
-        if (!node.subtotals) {
-          node.subtotals = {};
-        }
-        node.subtotals[metric] = aggregatedVal;
-      }
+        // Fallback: for any derived metrics still missing (e.g. table without comparison column),
+        // compute a weighted average from children using a volume metric if available, else simple average.
+        for (const metric of metricNames) {
+          if (isDerivedMetric(metric) && (node.metrics[metric] === null || node.metrics[metric] === undefined)) {
+            const derivedVal = roundTenth(
+              weightedMean(node.children, metric, derivedFallbackWeightKey(metric, metricNames, explicitWeight)),
+            );
 
-      // Recalculate derived metrics on parent node from its aggregated totals
-      recomputeDerivedMetrics(node.metrics, metricNames);
-      if (node.subtotals) {
-        recomputeDerivedMetrics(node.subtotals, metricNames);
-      }
-
-      // Fallback: for any derived metrics still missing (e.g. table without comparison column),
-      // compute a weighted average from children using a volume metric if available, else simple average.
-      for (const metric of metricNames) {
-        if (isDerivedMetric(metric) && (node.metrics[metric] === null || node.metrics[metric] === undefined)) {
-          const derivedVal = roundTenth(
-            weightedMean(node.children, metric, derivedFallbackWeightKey(metric, metricNames, explicitWeight)),
-          );
-
-          if (derivedVal !== null) {
-            node.metrics[metric] = derivedVal;
-            if (node.subtotals) node.subtotals[metric] = derivedVal;
+            if (derivedVal !== null) {
+              node.metrics[metric] = derivedVal;
+              if (node.subtotals) node.subtotals[metric] = derivedVal;
+            }
           }
         }
-      }
-    } else {
-      // Leaf node: ensure derived metrics are cleanly computed (e.g. 'Nuovo' when conf === 0)
-      recomputeDerivedMetrics(node.metrics, metricNames);
-      if (node.subtotals) {
-        recomputeDerivedMetrics(node.subtotals, metricNames);
+      } else {
+        // Leaf node: ensure derived metrics are cleanly computed (e.g. 'Nuovo' when conf === 0)
+        recomputeDerivedMetrics(node.metrics, metricNames);
+        if (node.subtotals) {
+          recomputeDerivedMetrics(node.subtotals, metricNames);
+        }
       }
     }
   }
+
+  rollupNodes(nodes);
 }
 
 /**
@@ -537,7 +617,9 @@ export function computeGrandTotal(
       continue;
     }
 
-    if (explicitWeight) {
+    if (isDistinctEntityMetric(metric)) {
+      grandTotalMetrics[metric] = calculateAggregation(numericValues(rootNodes, metric), 'sum');
+    } else if (explicitWeight) {
       grandTotalMetrics[metric] = explicitWeightedValue(rootNodes, metric, explicitWeight);
     } else if (isRateMetric(metric)) {
       const { suffix } = splitMetricKey(metric);
@@ -584,6 +666,8 @@ export function computeHorizontalRowTotals(
   nodes: TreeNode[],
   metrics: string[],
   pivotValues: string[],
+  _aggFunc: AggregationFunction = 'sum',
+  dimensions?: string[],
 ): void {
   if (!nodes || nodes.length === 0 || !metrics || metrics.length === 0 || !pivotValues || pivotValues.length === 0) {
     return;
@@ -609,6 +693,44 @@ export function computeHorizontalRowTotals(
           continue;
         }
 
+        const rowTotalKey = `${m}___ROW_TOTAL`;
+
+        if (isDistinctEntityMetric(m)) {
+          const entityDepth = resolveDistinctEntityDepth(m, dimensions, nodes);
+          if (node.depth < entityDepth && node.children && node.children.length > 0) {
+            const childRowTotals = numericValues(node.children, rowTotalKey);
+            const sumChildren = calculateAggregation(childRowTotals, 'sum');
+            node.metrics[rowTotalKey] = sumChildren;
+            if (node.subtotals) {
+              node.subtotals[rowTotalKey] = sumChildren;
+            }
+            continue;
+          }
+
+          let rowMax = -Infinity;
+          let hasDistinctVal = false;
+          for (const pVal of pivotValues) {
+            const compKey = `${m}___${pVal}`;
+            const subtotalKey = `${m}___${pVal}___SUBTOTAL`;
+            const rawVal =
+              node.metrics[compKey] ??
+              node.metrics[subtotalKey] ??
+              (node.subtotals ? (node.subtotals[compKey] ?? node.subtotals[subtotalKey]) : null);
+
+            if (typeof rawVal === 'number' && Number.isFinite(rawVal)) {
+              if (rawVal > rowMax) rowMax = rawVal;
+              hasDistinctVal = true;
+            }
+          }
+
+          const finalVal = hasDistinctVal ? rowMax : null;
+          node.metrics[rowTotalKey] = finalVal;
+          if (node.subtotals) {
+            node.subtotals[rowTotalKey] = finalVal;
+          }
+          continue;
+        }
+
         let rowSum = 0;
         let hasValue = false;
 
@@ -627,14 +749,14 @@ export function computeHorizontalRowTotals(
         }
 
         if (hasValue) {
-          node.metrics[`${m}___ROW_TOTAL`] = rowSum;
+          node.metrics[rowTotalKey] = rowSum;
           if (node.subtotals) {
-            node.subtotals[`${m}___ROW_TOTAL`] = rowSum;
+            node.subtotals[rowTotalKey] = rowSum;
           }
-        } else if (node.metrics[`${m}___ROW_TOTAL`] === undefined) {
-          node.metrics[`${m}___ROW_TOTAL`] = null;
+        } else if (node.metrics[rowTotalKey] === undefined) {
+          node.metrics[rowTotalKey] = null;
           if (node.subtotals) {
-            node.subtotals[`${m}___ROW_TOTAL`] = null;
+            node.subtotals[rowTotalKey] = null;
           }
         }
       }
@@ -649,4 +771,5 @@ export function computeHorizontalRowTotals(
 
   traverse(nodes);
 }
+
 

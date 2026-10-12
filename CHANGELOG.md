@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-12
+### Added
+- **Level-Aware Distinct Entity Roll-up (`isDistinctEntityMetric`, `resolveDistinctEntityDepth`)**: Metrics counting distinct physical units such as `Sportelli Attivi`, `Sedi Attive`, `Stanze Attive` and `Punti Attivi` now resolve the hierarchy depth of the counted entity (`entityDepth`, e.g. `depth = 1` for `Sportello` in `SedeDescrizione -> Sportello -> ServizioDescrizione -> GG Settimana -> FasciaOraria`) and apply a hybrid roll-up: `MAX` at and below `entityDepth` (including leaf record collisions and horizontal `ROW_TOTAL` across pivot months for a single desk) so an active unit evaluates to `1` rather than summing hourly/daily slices, and `SUM` above `entityDepth` (`SedeDescrizione` at `depth = 0` and `Grand Total`), yielding the exact count of distinct active units per facility and across the entire dataset while keeping `SUM` on additive volume metrics (`Arrivi`, `Serviti`, `Persi`, `Sportello Cup`, `Prenotazione Sportello`).
+- **Duration Rate Metric Recognition (`isRateMetric`)**: Extended `isRateMetric` to match duration and mean metrics containing `tempo`, `durata` or `media` (such as `Tempo Gestione Sportello`), ensuring parent nodes and `Grand Total` compute the arithmetic/weighted average instead of summing averages.
+
 ## [0.3.0] - 2026-10-08
 ### Added
 - **Per-Metric Goal Benchmarks**: A new `Goals (optional)` sub-group in `Comparison & Analysis` holds the `goals` control, a JSON list of `{ metricKey, target, direction }` entries where `direction` is `higher_is_better` (default) or `lower_is_better`. The resolved list becomes the typed `goals[]` field of the form data, the single goal model that later features such as the budget comparison read from. The pure engine `computeGoalDelta` in `src/utils/goalBenchmark.ts` returns the absolute and percentage gap to the target plus a status computed on the attainment ratio (actual / target, inverted for `lower_is_better`): `achieved` from 100%, `on_track` from 90%, `at_risk` from 75%, `missed` below. Zero targets and zero values are resolved without any division, so no `Infinity` or `NaN` can reach the table. Each metric cell whose column benchmarks a goal (plain metric columns and pivot value cells, never delta or total columns) shows a small badge with the signed gap, coloured by status. Malformed entries are ignored, and charts without goals render exactly as before. Covered by `test/transformPipeline.goals.test.ts`.
@@ -113,8 +118,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release for the Hierarchical Table plugin.
 
-[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.11...v0.3.0
+[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.10...v0.3.0
 [0.2.10]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.7...v0.2.8
