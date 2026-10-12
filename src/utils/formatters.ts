@@ -41,8 +41,15 @@ export function formatMetricValue(
     return `${sign}${value.toFixed(1)} p.p.`;
   }
 
-  // 2. Acceptance rate (percentage)
-  if (mName.includes('acc_corr') || mName.includes('acc_conf') || mName.includes('accettazione')) {
+  // 2. Acceptance rate (percentage) — exclude volume counts like 'Accettazione Totale'
+  if (
+    mName.includes('acc_corr') ||
+    mName.includes('acc_conf') ||
+    (mName.includes('accettazione') &&
+      !mName.includes('totale') &&
+      !mName.includes('numero') &&
+      !mName.includes('conteggio'))
+  ) {
     return `${value.toFixed(1)}%`;
   }
 

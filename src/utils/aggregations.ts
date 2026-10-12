@@ -30,13 +30,15 @@ export function calculateAggregation(
  */
 export function isDerivedMetric(metricName: string): boolean {
   const m = metricName.toLowerCase();
+  const { base } = splitMetricKey(metricName);
   return (
     m.includes('delta') ||
     m.includes('diff') ||
     m.includes('variazione') ||
     m.includes('pct') ||
     m.includes('percent') ||
-    m.includes('tasso')
+    m.includes('tasso') ||
+    base.trim().startsWith('%')
   );
 }
 
@@ -46,12 +48,17 @@ export function isDerivedMetric(metricName: string): boolean {
 export function isRateMetric(metricName: string): boolean {
   const m = metricName.toLowerCase();
   const isDelta = m.includes('delta') || m.includes('variazione') || m.includes('diff');
-  return (
-    m.includes('lt_off') ||
+  const isAcceptanceRate =
     m.includes('acc_corr') ||
     m.includes('acc_conf') ||
+    (m.includes('accettazione') &&
+      !m.includes('totale') &&
+      !m.includes('numero') &&
+      !m.includes('conteggio'));
+  return (
+    m.includes('lt_off') ||
+    isAcceptanceRate ||
     m.includes('attesa') ||
-    m.includes('accettazione') ||
     m.includes('tasso') ||
     (!isDelta && (m.includes('%') || m.includes('tempo') || m.includes('durata') || m.includes('media')))
   );
@@ -211,7 +218,14 @@ function derivedFallbackWeightKey(metric: string, metricNames: string[], explici
       k =>
         (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume') || k.toLowerCase().includes('corr')) &&
         !isDerivedMetric(k),
-    ) || `richieste_corr${suffix}`
+    ) ||
+    metricNames.find(
+      k =>
+        k.endsWith(suffix) &&
+        (k.toLowerCase().includes('totale') || k.toLowerCase().includes('operatore') || k.toLowerCase().includes('serviti')) &&
+        !isDerivedMetric(k),
+    ) ||
+    `richieste_corr${suffix}`
   );
 }
 
@@ -506,6 +520,64 @@ export function recomputeDerivedMetrics(
         computePercentageVariation(metrics, key, corrKey, confKey);
       }
     }
+
+    // 6a. Self-Acceptance share (% Self vs Operatore = Self / Accettazione Totale * 100)
+    else if (
+      mLower.startsWith('%') &&
+      mLower.includes('self') &&
+      !mLower.includes('fallit')
+    ) {
+      const selfKey =
+        allMetricKeys.find(
+          k => k.endsWith(suffix) && k.toLowerCase() === `self${suffix.toLowerCase()}`,
+        ) || `Self${suffix}`;
+      const totKey =
+        allMetricKeys.find(
+          k => k.endsWith(suffix) && k.toLowerCase() === `accettazione totale${suffix.toLowerCase()}`,
+        ) || `Accettazione Totale${suffix}`;
+      const opKey =
+        allMetricKeys.find(
+          k => k.endsWith(suffix) && k.toLowerCase() === `operatore${suffix.toLowerCase()}`,
+        ) || `Operatore${suffix}`;
+
+      const selfVal = metrics[selfKey];
+      const totVal = metrics[totKey];
+      const opVal = metrics[opKey];
+
+      if (typeof selfVal === 'number') {
+        const denom =
+          typeof totVal === 'number' && totVal > 0
+            ? totVal
+            : typeof opVal === 'number'
+              ? selfVal + opVal
+              : 0;
+        if (denom > 0) {
+          metrics[key] = Math.round((selfVal * 1000.0) / denom) / 10;
+        }
+      }
+    }
+
+    // 6b. Failed Self-Acceptance vs Operator (%Self fallite vs Operatore = Self - Fallite / Operatore * 100)
+    else if (mLower.startsWith('%') && mLower.includes('fallit')) {
+      const fallKey =
+        allMetricKeys.find(
+          k =>
+            k.endsWith(suffix) &&
+            k.toLowerCase().includes('fallit') &&
+            !k.toLowerCase().startsWith('%'),
+        ) || `Self - Fallite${suffix}`;
+      const opKey =
+        allMetricKeys.find(
+          k => k.endsWith(suffix) && k.toLowerCase() === `operatore${suffix.toLowerCase()}`,
+        ) || `Operatore${suffix}`;
+
+      const fallVal = metrics[fallKey];
+      const opVal = metrics[opKey];
+
+      if (typeof fallVal === 'number' && typeof opVal === 'number' && opVal > 0) {
+        metrics[key] = Math.round((fallVal * 1000.0) / opVal) / 10;
+      }
+    }
   }
 }
 
@@ -766,10 +838,38 @@ export function computeHorizontalRowTotals(
       if (node.subtotals) {
         recomputeDerivedMetrics(node.subtotals, rowTotalKeys);
       }
+
+      // Fallback for any derived metric not covered by operand pairs: average across pivot columns
+      for (const m of metrics) {
+        if (!isDerivedMetric(m)) continue;
+        const rowTotalKey = `${m}___ROW_TOTAL`;
+        if (node.metrics[rowTotalKey] === undefined || node.metrics[rowTotalKey] === null) {
+          let sum = 0;
+          let count = 0;
+          for (const pVal of pivotValues) {
+            const compKey = `${m}___${pVal}`;
+            const subtotalKey = `${m}___${pVal}___SUBTOTAL`;
+            const rawVal =
+              node.metrics[compKey] ??
+              node.metrics[subtotalKey] ??
+              (node.subtotals ? (node.subtotals[compKey] ?? node.subtotals[subtotalKey]) : null);
+            if (typeof rawVal === 'number' && Number.isFinite(rawVal)) {
+              sum += rawVal;
+              count++;
+            }
+          }
+          const avgVal = count > 0 ? roundTenth(sum / count) : null;
+          node.metrics[rowTotalKey] = avgVal;
+          if (node.subtotals) {
+            node.subtotals[rowTotalKey] = avgVal;
+          }
+        }
+      }
     }
   }
 
   traverse(nodes);
 }
+
 
 

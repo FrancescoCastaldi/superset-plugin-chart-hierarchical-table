@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.3.3] - 2026-10-12
 ### Fixed
+- **Volume Acceptance Count Exclusion in `formatMetricValue` and `isRateMetric`**: Additive volume count metrics containing `accettazione` combined with `totale`, `numero` or `conteggio` (such as `Accettazione Totale`) are no longer matched by the acceptance-rate heuristic (`acc_corr` / `acc_conf`), ensuring they are formatted as localized integers without a `%` suffix and summed rather than averaged in parent subtotals and `Grand Total`.
+- **Leading-Percent Derived Metric Detection & Roll-up Recomputation (`isDerivedMetric`, `recomputeDerivedMetrics`, `computeHorizontalRowTotals`)**: Metrics whose base label starts with `%` (such as `% Self vs Operatore` and `%Self fallite vs Operatore`) are now recognized by `isDerivedMetric`, recomputed from aggregated `Self`, `Self - Fallite`, `Operatore` and `Accettazione Totale` operands on parent nodes, `Grand Total` and horizontal `ROW_TOTAL` columns, and protected from horizontal summation across pivot periods.
 - **Temporal Dimension ISO Formatting in Tree Hierarchy and Pivots**: Epoch millisecond timestamps from database temporal/date columns in hierarchy dimensions and pivot keys are now automatically formatted as ISO date strings (`YYYY-MM-DD`) instead of displaying raw numeric timestamps.
 
 ## [0.3.2] - 2026-10-12
