@@ -1,5 +1,6 @@
 import { getNumberFormatter } from '@superset-ui/core';
 import { MinMaxBound } from '../types';
+import { isDistinctEntityMetric } from './aggregations';
 
 export function formatMetricValue(
   value: number | string | null | undefined,
@@ -17,6 +18,15 @@ export function formatMetricValue(
 
   if (typeof value === 'number' && isNaN(value)) {
     return '-';
+  }
+
+  // 0. Distinct physical entity counts (e.g. Sportelli Attivi, Sedi Attive, Stanze Attive)
+  // must always be formatted as integer counts, never as durations or float days
+  if (isDistinctEntityMetric(metricName || '')) {
+    return new Intl.NumberFormat('it-IT', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
   }
 
   const mName = (metricName || '').toLowerCase();
@@ -38,15 +48,19 @@ export function formatMetricValue(
 
   // 3. Delta Lead Time in days (gg)
   if (
+    !formatterString?.startsWith('DURATION') &&
     (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
-    (mName.includes('attesa') || mName.includes('lt_off') || mName.includes('lead') || (mName.includes('giorni') && !mName.includes('settimana')) || /\blt\b/.test(mName))
+    (mName.includes('lt_off') || mName.includes('lead') || (mName.includes('giorni') && !mName.includes('settimana')) || /\blt\b/.test(mName) || mName.includes(' gg') || mName.includes('_gg'))
   ) {
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(1)} gg`;
   }
 
   // 4. Lead Time in days (gg)
-  if (mName.includes('lt_off') || mName.includes('attesa') || (mName.includes('giorni') && !mName.includes('settimana'))) {
+  if (
+    !formatterString?.startsWith('DURATION') &&
+    (mName.includes('lt_off') || (mName.includes('giorni') && !mName.includes('settimana')) || mName.includes(' gg') || mName.includes('_gg') || mName.endsWith('(gg)'))
+  ) {
     return `${value.toFixed(1)} gg`;
   }
 

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-12
+### Fixed
+- **Distinct Entity Count Protection in `formatMetricValue`**: Physical entity count metrics identified by `isDistinctEntityMetric` (such as `Sportelli Attivi`, `Sedi Attive`, `Stanze Attive`) are now formatted strictly as localized integers (`Intl.NumberFormat('it-IT')`) even when the table-level `numberFormat` is set to `DURATION_COL` or `DURATION`, preventing active counter counts from displaying as `0:00` or sub-millisecond durations.
+- **Duration vs Days Format Collision**: The heuristic rule for lead time in days (`gg`) in `formatMetricValue` no longer intercepts duration metrics containing `attesa` (such as `Attesa Media`, `Attesa Media Sportello`, `Attesa Media Preno Sportello`) when `formatterString` starts with `DURATION` or when the metric does not explicitly specify day units (`giorni`, ` gg`, `_gg`, `lt_off`), allowing queue waiting times to render in colon duration notation (`mm:ss`) rather than days (`gg`).
+
 ## [0.3.1] - 2026-10-12
 ### Added
 - **Level-Aware Distinct Entity Roll-up (`isDistinctEntityMetric`, `resolveDistinctEntityDepth`)**: Metrics counting distinct physical units such as `Sportelli Attivi`, `Sedi Attive`, `Stanze Attive` and `Punti Attivi` now resolve the hierarchy depth of the counted entity (`entityDepth`, e.g. `depth = 1` for `Sportello` in `SedeDescrizione -> Sportello -> ServizioDescrizione -> GG Settimana -> FasciaOraria`) and apply a hybrid roll-up: `MAX` at and below `entityDepth` (including leaf record collisions and horizontal `ROW_TOTAL` across pivot months for a single desk) so an active unit evaluates to `1` rather than summing hourly/daily slices, and `SUM` above `entityDepth` (`SedeDescrizione` at `depth = 0` and `Grand Total`), yielding the exact count of distinct active units per facility and across the entire dataset while keeping `SUM` on additive volume metrics (`Arrivi`, `Serviti`, `Persi`, `Sportello Cup`, `Prenotazione Sportello`).
