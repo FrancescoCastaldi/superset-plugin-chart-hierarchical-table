@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-10-12
+### Fixed
+- **Volume Acceptance Count Exclusion in `formatMetricValue` and `isRateMetric`**: Additive volume count metrics containing `accettazione` combined with `totale`, `numero` or `conteggio` (such as `Accettazione Totale`) are no longer matched by the acceptance-rate heuristic (`acc_corr` / `acc_conf`), ensuring they are formatted as localized integers without a `%` suffix and summed rather than averaged in parent subtotals and `Grand Total`.
+- **Leading-Percent Derived Metric Detection & Roll-up Recomputation (`isDerivedMetric`, `recomputeDerivedMetrics`, `computeHorizontalRowTotals`)**: Metrics whose base label starts with `%` (such as `% Self vs Operatore` and `%Self fallite vs Operatore`) are now recognized by `isDerivedMetric`, recomputed from aggregated `Self`, `Self - Fallite`, `Operatore` and `Accettazione Totale` operands on parent nodes, `Grand Total` and horizontal `ROW_TOTAL` columns, and protected from horizontal summation across pivot periods.
+- **Temporal Dimension ISO Formatting in Tree Hierarchy and Pivots**: Epoch millisecond timestamps from database temporal/date columns in hierarchy dimensions and pivot keys are now automatically formatted as ISO date strings (`YYYY-MM-DD`) instead of displaying raw numeric timestamps.
+
+## [0.3.2] - 2026-10-12
+### Fixed
+- **Distinct Entity Count Protection in `formatMetricValue`**: Physical entity count metrics identified by `isDistinctEntityMetric` (such as `Sportelli Attivi`, `Sedi Attive`, `Stanze Attive`) are now formatted strictly as localized integers (`Intl.NumberFormat('it-IT')`) even when the table-level `numberFormat` is set to `DURATION_COL` or `DURATION`, preventing active counter counts from displaying as `0:00` or sub-millisecond durations.
+- **Duration vs Days Format Collision**: The heuristic rule for lead time in days (`gg`) in `formatMetricValue` no longer intercepts duration metrics containing `attesa` (such as `Attesa Media`, `Attesa Media Sportello`, `Attesa Media Preno Sportello`) when `formatterString` starts with `DURATION` or when the metric does not explicitly specify day units (`giorni`, ` gg`, `_gg`, `lt_off`), allowing queue waiting times to render in colon duration notation (`mm:ss`) rather than days (`gg`).
+
+## [0.3.1] - 2026-10-12
+### Added
+- **Level-Aware Distinct Entity Roll-up (`isDistinctEntityMetric`, `resolveDistinctEntityDepth`)**: Metrics counting distinct physical units such as `Sportelli Attivi`, `Sedi Attive`, `Stanze Attive` and `Punti Attivi` now resolve the hierarchy depth of the counted entity (`entityDepth`, e.g. `depth = 1` for `Sportello` in `SedeDescrizione -> Sportello -> ServizioDescrizione -> GG Settimana -> FasciaOraria`) and apply a hybrid roll-up: `MAX` at and below `entityDepth` (including leaf record collisions and horizontal `ROW_TOTAL` across pivot months for a single desk) so an active unit evaluates to `1` rather than summing hourly/daily slices, and `SUM` above `entityDepth` (`SedeDescrizione` at `depth = 0` and `Grand Total`), yielding the exact count of distinct active units per facility and across the entire dataset while keeping `SUM` on additive volume metrics (`Arrivi`, `Serviti`, `Persi`, `Sportello Cup`, `Prenotazione Sportello`).
+- **Duration Rate Metric Recognition (`isRateMetric`)**: Extended `isRateMetric` to match duration and mean metrics containing `tempo`, `durata` or `media` (such as `Tempo Gestione Sportello`), ensuring parent nodes and `Grand Total` compute the arithmetic/weighted average instead of summing averages.
+
 ## [0.3.0] - 2026-10-08
 ### Added
 - **Per-Metric Goal Benchmarks**: A new `Goals (optional)` sub-group in `Comparison & Analysis` holds the `goals` control, a JSON list of `{ metricKey, target, direction }` entries where `direction` is `higher_is_better` (default) or `lower_is_better`. The resolved list becomes the typed `goals[]` field of the form data, the single goal model that later features such as the budget comparison read from. The pure engine `computeGoalDelta` in `src/utils/goalBenchmark.ts` returns the absolute and percentage gap to the target plus a status computed on the attainment ratio (actual / target, inverted for `lower_is_better`): `achieved` from 100%, `on_track` from 90%, `at_risk` from 75%, `missed` below. Zero targets and zero values are resolved without any division, so no `Infinity` or `NaN` can reach the table. Each metric cell whose column benchmarks a goal (plain metric columns and pivot value cells, never delta or total columns) shows a small badge with the signed gap, coloured by status. Malformed entries are ignored, and charts without goals render exactly as before. Covered by `test/transformPipeline.goals.test.ts`.
@@ -113,8 +129,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release for the Hierarchical Table plugin.
 
-[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.11...v0.3.0
+[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.10...v0.3.0
 [0.2.10]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.7...v0.2.8

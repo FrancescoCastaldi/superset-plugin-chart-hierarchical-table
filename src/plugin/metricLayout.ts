@@ -71,7 +71,7 @@ export function buildMetricLayout(
     const dim2Values = collectDistinctValues(records, pivotDimensions[1]);
 
     if (pivotRowTotalsPosition !== 'none') {
-      computeHorizontalRowTotals(treeData, metrics, displayDim1Values);
+      computeHorizontalRowTotals(treeData, metrics, displayDim1Values, 'sum', options.dimensions);
     }
 
     return buildMultiPivotColumns({
@@ -100,7 +100,13 @@ export function buildMetricLayout(
   }
 
   if (pivotRowTotalsPosition !== 'none') {
-    computeHorizontalRowTotals(treeData, metrics, chronologicalPivotValues);
+    computeHorizontalRowTotals(
+      treeData,
+      metrics,
+      chronologicalPivotValues,
+      'sum',
+      options.dimensions,
+    );
   }
 
   const layout = buildSinglePivotColumns({

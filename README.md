@@ -14,7 +14,7 @@ Frontend visualization plugin for **Apache Superset 6.1.0+** providing a rich, i
 - **Expression & Metric Sorting**: Sorting by hierarchy name, query metrics, structural properties (`__tree_level__`, `__leaf_count__`), and derived expressions (`delta_*_pct`), paired with configurable `nullHandling` (`bottom`, `top`, `exclude`).
 - **Large Tree Virtualization**: Configurable `pageSize` and `virtualizationThreshold` using windowed rendering for high-volume trees with parent-delegated cross-filter interactions.
 - **Multi-Selection Cross-Filtering**: Native Superset 6.1.0 `setDataMask` integration with grouped `IN` filters, checkboxes, multi-row highlighting, and URI-safe key handling.
-- **Automatic Rollups & Sticky Grand Total**: Post-order tree aggregation for subtotals (SUM, AVG, MIN, MAX, COUNT, WEIGHTED_AVG) and sticky Grand Total row.
+- **Automatic Rollups & Sticky Grand Total**: Post-order tree aggregation for subtotals (SUM, AVG, MIN, MAX, COUNT, WEIGHTED_AVG), level-aware hybrid MAX/SUM roll-ups for distinct physical unit counters (`Sportelli Attivi`, `Sedi Attive`), automatic averaging for duration/rate metrics (`Tempo Gestione Sportello`), and sticky Grand Total row.
 - **Two-Way Pivot Matrix Grid**: Horizontal row totals, column subtotals, and pivot time delta columns.
 
 ## Installation & Setup

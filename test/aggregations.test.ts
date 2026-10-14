@@ -2,6 +2,8 @@ import {
   recomputeDerivedMetrics,
   rollupTreeMetrics,
   computeGrandTotal,
+  computeHorizontalRowTotals,
+  isRateMetric,
 } from '../src/utils/aggregations';
 import { TreeNode } from '../src/types';
 
@@ -561,3 +563,216 @@ describe('aggregations.computeGrandTotal', () => {
     expect(gt.metrics).toEqual({ richieste_corr: 200, richieste_conf: 200, delta_richieste_pct: 0 });
   });
 });
+
+describe('Level-aware distinct entity metrics (Sportelli Attivi) & duration averages (Tempo Gestione Sportello)', () => {
+  const dimensions = [
+    'SedeDescrizione',
+    'Sportello',
+    'ServizioDescrizione',
+    'GG Settimana',
+    'FasciaOraria',
+  ];
+  const metricNames = [
+    'Sportelli Attivi',
+    'Arrivi',
+    'Serviti',
+    'Persi',
+    'Sportello Cup',
+    'Prenotazione Sportello',
+    'Tempo Gestione Sportello',
+  ];
+
+  function buildSportelliTree(): TreeNode[] {
+    return [
+      parent('Ascoli Piceno', 0, [
+        parent('Ascoli Piceno > SPORTELLO 1', 1, [
+          parent('Ascoli Piceno > SPORTELLO 1 > Prelievi', 2, [
+            parent('Ascoli Piceno > SPORTELLO 1 > Prelievi > Lunedi', 3, [
+              leaf('Ascoli Piceno > SPORTELLO 1 > Prelievi > Lunedi > 08:00', 4, {
+                'Sportelli Attivi': 1,
+                Arrivi: 20,
+                Serviti: 19,
+                Persi: 1,
+                'Sportello Cup': 19,
+                'Prenotazione Sportello': 0,
+                'Tempo Gestione Sportello': 120,
+              }),
+              leaf('Ascoli Piceno > SPORTELLO 1 > Prelievi > Lunedi > 09:00', 4, {
+                'Sportelli Attivi': 1,
+                Arrivi: 30,
+                Serviti: 28,
+                Persi: 2,
+                'Sportello Cup': 25,
+                'Prenotazione Sportello': 3,
+                'Tempo Gestione Sportello': 180,
+              }),
+            ]),
+          ]),
+        ]),
+        parent('Ascoli Piceno > SPORTELLO 2', 1, [
+          parent('Ascoli Piceno > SPORTELLO 2 > Accettazione', 2, [
+            parent('Ascoli Piceno > SPORTELLO 2 > Accettazione > Martedi', 3, [
+              leaf('Ascoli Piceno > SPORTELLO 2 > Accettazione > Martedi > 08:00', 4, {
+                'Sportelli Attivi': 1,
+                Arrivi: 15,
+                Serviti: 15,
+                Persi: 0,
+                'Sportello Cup': 15,
+                'Prenotazione Sportello': 0,
+                'Tempo Gestione Sportello': 90,
+              }),
+            ]),
+          ]),
+        ]),
+        parent('Ascoli Piceno > ZEROCODA', 1, [
+          parent('Ascoli Piceno > ZEROCODA > Prelievi ZC', 2, [
+            parent('Ascoli Piceno > ZEROCODA > Prelievi ZC > Lunedi', 3, [
+              leaf('Ascoli Piceno > ZEROCODA > Prelievi ZC > Lunedi > 08:00', 4, {
+                'Sportelli Attivi': 0,
+                Arrivi: 140,
+                Serviti: 139,
+                Persi: 1,
+                'Sportello Cup': 0,
+                'Prenotazione Sportello': 139,
+                'Tempo Gestione Sportello': 60,
+              }),
+            ]),
+          ]),
+        ]),
+      ]),
+      parent('Ancona', 0, [
+        parent('Ancona > SPORTELLO 1', 1, [
+          parent('Ancona > SPORTELLO 1 > Prelievi', 2, [
+            parent('Ancona > SPORTELLO 1 > Prelievi > Lunedi', 3, [
+              leaf('Ancona > SPORTELLO 1 > Prelievi > Lunedi > 08:00', 4, {
+                'Sportelli Attivi': 1,
+                Arrivi: 40,
+                Serviti: 40,
+                Persi: 0,
+                'Sportello Cup': 40,
+                'Prenotazione Sportello': 0,
+                'Tempo Gestione Sportello': 100,
+              }),
+            ]),
+          ]),
+        ]),
+      ]),
+    ];
+  }
+
+  it('uses MAX at Sportello depth and below (depth >= 1) and SUM at SedeDescrizione (depth = 0) and Grand Total', () => {
+    const tree = buildSportelliTree();
+    rollupTreeMetrics(tree, metricNames, 'sum', undefined, dimensions);
+
+    const ascoli = tree[0];
+    const sp1 = ascoli.children![0];
+    const sp1Prelievi = sp1.children![0];
+    const sp1Lunedi = sp1Prelievi.children![0];
+    const sp2 = ascoli.children![1];
+    const zc = ascoli.children![2];
+    const ancona = tree[1];
+
+    // Depth 3 (GG Settimana), Depth 2 (ServizioDescrizione), Depth 1 (Sportello) -> MAX = 1
+    expect(sp1Lunedi.metrics['Sportelli Attivi']).toBe(1);
+    expect(sp1Prelievi.metrics['Sportelli Attivi']).toBe(1);
+    expect(sp1.metrics['Sportelli Attivi']).toBe(1);
+    expect(sp2.metrics['Sportelli Attivi']).toBe(1);
+    expect(zc.metrics['Sportelli Attivi']).toBe(0);
+
+    // Additive volume metrics on SPORTELLO 1 still SUM across hours
+    expect(sp1.metrics.Arrivi).toBe(50);
+    expect(sp1.metrics.Serviti).toBe(47);
+    expect(sp1.metrics.Persi).toBe(3);
+    expect(sp1.metrics['Sportello Cup']).toBe(44);
+    expect(sp1.metrics['Prenotazione Sportello']).toBe(3);
+
+    // Duration rate metric (Tempo Gestione Sportello) averages instead of summing
+    expect(sp1Lunedi.metrics['Tempo Gestione Sportello']).toBe(150);
+    expect(sp1.metrics['Tempo Gestione Sportello']).toBe(150);
+
+    // Depth 0 (SedeDescrizione) -> SUM of Sportello children (1 + 1 + 0 = 2 for Ascoli, 1 for Ancona)
+    expect(ascoli.metrics['Sportelli Attivi']).toBe(2);
+    expect(ascoli.metrics.Arrivi).toBe(205);
+    expect(ascoli.metrics.Serviti).toBe(201);
+    expect(ascoli.metrics.Persi).toBe(4);
+    expect(ascoli.metrics['Sportello Cup']).toBe(59);
+    expect(ascoli.metrics['Prenotazione Sportello']).toBe(142);
+
+    expect(ancona.metrics['Sportelli Attivi']).toBe(1);
+
+    // Grand Total -> SUM across SedeDescrizione roots (2 + 1 = 3)
+    const gt = computeGrandTotal(tree, metricNames, 'sum');
+    expect(gt.metrics['Sportelli Attivi']).toBe(3);
+    expect(gt.metrics.Arrivi).toBe(245);
+    expect(gt.metrics.Serviti).toBe(241);
+    expect(gt.metrics.Persi).toBe(4);
+    expect(gt.metrics['Sportello Cup']).toBe(99);
+    expect(gt.metrics['Prenotazione Sportello']).toBe(142);
+    // Average duration across Ascoli (100) and Ancona (100) = 100
+    expect(gt.metrics['Tempo Gestione Sportello']).toBe(100);
+  });
+});
+
+describe('Chart 105 (Accettazione Totale, Operatore, Self, Self - Fallite, % Self vs Operatore, %Self fallite vs Operatore)', () => {
+  it('treats Accettazione Totale as an additive count (not a rate) and sums it in Grand Total', () => {
+    expect(isRateMetric('Accettazione Totale')).toBe(false);
+    expect(isRateMetric('Accettazione Totale___September')).toBe(false);
+    expect(isRateMetric('acc_corr')).toBe(true);
+    expect(isRateMetric('acc_conf')).toBe(true);
+
+    const roots: TreeNode[] = [
+      leaf('Camerino', 0, {
+        'Accettazione Totale___September': 1739,
+        'Operatore___September': 1727,
+        'Self___September': 12,
+        'Self - Fallite___September': 29,
+        '% Self vs Operatore___September': 0.7,
+        '%Self fallite vs Operatore___September': 1.7,
+      }),
+      leaf('P.O. Torrette - Umberto I di Ancona', 0, {
+        'Accettazione Totale___September': 2913,
+        'Operatore___September': 1907,
+        'Self___September': 1006,
+        'Self - Fallite___September': 120,
+        '% Self vs Operatore___September': 34.5,
+        '%Self fallite vs Operatore___September': 6.3,
+      }),
+    ];
+
+    const metricKeys = [
+      'Accettazione Totale___September',
+      'Operatore___September',
+      'Self___September',
+      'Self - Fallite___September',
+      '% Self vs Operatore___September',
+      '%Self fallite vs Operatore___September',
+    ];
+
+    const gt = computeGrandTotal(roots, metricKeys, 'sum');
+    expect(gt.metrics['Accettazione Totale___September']).toBe(4652);
+    expect(gt.metrics['Operatore___September']).toBe(3634);
+    expect(gt.metrics['Self___September']).toBe(1018);
+    expect(gt.metrics['Self - Fallite___September']).toBe(149);
+    // Recomputed from totals: 1018 / 4652 * 100 = 21.883... -> 21.9
+    expect(gt.metrics['% Self vs Operatore___September']).toBe(21.9);
+    // Recomputed from totals: 149 / 3634 * 100 = 4.100... -> 4.1
+    expect(gt.metrics['%Self fallite vs Operatore___September']).toBe(4.1);
+
+    // Also verify ROW_TOTAL recomputes percentages instead of summing across pivot columns
+    const allNodes = [...roots, gt];
+    const baseMetrics = [
+      'Accettazione Totale',
+      'Operatore',
+      'Self',
+      'Self - Fallite',
+      '% Self vs Operatore',
+      '%Self fallite vs Operatore',
+    ];
+    computeHorizontalRowTotals(allNodes, baseMetrics, ['September'], 'sum');
+    expect(gt.metrics['Accettazione Totale___ROW_TOTAL']).toBe(4652);
+    expect(gt.metrics['% Self vs Operatore___ROW_TOTAL']).toBe(21.9);
+    expect(gt.metrics['%Self fallite vs Operatore___ROW_TOTAL']).toBe(4.1);
+  });
+});
+
+

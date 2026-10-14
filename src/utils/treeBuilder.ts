@@ -1,6 +1,12 @@
 import { DataRecord } from '@superset-ui/core';
 import { TreeNode, SortOrder, MinMaxScope, MinMaxBoundsMap, NullHandling, SortExpression } from '../types';
-import { rollupTreeMetrics, isDerivedMetric, rollupFunction, recomputeDerivedMetrics } from './aggregations';
+import {
+  rollupTreeMetrics,
+  isDerivedMetric,
+  isDistinctEntityMetric,
+  rollupFunction,
+  recomputeDerivedMetrics,
+} from './aggregations';
 
 /**
  * Builds a hierarchical tree from flat records using an ordered list of dimensions.
@@ -33,7 +39,13 @@ export function buildMultiDimensionTree(
       const pivotParts: string[] = [];
       for (const pDim of pivotDimensions) {
         const rawP = record[pDim];
-        pivotParts.push(rawP !== null && rawP !== undefined ? String(rawP) : '(Empty)');
+        pivotParts.push(
+          rawP !== null && rawP !== undefined
+            ? typeof rawP === 'number' && rawP > 1e11 && rawP < 3e12
+              ? new Date(rawP).toISOString().slice(0, 10)
+              : String(rawP)
+            : '(Empty)',
+        );
       }
       pivotKey = pivotParts.join(' - ');
       if (isMultiPivot) {
@@ -45,7 +57,12 @@ export function buildMultiDimensionTree(
     for (let i = 0; i < dimensions.length; i++) {
       const dim = dimensions[i];
       const rawVal = record[dim];
-      const val = rawVal !== null && rawVal !== undefined ? String(rawVal) : '(Empty)';
+      const val =
+        rawVal !== null && rawVal !== undefined
+          ? typeof rawVal === 'number' && rawVal > 1e11 && rawVal < 3e12
+            ? new Date(rawVal).toISOString().slice(0, 10)
+            : String(rawVal)
+          : '(Empty)';
       currentPath.push(val);
 
       const pathKey = currentPath.join(' > ');
@@ -96,12 +113,15 @@ export function buildMultiDimensionTree(
 
         currentLevelMap.set(val, nodeObj);
       } else if (isLeaf) {
-        // If multiple records land on the same leaf path, sum up their metrics
+        // If multiple records land on the same leaf path, sum up their metrics (or MAX for distinct-entity metrics)
         const existingNode = currentLevelMap.get(val);
         for (const m of metrics) {
           if (isDerivedMetric(m)) {
             continue;
           }
+          const isDistinct = isDistinctEntityMetric(m);
+          const mergeVal = (curr: unknown, next: number): number =>
+            typeof curr === 'number' ? (isDistinct ? Math.max(curr, next) : curr + next) : next;
           const rawM = record[m];
           const numVal =
             rawM === null || rawM === undefined
@@ -115,8 +135,7 @@ export function buildMultiDimensionTree(
             if (isPivot) {
               if (isMultiPivot) {
                 const addVal = (k: string) => {
-                  const curr = existingNode.metrics[k];
-                  existingNode.metrics[k] = typeof curr === 'number' ? curr + numVal : numVal;
+                  existingNode.metrics[k] = mergeVal(existingNode.metrics[k], numVal);
                 };
                 addVal(`${m}___${pVal1}___${pVal2}`);
                 addVal(`${m}___${pVal1}___SUBTOTAL`);
@@ -125,14 +144,10 @@ export function buildMultiDimensionTree(
                 addVal(`${m}___${pivotKey}`);
               } else if (pivotKey) {
                 const targetKey = `${m}___${pivotKey}`;
-                const existing = existingNode.metrics[targetKey];
-                existingNode.metrics[targetKey] =
-                  typeof existing === 'number' ? existing + numVal : numVal;
+                existingNode.metrics[targetKey] = mergeVal(existingNode.metrics[targetKey], numVal);
               }
             } else {
-              const existing = existingNode.metrics[m];
-              existingNode.metrics[m] =
-                typeof existing === 'number' ? existing + numVal : numVal;
+              existingNode.metrics[m] = mergeVal(existingNode.metrics[m], numVal);
             }
           }
         }
@@ -187,7 +202,13 @@ export function buildMultiDimensionTree(
   }
   collectKeys(tree);
 
-  rollupTreeMetrics(tree, Array.from(allMetricKeys), rollupFunction(weightColumn), weightColumn);
+  rollupTreeMetrics(
+    tree,
+    Array.from(allMetricKeys),
+    rollupFunction(weightColumn),
+    weightColumn,
+    dimensions,
+  );
   return tree;
 }
 
