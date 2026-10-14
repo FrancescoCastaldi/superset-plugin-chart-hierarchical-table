@@ -54,6 +54,11 @@ function GoalBadge({
   );
 }
 
+/** Re-render the window only when the scroll crosses a block of rows, not on every pixel. */
+const SCROLL_STEP_PX = 32 * 10;
+const quantizeScrollTop = (scrollTop: number): number =>
+  Math.floor(scrollTop / SCROLL_STEP_PX) * SCROLL_STEP_PX;
+
 function isHierarchySortKey(key?: string, dims?: string[]): boolean {
   if (!key) return false;
   return (
@@ -783,7 +788,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
       {/* Table Content */}
       <div
         className="table-scroll-wrapper"
-        onScroll={e => rows.length < visibleRows.length && setScrollTop(e.currentTarget.scrollTop)}
+        onScroll={e => rows.length < visibleRows.length && setScrollTop(quantizeScrollTop(e.currentTarget.scrollTop))}
       >
         <table
           className={classNames('hierarchical-table', {

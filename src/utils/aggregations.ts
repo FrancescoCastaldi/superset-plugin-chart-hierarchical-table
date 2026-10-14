@@ -1,5 +1,21 @@
 import { TreeNode, AggregationFunction } from '../types';
 
+const MEMO_LIMIT = 10000;
+
+/** Memoizes a pure function of a metric name; the classifiers below run once per distinct name. */
+function memoizeByName<T>(fn: (name: string) => T): (name: string) => T {
+  const cache = new Map<string, T>();
+  return (name: string): T => {
+    let value = cache.get(name);
+    if (value === undefined) {
+      if (cache.size >= MEMO_LIMIT) cache.clear();
+      value = fn(name);
+      cache.set(name, value);
+    }
+    return value;
+  };
+}
+
 /**
  * Calculates aggregate values for a list of child numbers based on the aggregation function.
  */
@@ -28,7 +44,7 @@ export function calculateAggregation(
 /**
  * Checks if a metric is a derived percentage/ratio metric that should not be summed.
  */
-export function isDerivedMetric(metricName: string): boolean {
+export const isDerivedMetric = memoizeByName(function isDerivedMetric(metricName: string): boolean {
   const m = metricName.toLowerCase();
   const { base } = splitMetricKey(metricName);
   return (
@@ -40,12 +56,12 @@ export function isDerivedMetric(metricName: string): boolean {
     m.includes('tasso') ||
     base.trim().startsWith('%')
   );
-}
+});
 
 /**
  * Checks if a metric is an average, duration, or rate that should use weighted average rather than sum.
  */
-export function isRateMetric(metricName: string): boolean {
+export const isRateMetric = memoizeByName(function isRateMetric(metricName: string): boolean {
   const m = metricName.toLowerCase();
   const isDelta = m.includes('delta') || m.includes('variazione') || m.includes('diff');
   const isAcceptanceRate =
@@ -62,12 +78,12 @@ export function isRateMetric(metricName: string): boolean {
     m.includes('tasso') ||
     (!isDelta && (m.includes('%') || m.includes('tempo') || m.includes('durata') || m.includes('media')))
   );
-}
+});
 
 /**
  * Helper to extract base metric and pivot suffix (e.g. 'delta_richieste_pct___SSN' -> base: 'delta_richieste_pct', pivot: '___SSN')
  */
-function splitMetricKey(key: string): { base: string; suffix: string } {
+const splitMetricKey = memoizeByName(function splitMetricKey(key: string): { base: string; suffix: string } {
   const pivotIdx = key.indexOf('___');
   if (pivotIdx !== -1) {
     return {
@@ -76,13 +92,13 @@ function splitMetricKey(key: string): { base: string; suffix: string } {
     };
   }
   return { base: key, suffix: '' };
-}
+});
 
 /**
  * Checks if a metric represents a count of distinct physical entities (e.g. 'Sportelli Attivi')
  * that should roll up via MAX at and below the entity's hierarchy depth, and via SUM above it.
  */
-export function isDistinctEntityMetric(metricName: string): boolean {
+export const isDistinctEntityMetric = memoizeByName(function isDistinctEntityMetric(metricName: string): boolean {
   const { base } = splitMetricKey(metricName);
   const m = base.toLowerCase().trim();
   return (
@@ -97,7 +113,7 @@ export function isDistinctEntityMetric(metricName: string): boolean {
     m.startsWith('distinct_') ||
     m.endsWith('_distinct')
   );
-}
+});
 
 /**
  * Resolves the 0-based hierarchy depth corresponding to the entity counted by `metricName`

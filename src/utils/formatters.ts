@@ -2,6 +2,29 @@ import { getNumberFormatter } from '@superset-ui/core';
 import { MinMaxBound } from '../types';
 import { isDistinctEntityMetric } from './aggregations';
 
+const INTEGER_FORMAT = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const DELTA_FORMAT = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 });
+const SMART_FORMAT = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+interface MetricNameInfo {
+  lower: string;
+  isDistinctEntity: boolean;
+}
+
+const nameInfoCache = new Map<string, MetricNameInfo>();
+const NAME_CACHE_LIMIT = 5000;
+
+/** Lowercase name and entity-count flag of a metric, computed once per distinct name. */
+function getMetricNameInfo(metricName: string): MetricNameInfo {
+  let info = nameInfoCache.get(metricName);
+  if (!info) {
+    if (nameInfoCache.size >= NAME_CACHE_LIMIT) nameInfoCache.clear();
+    info = { lower: metricName.toLowerCase(), isDistinctEntity: isDistinctEntityMetric(metricName) };
+    nameInfoCache.set(metricName, info);
+  }
+  return info;
+}
+
 export function formatMetricValue(
   value: number | string | null | undefined,
   formatterString?: string,
@@ -22,14 +45,12 @@ export function formatMetricValue(
 
   // 0. Distinct physical entity counts (e.g. Sportelli Attivi, Sedi Attive, Stanze Attive)
   // must always be formatted as integer counts, never as durations or float days
-  if (isDistinctEntityMetric(metricName || '')) {
-    return new Intl.NumberFormat('it-IT', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+  const nameInfo = getMetricNameInfo(metricName || '');
+  if (nameInfo.isDistinctEntity) {
+    return INTEGER_FORMAT.format(value);
   }
 
-  const mName = (metricName || '').toLowerCase();
+  const mName = nameInfo.lower;
 
   // 1. Delta Acceptance in percentage points (p.p.)
   if (
@@ -92,7 +113,7 @@ export function formatMetricValue(
   // 7. General delta with sign
   if (mName.startsWith('delta') || mName.includes('delta_') || mName.includes('variazione') || mName.includes('diff')) {
     const sign = value > 0 ? '+' : '';
-    return `${sign}${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(value)}`;
+    return `${sign}${DELTA_FORMAT.format(value)}`;
   }
 
   let formatted = '';
@@ -102,10 +123,7 @@ export function formatMetricValue(
       formatted = formatter(value);
     } else {
       // Italian localized thousands separator (e.g. 1.250)
-      formatted = new Intl.NumberFormat('it-IT', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }).format(value);
+      formatted = SMART_FORMAT.format(value);
     }
   } catch (e) {
     formatted = String(value);
