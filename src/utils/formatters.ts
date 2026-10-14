@@ -1,6 +1,7 @@
 import { getNumberFormatter } from '@superset-ui/core';
 import { MinMaxBound } from '../types';
 import { isDistinctEntityMetric } from './aggregations';
+import { hasDiffToken } from './nameHeuristics';
 
 const INTEGER_FORMAT = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const DELTA_FORMAT = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 });
@@ -54,7 +55,7 @@ export function formatMetricValue(
 
   // 1. Delta Acceptance in percentage points (p.p.)
   if (
-    (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
+    (mName.includes('delta') || mName.includes('variazione') || hasDiffToken(mName)) &&
     (mName.includes('accettazione') || mName.includes('p.p.') || /\bacc\b/.test(mName) || mName.includes('acc_')) &&
     !mName.includes('accesso')
   ) {
@@ -77,7 +78,7 @@ export function formatMetricValue(
   // 3. Delta Lead Time in days (gg)
   if (
     !formatterString?.startsWith('DURATION') &&
-    (mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
+    (mName.includes('delta') || mName.includes('variazione') || hasDiffToken(mName)) &&
     (mName.includes('lt_off') || mName.includes('lead') || (mName.includes('giorni') && !mName.includes('settimana')) || /\blt\b/.test(mName) || mName.includes(' gg') || mName.includes('_gg'))
   ) {
     const sign = value > 0 ? '+' : '';
@@ -98,7 +99,7 @@ export function formatMetricValue(
     mName.includes('δ') ||
     (metricName || '').includes('Δ') ||
     mName.includes('delta %') ||
-    ((mName.includes('delta') || mName.includes('variazione') || mName.includes('diff')) &&
+    ((mName.includes('delta') || mName.includes('variazione') || hasDiffToken(mName)) &&
       (mName.includes('%') || mName.includes('pct') || mName.includes('percent')))
   ) {
     const sign = value > 0 ? '+' : '';
@@ -111,7 +112,7 @@ export function formatMetricValue(
   }
 
   // 7. General delta with sign
-  if (mName.startsWith('delta') || mName.includes('delta_') || mName.includes('variazione') || mName.includes('diff')) {
+  if (mName.startsWith('delta') || mName.includes('delta_') || mName.includes('variazione') || hasDiffToken(mName)) {
     const sign = value > 0 ? '+' : '';
     return `${sign}${DELTA_FORMAT.format(value)}`;
   }

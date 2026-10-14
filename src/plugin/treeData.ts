@@ -15,6 +15,7 @@ export type TreeDataOptions = Pick<
   | 'labelColumn'
   | 'showVarianceDelta'
   | 'weightColumn'
+  | 'aggregationMode'
 >;
 
 /**
@@ -45,7 +46,14 @@ export function buildTreeData(
 
   const treeData =
     hierarchyType === 'multi_dimension'
-      ? buildMultiDimensionTree(records, dimensions, metrics, pivotDimensions, options.weightColumn)
+      ? buildMultiDimensionTree(
+          records,
+          dimensions,
+          metrics,
+          pivotDimensions,
+          options.weightColumn,
+          options.aggregationMode,
+        )
       : buildParentChildTree(
           records,
           options.idColumn,
@@ -53,6 +61,7 @@ export function buildTreeData(
           options.labelColumn,
           metrics,
           options.weightColumn,
+          options.aggregationMode,
         );
 
   if (options.showVarianceDelta && hierarchyType === 'multi_dimension' && dimensions.length > 0) {

@@ -1,5 +1,5 @@
 import { DataRecord } from '@superset-ui/core';
-import { PivotTimeDeltaMode, TreeNode } from '../types';
+import { AggregationFunction, PivotTimeDeltaMode, TreeNode } from '../types';
 import { computeGrandTotal, rollupFunction } from '../utils/aggregations';
 import {
   TimeDeltaStrategyConfig,
@@ -20,6 +20,7 @@ export interface GrandTotalParams {
   pivotTimeDeltaLag: number;
   timeDeltaStrategy?: TimeDeltaStrategyConfig | null;
   weightColumn?: string;
+  aggregationMode?: AggregationFunction;
 }
 
 /**
@@ -38,6 +39,7 @@ export function buildGrandTotalNode({
   pivotTimeDeltaLag,
   timeDeltaStrategy,
   weightColumn = '',
+  aggregationMode = 'sum',
 }: GrandTotalParams): TreeNode | undefined {
   if (!showGrandTotal || treeData.length === 0) {
     return undefined;
@@ -46,7 +48,7 @@ export function buildGrandTotalNode({
   const grandTotalNode = computeGrandTotal(
     treeData,
     metricKeys,
-    rollupFunction(weightColumn),
+    rollupFunction(weightColumn, aggregationMode),
     weightColumn,
   );
   const periodKeys = (): string[] =>

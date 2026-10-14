@@ -1,11 +1,13 @@
 import { ensureIsArray } from '@superset-ui/core';
 import {
+  AggregationFunction,
   ComparisonReferencePeriod,
   ComparisonStrategy,
   ComparisonTimeGrain,
   ConditionalFormattingRule,
   HierarchyType,
   HierarchyValueDisplayMode,
+  MetricDefinition,
   MetricGoal,
   MinMaxDisplayMode,
   MinMaxScope,
@@ -16,6 +18,7 @@ import {
 } from '../types';
 import { normalizeConditionalFormatting } from '../utils/conditionalFormatting';
 import { normalizeGoals } from '../utils/goalBenchmark';
+import { normalizeMetricDefinitions } from '../utils/metricSemantics';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 
 /**
@@ -62,6 +65,8 @@ export interface TransformOptions {
   comparisonReferencePeriod: ComparisonReferencePeriod;
   comparisonStrategy: ComparisonStrategy;
   goals: MetricGoal[];
+  metricDefinitions: MetricDefinition[];
+  aggregationMode: AggregationFunction;
   conditionalFormatting: ConditionalFormattingRule[];
   /** Weight metric of the weighted_avg roll-up; empty for every other aggregation mode. */
   weightColumn: string;
@@ -70,6 +75,7 @@ export interface TransformOptions {
 
 const TIME_GRAINS: readonly ComparisonTimeGrain[] = ['day', 'week', 'month', 'quarter', 'year'];
 const REFERENCE_PERIODS: readonly ComparisonReferencePeriod[] = ['current', 'previous', 'ytd'];
+const AGGREGATION_MODES: readonly AggregationFunction[] = ['sum', 'avg', 'min', 'max', 'count', 'weighted_avg'];
 const COMPARISON_STRATEGIES: readonly ComparisonStrategy[] = [
   'prev_period',
   'prev_year_same_period',
@@ -226,6 +232,8 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
       mergedFormData.comparisonType,
     ),
     goals: normalizeGoals(mergedFormData.goals),
+    metricDefinitions: normalizeMetricDefinitions(mergedFormData.metricDefinitions),
+    aggregationMode: pickChoice(AGGREGATION_MODES, 'sum', mergedFormData.aggregationMode),
     conditionalFormatting: normalizeConditionalFormatting(mergedFormData.conditionalFormatting),
     weightColumn:
       mergedFormData.aggregationMode === 'weighted_avg'

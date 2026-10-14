@@ -1,6 +1,10 @@
 import { TreeNode, AggregationFunction } from '../types';
+import { hasDiffToken } from './nameHeuristics';
 
 const MEMO_LIMIT = 10000;
+
+/** 'attesa' names that count people or bookings waiting (a volume), not a waiting time. */
+const COUNT_OF_WAITING = /prenotazion|pazient|numero|conteggio|\bn\.|\bin attesa/;
 
 /** Memoizes a pure function of a metric name; the classifiers below run once per distinct name. */
 function memoizeByName<T>(fn: (name: string) => T): (name: string) => T {
@@ -49,7 +53,7 @@ export const isDerivedMetric = memoizeByName(function isDerivedMetric(metricName
   const { base } = splitMetricKey(metricName);
   return (
     m.includes('delta') ||
-    m.includes('diff') ||
+    hasDiffToken(m) ||
     m.includes('variazione') ||
     m.includes('pct') ||
     m.includes('percent') ||
@@ -63,7 +67,7 @@ export const isDerivedMetric = memoizeByName(function isDerivedMetric(metricName
  */
 export const isRateMetric = memoizeByName(function isRateMetric(metricName: string): boolean {
   const m = metricName.toLowerCase();
-  const isDelta = m.includes('delta') || m.includes('variazione') || m.includes('diff');
+  const isDelta = m.includes('delta') || m.includes('variazione') || hasDiffToken(m);
   const isAcceptanceRate =
     m.includes('acc_corr') ||
     m.includes('acc_conf') ||
@@ -74,7 +78,7 @@ export const isRateMetric = memoizeByName(function isRateMetric(metricName: stri
   return (
     m.includes('lt_off') ||
     isAcceptanceRate ||
-    m.includes('attesa') ||
+    (m.includes('attesa') && !COUNT_OF_WAITING.test(m)) ||
     m.includes('tasso') ||
     (!isDelta && (m.includes('%') || m.includes('tempo') || m.includes('durata') || m.includes('media')))
   );
@@ -174,7 +178,7 @@ function numericValues(nodes: TreeNode[], metric: string): number[] {
  * Mean of `metric` over `nodes` weighted by `weightKey`. Values without a positive weight only
  * count towards the arithmetic-mean fallback used when the weights sum to zero.
  */
-function weightedMean(nodes: TreeNode[], metric: string, weightKey: string): number | null {
+export function weightedMean(nodes: TreeNode[], metric: string, weightKey: string): number | null {
   let weightedSum = 0;
   let totalWeight = 0;
   let unweightedSum = 0;
@@ -213,9 +217,14 @@ export function weightedAvgOnNode(
 
 const STANDARD_AGG_FUNCS = new Set(['sum', 'avg', 'min', 'max', 'count']);
 
-/** The other aggregation modes stay dormant: only a resolved weight column changes the roll-up. */
-export const rollupFunction = (weightColumn: string): AggregationFunction =>
-  weightColumn && !STANDARD_AGG_FUNCS.has(weightColumn.toLowerCase()) ? 'weighted_avg' : 'sum';
+/**
+ * Roll-up function of the parent rows: a resolved weight column means weighted_avg; otherwise
+ * the chosen avg, min, max or count applies, and sum is the default.
+ */
+export const rollupFunction = (weightColumn: string, mode: AggregationFunction = 'sum'): AggregationFunction => {
+  if (weightColumn && !STANDARD_AGG_FUNCS.has(weightColumn.toLowerCase())) return 'weighted_avg';
+  return mode === 'avg' || mode === 'min' || mode === 'max' || mode === 'count' ? mode : 'sum';
+};
 
 /** weighted_avg roll-up of one metric: the weight metric itself is summed so it can weight the next level. */
 function explicitWeightedValue(nodes: TreeNode[], metric: string, weightColumn: string): number | null {
@@ -257,7 +266,7 @@ function findMetricPair(
 ): { corrKey: string; confKey: string } {
   const isExcluded = (k: string) => {
     const l = k.toLowerCase();
-    return l.includes('delta') || l.includes('variazione') || l.includes('diff');
+    return l.includes('delta') || l.includes('variazione') || hasDiffToken(l);
   };
 
   const matchesDomain = (k: string) => {
@@ -333,7 +342,7 @@ export function recomputeDerivedMetrics(
 
     // 1. Delta / Variazione Richieste (Percentage)
     if (
-      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       (mLower.includes('richieste') || mLower.includes('volume'))
     ) {
       const { corrKey, confKey } = findMetricPair(
@@ -348,7 +357,7 @@ export function recomputeDerivedMetrics(
 
     // 1a. Delta / Variazione Accesso Diretto (Percentage)
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       (mLower.includes('accesso') || mLower.includes('diretto'))
     ) {
       const { corrKey, confKey } = findMetricPair(
@@ -363,7 +372,7 @@ export function recomputeDerivedMetrics(
 
     // 1b. Delta / Variazione Programmata (Percentage)
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       (mLower.includes('programmata') || mLower.includes('programmazione'))
     ) {
       const { corrKey, confKey } = findMetricPair(
@@ -378,7 +387,7 @@ export function recomputeDerivedMetrics(
 
     // 1c. Delta / Variazione Prime Visite (Percentage)
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       (mLower.includes('prime') || mLower.includes('visite')) &&
       !mLower.includes('su totale') &&
       !mLower.includes('% su')
@@ -395,7 +404,7 @@ export function recomputeDerivedMetrics(
 
     // 1d. Delta / Variazione Controlli (Percentage)
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       mLower.includes('controlli')
     ) {
       const { corrKey, confKey } = findMetricPair(
@@ -436,7 +445,7 @@ export function recomputeDerivedMetrics(
 
     // 3. Delta Acceptance (delta_acc = acc_corr - acc_conf) in p.p.
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       (mLower.includes('acc') || mLower.includes('accettazione'))
     ) {
       const accCorrKey =
@@ -473,7 +482,7 @@ export function recomputeDerivedMetrics(
 
     // 4. Delta Lead Time (delta_lt_off = lt_off_corr - lt_off_conf) in gg
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       (mLower.includes('attesa') || mLower.includes('lt_off') || mLower.includes('lead') || (mLower.includes('giorni') && !mLower.includes('settimana'))) &&
       !mLower.includes('acc')
     ) {
@@ -511,7 +520,7 @@ export function recomputeDerivedMetrics(
 
     // 5. Generic fallback for ANY percentage variation
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || mLower.includes('diff')) &&
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       (mLower.includes('%') || mLower.includes('pct') || mLower.includes('percent'))
     ) {
       const corrKey =

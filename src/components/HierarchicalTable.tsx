@@ -8,6 +8,7 @@ import {
   MinMaxDisplayMode,
   MinMaxScope,
   HierarchyValueDisplayMode,
+  MetricPolarity,
   MetricGoal,
   ConditionalFormattingRule,
 } from '../types';
@@ -58,6 +59,13 @@ function GoalBadge({
 const SCROLL_STEP_PX = 32 * 10;
 const quantizeScrollTop = (scrollTop: number): number =>
   Math.floor(scrollTop / SCROLL_STEP_PX) * SCROLL_STEP_PX;
+
+/** Delta colour class; a metric where lower is better swaps the good and bad colours. */
+function deltaClassName(val: number, polarity?: MetricPolarity): string {
+  if (val === 0) return 'delta-neutral';
+  const improves = polarity === 'lower_is_better' ? val < 0 : val > 0;
+  return improves ? 'delta-positive' : 'delta-negative';
+}
 
 function isHierarchySortKey(key?: string, dims?: string[]): boolean {
   if (!key) return false;
@@ -212,13 +220,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
           <span className="badge-delta-nuovo">Nuovo</span>
         ) : isDelta && typeof val === 'number' ? (
           <span
-            className={
-              val > 0
-                ? 'delta-positive'
-                : val < 0
-                ? 'delta-negative'
-                : 'delta-neutral'
-            }
+            className={deltaClassName(val, col?.polarity)}
           >
             {col?.formatter ? col.formatter(val) : String(val ?? '-')}
           </span>
@@ -338,6 +340,10 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
       setActiveDisplayMode(valueDisplayMode);
     }
   }, [valueDisplayMode]);
+
+  // Without subtotals the parent rows carry no values, the same as the leaves-only view.
+  const rowDisplayMode: HierarchyValueDisplayMode =
+    props.showSubtotals === false && activeDisplayMode === 'all' ? 'leaves_only' : activeDisplayMode;
 
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -622,7 +628,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
       columns,
       displayCols,
       nodes: filteredData,
-      displayMode: activeDisplayMode,
+      displayMode: rowDisplayMode,
       showGrandTotal,
       grandTotalNode,
       grandTotalPosition,
@@ -635,7 +641,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     grandTotalNode,
     grandTotalPosition,
     filteredData,
-    activeDisplayMode,
+    rowDisplayMode,
   ]);
 
   if (!data || data.length === 0) {
@@ -670,13 +676,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               <span className="badge-delta-nuovo">Nuovo</span>
             ) : isDelta && typeof val === 'number' ? (
               <span
-                className={
-                  val > 0
-                    ? 'delta-positive'
-                    : val < 0
-                    ? 'delta-negative'
-                    : 'delta-neutral'
-                }
+                className={deltaClassName(val, col?.polarity)}
               >
                 {col?.formatter ? col.formatter(val) : String(val ?? '-')}
               </span>
@@ -1005,7 +1005,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   isExpanded={isExpanded}
                   isFilterSelected={isFilterSelected}
                   emitFilter={emitFilter}
-                  activeDisplayMode={activeDisplayMode}
+                  activeDisplayMode={rowDisplayMode}
                   minMaxDisplayMode={minMaxDisplayMode}
                   minMaxScope={minMaxScope}
                   minMaxBounds={minMaxBounds}

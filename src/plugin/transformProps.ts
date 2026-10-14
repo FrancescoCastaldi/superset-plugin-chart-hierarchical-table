@@ -6,10 +6,38 @@ import {
 } from '../types';
 import { buildHierarchyColumn } from './columnBuilders';
 import { createClearFilterHandler, createCrossFilterHandler } from './eventHandlers';
-import { resolveTransformOptions } from './formDataOptions';
+import { TransformOptions, resolveTransformOptions } from './formDataOptions';
 import { buildGrandTotalNode } from './grandTotal';
 import { buildMetricLayout, resolveTimeDeltaStrategy } from './metricLayout';
 import { buildTreeData } from './treeData';
+import {
+  applyMetricDefinitions,
+  findMetricDefinition,
+  formatByDefinition,
+} from '../utils/metricSemantics';
+
+/**
+ * Column with the number format and the polarity of its metric definition. Delta columns keep
+ * their own format and only borrow the polarity.
+ */
+function applyColumnDefinition(column: TableColumn, options: TransformOptions): TableColumn {
+  if (!column.isMetric || options.metricDefinitions.length === 0) return column;
+  const def = findMetricDefinition(column.baseMetric ?? column.key, options.metricDefinitions);
+  if (!def) return column;
+  const isDeltaColumn = /delta/i.test(column.key) || /delta/i.test(column.baseMetric ?? '');
+  const baseFormatter = column.formatter;
+  return {
+    ...column,
+    ...(def.polarity ? { polarity: def.polarity } : {}),
+    ...(def.format && !isDeltaColumn
+      ? {
+          formatter: (val: any) =>
+            formatByDefinition(val, def, options.currencySymbol) ??
+            (baseFormatter ? baseFormatter(val) : String(val ?? '-')),
+        }
+      : {}),
+  };
+}
 
 export default function transformProps(
   chartProps: HierarchicalTableChartProps,
@@ -21,11 +49,13 @@ export default function transformProps(
   const dataRecords: DataRecord[] = queriesData?.[0]?.data || [];
 
   const { treeData, metrics } = buildTreeData(dataRecords, options);
+  // Explicit metric definitions first, so that the deltas computed by the layout read the right values.
+  applyMetricDefinitions(treeData, undefined, options.metricDefinitions, options.dimensions);
   const layout = buildMetricLayout(treeData, dataRecords, options, metrics);
 
   const columns: TableColumn[] = [
     buildHierarchyColumn(options.hierarchyType, options.dimensions),
-    ...layout.columns,
+    ...layout.columns.map(column => applyColumnDefinition(column, options)),
   ];
 
   const grandTotalNode = buildGrandTotalNode({
@@ -40,7 +70,10 @@ export default function transformProps(
     pivotTimeDeltaLag: options.pivotTimeDeltaLag,
     timeDeltaStrategy: resolveTimeDeltaStrategy(options),
     weightColumn: options.weightColumn,
+    aggregationMode: options.aggregationMode,
   });
+  // Again with the grand total and the row totals, which only exist after the layout.
+  applyMetricDefinitions(treeData, grandTotalNode, options.metricDefinitions, options.dimensions);
 
   return {
     width,

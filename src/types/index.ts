@@ -69,6 +69,43 @@ export interface ConditionalFormattingRule {
   scope?: ConditionalFormattingScope;
 }
 
+export type MetricType = 'sum' | 'mean' | 'distinct_count' | 'ratio' | 'delta_pct' | 'none';
+
+export type MetricFormat = 'integer' | 'decimal' | 'percent' | 'duration' | 'days' | 'currency';
+
+export type MetricPolarity = 'higher_is_better' | 'lower_is_better';
+
+export type ConfidenceMethod = 'none' | 'wilson' | 'poisson';
+
+export type SignalReference = 'parent' | 'total' | 'goal';
+
+/**
+ * Explicit meaning of one metric. When present it wins over the name heuristics for the roll-up
+ * of parent rows and the grand total, the number format and the polarity of deltas.
+ */
+export interface MetricDefinition {
+  metric: string;
+  type: MetricType;
+  /** 'mean': metric that weights the average; empty means a plain arithmetic mean. */
+  weight?: string;
+  /** 'distinct_count': hierarchy dimension of the counted entity (MAX at and below, SUM above). */
+  entityDimension?: string;
+  /** 'ratio': numerator / denominator * scale. */
+  numerator?: string;
+  denominator?: string;
+  scale?: number;
+  /** 'delta_pct': (current - baseline) / baseline * 100. */
+  current?: string;
+  baseline?: string;
+  format?: MetricFormat;
+  decimals?: number;
+  polarity?: MetricPolarity;
+  /** 'ratio' only: confidence interval method, level and the reference of the significance signal. */
+  ci?: ConfidenceMethod;
+  ciLevel?: number;
+  compareTo?: SignalReference;
+}
+
 export interface HierarchicalTableFormData extends QueryFormData {
   // Dimension & Metric Controls
   hierarchyType: HierarchyType;
@@ -134,6 +171,9 @@ export interface HierarchicalTableFormData extends QueryFormData {
   aggregationMode?: AggregationFunction;
   weightColumn?: string;
 
+  // Metric Semantics: explicit meaning of metrics, wins over the name heuristics.
+  metricDefinitions?: MetricDefinition[];
+
   // Goals (optional)
   goals?: { metricKey: string; target: number; direction: 'higher_is_better' | 'lower_is_better' }[];
 
@@ -180,6 +220,8 @@ export interface TableColumn {
   pivotValue?: string;
   baseMetric?: string;
   formatter?: (val: any) => any;
+  /** Direction of improvement of the metric of the column, from its definition. */
+  polarity?: MetricPolarity;
 }
 
 export interface PivotHeaderGroup {

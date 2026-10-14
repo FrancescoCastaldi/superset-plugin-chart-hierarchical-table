@@ -1,6 +1,7 @@
 import { MetricGoal, TableColumn } from '../types';
 import type { CellConditionalFormat } from '../plugin/columnBuilders';
 import { findColumnGoal } from './goalBenchmark';
+import { hasDiffToken } from './nameHeuristics';
 
 export interface ColumnMeta {
   key: string;
@@ -28,11 +29,11 @@ export function isDeltaColumn(col: Pick<TableColumn, 'key' | 'title'>): boolean 
   return (
     k.includes('delta') ||
     k.includes('variazione') ||
-    k.includes('diff') ||
+    hasDiffToken(k) ||
     k.includes('p.p.') ||
     t.includes('delta') ||
     t.includes('variazione') ||
-    t.includes('diff') ||
+    hasDiffToken(t) ||
     t.includes('δ') ||
     (col.title || '').includes('Δ')
   );

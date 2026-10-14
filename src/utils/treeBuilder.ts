@@ -1,5 +1,5 @@
 import { DataRecord } from '@superset-ui/core';
-import { TreeNode, SortOrder, MinMaxScope, MinMaxBoundsMap, NullHandling, SortExpression } from '../types';
+import { AggregationFunction, TreeNode, SortOrder, MinMaxScope, MinMaxBoundsMap, NullHandling, SortExpression } from '../types';
 import {
   rollupTreeMetrics,
   isDerivedMetric,
@@ -19,6 +19,7 @@ export function buildMultiDimensionTree(
   metrics: string[],
   pivotDimensions: string[] = [],
   weightColumn = '',
+  aggregationMode: AggregationFunction = 'sum',
 ): TreeNode[] {
   if (!records || records.length === 0 || !dimensions || dimensions.length === 0) {
     return [];
@@ -194,7 +195,7 @@ export function buildMultiDimensionTree(
   rollupTreeMetrics(
     tree,
     Array.from(allMetricKeys),
-    rollupFunction(weightColumn),
+    rollupFunction(weightColumn, aggregationMode),
     weightColumn,
     dimensions,
   );
@@ -212,6 +213,7 @@ export function buildParentChildTree(
   labelColumn: string,
   metrics: string[],
   weightColumn = '',
+  aggregationMode: AggregationFunction = 'sum',
 ): TreeNode[] {
   if (!records || records.length === 0 || !idColumn) {
     return [];
@@ -323,7 +325,7 @@ export function buildParentChildTree(
     }
   }
 
-  rollupTreeMetrics(roots, metrics, rollupFunction(weightColumn), weightColumn);
+  rollupTreeMetrics(roots, metrics, rollupFunction(weightColumn, aggregationMode), weightColumn);
   return roots;
 }
 

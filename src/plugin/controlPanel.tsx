@@ -737,6 +737,27 @@ const config: ControlPanelConfig = {
           },
         ],
         [subsectionDivider()],
+        [subsectionHeader(t('Metric Semantics (optional)'))],
+        [
+          {
+            name: 'metricDefinitions',
+            config: {
+              type: 'TextAreaControl',
+              language: 'json',
+              label: t('Metric Definitions'),
+              default: '',
+              renderTrigger: true,
+              description: t(
+                'JSON list that states what each metric means, overriding the name-based guesses. Types: sum, mean (optional weight), ' +
+                  'distinct_count (entityDimension), ratio (numerator, denominator, scale: parents and totals are a ratio of sums), ' +
+                  'delta_pct (current, baseline) and none (empty on parent rows). Optional format (integer, decimal, percent, duration in seconds, ' +
+                  'days, currency), decimals and polarity (higher_is_better or lower_is_better, used for the colour of deltas). ' +
+                  'Example: [{"metric": "pct_in_soglia", "type": "ratio", "numerator": "entro_soglia", "denominator": "prenotazioni", "scale": 100, "format": "percent"}]',
+              ),
+            },
+          },
+        ],
+        [subsectionDivider()],
         [subsectionHeader(t('Advanced Rollup Calculations'))],
         [
           {

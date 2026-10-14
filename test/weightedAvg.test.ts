@@ -192,10 +192,16 @@ describe('weightedAvg transform pipeline', () => {
     expect(gt.metrics.qty).toBe(6);
   });
 
-  it('weightedAvg is ignored by the pipeline for the other aggregation modes', () => {
-    const options = resolveTransformOptions({ ...formData, aggregationMode: 'avg', weightColumn: 'qty' });
-    const { treeData } = buildTreeData(records, options);
-    expect(treeData.find(n => n.name === 'Nord')!.metrics.prezzo).toBe(30);
+  it('the weight metric is ignored by the other aggregation modes, which apply their own function', () => {
+    const base = { ...formData, weightColumn: 'qty' };
+    const prezzo = (aggregationMode: string) =>
+      buildTreeData(records, resolveTransformOptions({ ...base, aggregationMode })).treeData.find(
+        n => n.name === 'Nord',
+      )!.metrics.prezzo;
+    expect(prezzo('sum')).toBe(30);
+    expect(prezzo('avg')).toBe(15);
+    expect(prezzo('min')).toBe(10);
+    expect(prezzo('max')).toBe(20);
   });
 });
 

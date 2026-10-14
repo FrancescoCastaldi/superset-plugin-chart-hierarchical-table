@@ -125,6 +125,7 @@ describe('controlPanel layout', () => {
     expect(subsectionHeadings(sectionByLabel('Comparison & Analysis'))).toEqual([
       'Time Comparison & Period-over-Period Variance',
       'Goals (optional)',
+      'Metric Semantics (optional)',
       'Advanced Rollup Calculations',
     ]);
   });
@@ -156,6 +157,7 @@ describe('controlPanel layout', () => {
         'referencePeriod',
         'comparisonType',
         'goals',
+        'metricDefinitions',
         'aggregationMode',
         'emit_filter',
       ]),
