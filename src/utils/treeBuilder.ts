@@ -106,12 +106,18 @@ export function buildMultiDimensionTree(
         // If multiple records land on the same leaf path, sum up their metrics (or MAX for distinct-entity metrics)
         const existingNode = currentLevelMap.get(val);
         for (const m of metrics) {
-          if (isDerivedMetric(m)) {
-            continue;
-          }
+          // Derived metrics (rates, deltas) are never summed, but a new pivot cell of the same
+          // leaf must still receive its own value.
+          const isDerived = isDerivedMetric(m);
           const isDistinct = isDistinctEntityMetric(m);
           const mergeVal = (curr: unknown, next: number): number =>
-            typeof curr === 'number' ? (isDistinct ? Math.max(curr, next) : curr + next) : next;
+            typeof curr !== 'number'
+              ? next
+              : isDerived
+              ? curr
+              : isDistinct
+              ? Math.max(curr, next)
+              : curr + next;
           const rawM = record[m];
           const numVal =
             rawM === null || rawM === undefined

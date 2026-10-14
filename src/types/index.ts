@@ -53,6 +53,8 @@ export interface MinMaxBoundsMap {
 
 export type ConditionalFormattingScope = 'cell' | 'row' | 'column';
 
+export type ConditionalIcon = 'arrow_up' | 'arrow_down' | 'dot' | 'flag' | 'check' | 'warning';
+
 export interface ConditionalFormattingRule {
   metric: string;
   operator: '>' | '>=' | '<' | '<=' | '==' | 'between' | 'regex';
@@ -67,6 +69,8 @@ export interface ConditionalFormattingRule {
   priority?: number;
   /** Defaults to 'row' when highlightRow is set, 'cell' otherwise. */
   scope?: ConditionalFormattingScope;
+  /** Indicator shown beside the value of a matching cell, coloured like the rule. */
+  icon?: ConditionalIcon;
 }
 
 export type MetricType = 'sum' | 'mean' | 'distinct_count' | 'ratio' | 'delta_pct' | 'none';
@@ -174,6 +178,14 @@ export interface HierarchicalTableFormData extends QueryFormData {
   // Metric Semantics: explicit meaning of metrics, wins over the name heuristics.
   metricDefinitions?: MetricDefinition[];
 
+  // Privacy and trend.
+  suppressionThreshold?: number;
+  suppressionMetrics?: string;
+  suppressionLabel?: string;
+  complementarySuppression?: boolean;
+  showSparklines?: boolean;
+  sparklineMetrics?: string;
+
   // Goals (optional)
   goals?: { metricKey: string; target: number; direction: 'higher_is_better' | 'lower_is_better' }[];
 
@@ -195,6 +207,15 @@ export interface GoalDelta {
   status: GoalStatus;
 }
 
+/** Confidence interval of a ratio cell, in the units of the cell value. */
+export interface CellInterval {
+  lower: number;
+  upper: number;
+  level: number;
+  /** The interval lies entirely above or below the reference of the significance signal. */
+  signal?: 'above' | 'below';
+}
+
 export interface TreeNode {
   key: string;
   id: string;
@@ -207,6 +228,10 @@ export interface TreeNode {
   metrics: Record<string, number | string | null>;
   subtotals?: Record<string, number | string | null>;
   rawData?: DataRecord;
+  /** Confidence intervals by metric key, for ratio metrics with a ci method. */
+  intervals?: Record<string, CellInterval>;
+  /** Label shown in place of the hidden value of a small-number-suppressed cell, by metric key. */
+  suppressed?: Record<string, string>;
 }
 
 export interface TableColumn {
@@ -222,6 +247,8 @@ export interface TableColumn {
   formatter?: (val: any) => any;
   /** Direction of improvement of the metric of the column, from its definition. */
   polarity?: MetricPolarity;
+  /** Trend column: the cell draws the series of `metric` over `periods` instead of a value. */
+  sparkline?: { metric: string; periods: string[] };
 }
 
 export interface PivotHeaderGroup {

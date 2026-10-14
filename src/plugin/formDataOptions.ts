@@ -19,6 +19,7 @@ import {
 import { normalizeConditionalFormatting } from '../utils/conditionalFormatting';
 import { normalizeGoals } from '../utils/goalBenchmark';
 import { normalizeMetricDefinitions } from '../utils/metricSemantics';
+import { DEFAULT_SUPPRESSION_LABEL, SuppressionOptions, parseSuppressionMetrics } from '../utils/suppression';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 
 /**
@@ -66,6 +67,9 @@ export interface TransformOptions {
   comparisonStrategy: ComparisonStrategy;
   goals: MetricGoal[];
   metricDefinitions: MetricDefinition[];
+  suppression: SuppressionOptions;
+  showSparklines: boolean;
+  sparklineMetrics: string[];
   aggregationMode: AggregationFunction;
   conditionalFormatting: ConditionalFormattingRule[];
   /** Weight metric of the weighted_avg roll-up; empty for every other aggregation mode. */
@@ -233,6 +237,14 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     ),
     goals: normalizeGoals(mergedFormData.goals),
     metricDefinitions: normalizeMetricDefinitions(mergedFormData.metricDefinitions),
+    suppression: {
+      threshold: Math.max(0, Math.floor(Number(mergedFormData.suppressionThreshold) || 0)),
+      metrics: parseSuppressionMetrics(mergedFormData.suppressionMetrics),
+      label: String(mergedFormData.suppressionLabel ?? '').trim() || DEFAULT_SUPPRESSION_LABEL,
+      complementary: mergedFormData.complementarySuppression ?? true,
+    },
+    showSparklines: Boolean(mergedFormData.showSparklines),
+    sparklineMetrics: parseSuppressionMetrics(mergedFormData.sparklineMetrics),
     aggregationMode: pickChoice(AGGREGATION_MODES, 'sum', mergedFormData.aggregationMode),
     conditionalFormatting: normalizeConditionalFormatting(mergedFormData.conditionalFormatting),
     weightColumn:

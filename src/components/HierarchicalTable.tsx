@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import Sparkline from './Sparkline';
 import classNames from 'classnames';
 import {
   HierarchicalTableTransformedProps,
@@ -7,6 +8,7 @@ import {
   MinMaxBoundsMap,
   MinMaxDisplayMode,
   MinMaxScope,
+  CellInterval,
   HierarchyValueDisplayMode,
   MetricPolarity,
   MetricGoal,
@@ -21,7 +23,7 @@ import { getNormalizedMetricValue, getHeatmapBgColor } from '../utils/formatters
 import { ColumnMeta, buildColumnMetaMap, getDisplayColumns } from '../utils/tableColumns';
 import { buildCsvRows, downloadCsv, serializeCsv } from '../utils/csvExport';
 import { GOAL_STATUS_LABELS, computeGoalDelta, formatGoalDelta } from '../utils/goalBenchmark';
-import { firstByPriority } from '../utils/conditionalFormatting';
+import { CONDITIONAL_ICONS, firstByPriority } from '../utils/conditionalFormatting';
 import { buildColumnConditionalFormat } from '../plugin/columnBuilders';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 import { useFlatTreeVirtualization } from './useFlatTreeVirtualization';
@@ -51,6 +53,29 @@ function GoalBadge({
       aria-label={`${GOAL_STATUS_LABELS[delta.status]}: ${comparison} vs target ${target}`}
     >
       {comparison}
+    </span>
+  );
+}
+
+function SignalMarker({
+  interval,
+  polarity,
+  formatter,
+}: {
+  interval: CellInterval;
+  polarity?: MetricPolarity;
+  formatter?: (val: any) => any;
+}) {
+  const show = (v: number) => (formatter ? formatter(v) : String(Math.round(v * 10) / 10));
+  const range = `CI ${Math.round(interval.level * 1000) / 10}%: ${show(interval.lower)} to ${show(interval.upper)}`;
+  if (!interval.signal) {
+    return <span className="ci-range" title={range} aria-label={range} />;
+  }
+  const good = (interval.signal === 'above') === (polarity !== 'lower_is_better');
+  const label = `${interval.signal === 'above' ? 'Significantly above' : 'Significantly below'} the reference. ${range}`;
+  return (
+    <span className={`signal-marker ${good ? 'signal-good' : 'signal-bad'}`} title={label} aria-label={label}>
+      {interval.signal === 'above' ? '▲' : '▼'}
     </span>
   );
 }
@@ -185,6 +210,19 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
           return <td key={col.key} className="metric-cell empty-metric-cell" />;
         }
 
+        if (col.sparkline) {
+          const { metric, periods } = col.sparkline;
+          const series = (periods as string[]).map((p: string) => {
+            const v = cellValue(`${metric}___${p}`);
+            return typeof v === 'number' ? v : null;
+          });
+          return (
+            <td key={col.key} className="metric-cell sparkline-cell">
+              <Sparkline values={series} polarity={col.polarity} label={`${metric}: ${periods[0]} to ${periods[periods.length - 1]}`} />
+            </td>
+          );
+        }
+
         const meta = columnMetaMap.get(col.key);
         const val = cellValue(col.key);
         // A matching rule replaces the heatmap background with its own colours.
@@ -230,7 +268,9 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
           String(val ?? '-')
         );
 
-        const cellContent =
+        const interval = node.intervals?.[col.key];
+        const suppressedLabel = node.suppressed?.[col.key];
+        const withGoal =
           meta?.goal && isNumeric ? (
             <>
               {baseContent}
@@ -238,6 +278,26 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
             </>
           ) : (
             baseContent
+          );
+        const cellContent =
+          suppressedLabel !== undefined ? (
+            <span className="suppressed-cell" title="Value hidden for privacy (small number)">
+              {suppressedLabel}
+            </span>
+          ) : interval || format?.rule.icon ? (
+            <>
+              {withGoal}
+              {format?.rule.icon && (
+                <span className="cond-icon" aria-hidden="true" style={format.style.color ? { color: format.style.color } : undefined}>
+                  {CONDITIONAL_ICONS[format.rule.icon]}
+                </span>
+              )}
+              {interval && (
+                <SignalMarker interval={interval} polarity={col.polarity} formatter={col.formatter} />
+              )}
+            </>
+          ) : (
+            withGoal
           );
 
         // Cell heatmap background style

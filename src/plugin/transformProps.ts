@@ -10,6 +10,8 @@ import { TransformOptions, resolveTransformOptions } from './formDataOptions';
 import { buildGrandTotalNode } from './grandTotal';
 import { buildMetricLayout, resolveTimeDeltaStrategy } from './metricLayout';
 import { buildTreeData } from './treeData';
+import { applyConfidenceIntervals } from '../utils/significance';
+import { applySuppression } from '../utils/suppression';
 import {
   applyMetricDefinitions,
   findMetricDefinition,
@@ -74,6 +76,9 @@ export default function transformProps(
   });
   // Again with the grand total and the row totals, which only exist after the layout.
   applyMetricDefinitions(treeData, grandTotalNode, options.metricDefinitions, options.dimensions);
+  applyConfidenceIntervals(treeData, grandTotalNode, options.metricDefinitions, options.goals);
+  // Last, so that nothing downstream (sorting, colours, export) ever sees a hidden value.
+  applySuppression(treeData, options.suppression, options.metricDefinitions);
 
   return {
     width,

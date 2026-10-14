@@ -20,6 +20,8 @@ export interface CsvExportParams {
 }
 
 function cellValue(node: TreeNode, key: string): string {
+  const suppressed = node.suppressed?.[key];
+  if (suppressed !== undefined) return suppressed;
   const val = node.metrics?.[key] ?? node.subtotals?.[key];
   return val !== null && val !== undefined ? String(val) : '';
 }

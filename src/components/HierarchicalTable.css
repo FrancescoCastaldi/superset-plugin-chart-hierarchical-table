@@ -792,3 +792,37 @@ th.sortable-header:hover .sort-indicator-inactive::after {
 
 
 
+
+/* Small-number suppression, confidence interval signal */
+.suppressed-cell {
+  color: var(--ht-muted, #6c757d);
+  font-style: italic;
+  cursor: help;
+}
+
+.signal-marker {
+  margin-left: 4px;
+  font-size: 0.75em;
+  cursor: help;
+}
+
+.signal-marker.signal-good {
+  color: #28a745;
+}
+
+.signal-marker.signal-bad {
+  color: #dc3545;
+}
+
+.ci-range {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+  cursor: help;
+}
+
+.cond-icon {
+  margin-left: 4px;
+  font-size: 0.8em;
+}

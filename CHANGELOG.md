@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-15
+### Added
+- **Metric Definitions (`metricDefinitions`)**: new JSON control in `Comparison & Analysis` that states what each metric means and wins over the name-based guesses. Types: `sum`, `mean` (optional `weight` metric), `distinct_count` (`entityDimension`: MAX at and below that level, SUM above), `ratio` (`numerator`, `denominator`, `scale`: parent rows, grand total and row totals are a ratio of sums, never an average of ratios), `delta_pct` (`current`, `baseline`) and `none` (empty on parent rows). Each entry can also set `format` (`integer`, `decimal`, `percent`, `duration` in seconds, `days`, `currency`), `decimals` and `polarity` (`higher_is_better`, `lower_is_better`). Malformed entries are dropped, and charts without definitions behave exactly as before. Logic in `src/utils/metricSemantics.ts`; covered by `test/metricSemantics.test.ts` and `test/transformPipeline.metricDefinitions.test.ts`.
+- **Confidence Intervals and Significance Signal**: a `ratio` definition can declare `ci: "wilson"` (proportions, for example the share of bookings within the maximum waiting time) or `ci: "poisson"` (event rates over a population, with `scale` 1000 or 100000), a `ciLevel` (0.9, 0.95, 0.99 or 0.998) and `compareTo` (`parent`, `total` or `goal`). Every cell gets its interval, shown in the tooltip, and a marker (up or down) appears only when the whole interval lies on one side of the reference, so small units are not ranked better or worse by chance, the funnel plot logic of public health benchmarking inside the table. The marker colour follows the polarity. Pure functions in `src/utils/statistics.ts` (Wilson score, Byar approximation of the exact Poisson interval) and `src/utils/significance.ts`; covered by `test/significanceAndSuppression.test.ts`.
+- **Small-Number Suppression (`Privacy (small numbers)`)**: `suppressionThreshold`, `suppressionMetrics`, `complementarySuppression` and `suppressionLabel`. Counts from 1 to threshold minus 1 are replaced by a label such as `<5`; the smallest visible nonzero sibling of a lone hidden cell is hidden too (complementary suppression, also among the root rows), so the value cannot be recovered by subtracting from the total; ratios and deltas built on a hidden cell are hidden; the grand total stays visible. Suppression runs last, so sorting, min/max colouring and the CSV export never see the hidden value, and the export writes the label. Logic in `src/utils/suppression.ts`.
+- **Trend Sparklines**: `showSparklines` and `sparklineMetrics` add a `Trend` column per metric with a line over the periods in calendar order (single pivot dimension). The geometry is pure and deterministic (`computeSparkline` in `src/components/Sparkline.tsx`), gaps split the line and the colour follows the polarity.
+- **Indicators in Conditional Formatting**: rules accept `icon` (`arrow_up`, `arrow_down`, `dot`, `flag`, `check`, `warning`) shown beside the value of a matching cell.
+- **Benchmark Script**: `node scripts/bench.mjs [rows] [periods]` runs `transformProps` on a synthetic dataset. Results in `docs/BENCHMARK_v0.4.0.md`. The control audit of this release is in `docs/AUDIT_CONTROLLI_v0.4.0.md`.
+
+### Changed
+- **Calendar-Aware Period Order**: pivot periods that are Italian or English month names or weekday names follow the calendar, whole numbers compare numerically and composite keys compare part by part. ISO dates, quarters and free labels keep the lexicographic order.
+- **Delta Colours Follow the Polarity**: a metric declared `lower_is_better` shows a decrease in green and an increase in red; without a definition the colours are unchanged.
+- **`diff` Is Read as a Token**: names such as `Differibile` or `Prestazioni differite` (priority class D) are no longer taken for difference metrics, so they are summed and shown without a sign. Names with `Prenotazioni`, `Pazienti`, `Numero` or `in attesa` are no longer averaged as waiting times.
+- **Control Label**: `Enable CSV / Excel Hierarchy Export` now reads `Enable CSV Hierarchy Export`, since only CSV exists.
+- **Dependencies and Bundle**: removed the unused `d3-format` and `@types/lodash`, and the duplicate example image; `dist/index.esm.js` shrinks from 120.7 KB to 109.6 KB before the new features (121.6 KB with them).
+
+### Fixed
+- **Pivot Columns on Dates**: epoch timestamps used as pivot values were converted to ISO dates in the tree but not in the column keys, so the pivot cells, row totals and deltas came out empty. Tree and pivot now share one normalization (`src/utils/dimensionValue.ts`).
+- **Derived Metrics on Pivoted Leaves**: a derived metric (for example a rate named `tasso_...`) received a value only for the first period of a leaf; every pivot cell now gets its own value.
+- **`aggregationMode` avg, min, max and count**: the control offered them but the roll-up always summed. They are now applied to parent rows and the grand total (the weighted average keeps its explicit weight metric).
+- **`showSubtotals`**: the option was resolved but never read; with it off, parent rows no longer show values.
+
+### Performance
+- Metric name classifiers are memoized, the tree path key is built incrementally, `Intl.NumberFormat` instances are created once, and the virtualization window updates once per block of 10 rows instead of on every scroll event. `transformProps` on 50,000 rows and 24 periods goes from 265 ms to about 180 ms (-30%).
+
 ## [0.3.3] - 2026-10-12
 ### Fixed
 - **Volume Acceptance Count Exclusion in `formatMetricValue` and `isRateMetric`**: Additive volume count metrics containing `accettazione` combined with `totale`, `numero` or `conteggio` (such as `Accettazione Totale`) are no longer matched by the acceptance-rate heuristic (`acc_corr` / `acc_conf`), ensuring they are formatted as localized integers without a `%` suffix and summed rather than averaged in parent subtotals and `Grand Total`.
@@ -129,7 +154,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release for the Hierarchical Table plugin.
 
-[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.3...v0.4.0
+[0.3.3]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.10...v0.3.0
 [0.2.10]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.2.9...v0.2.10

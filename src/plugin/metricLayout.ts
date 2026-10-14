@@ -9,6 +9,7 @@ import {
 import {
   ColumnLayout,
   appendPeriodComparisonColumns,
+  appendSparklineColumns,
   buildFlatColumns,
   buildMultiPivotColumns,
   buildSinglePivotColumns,
@@ -125,6 +126,10 @@ export function buildMetricLayout(
     computeTreeTimeDeltaByStrategy(treeData, metrics, chronologicalPivotValues, timeDeltaStrategy)
   ) {
     appendPeriodComparisonColumns(layout, metrics, timeDeltaStrategy, format);
+  }
+
+  if (options.showSparklines) {
+    appendSparklineColumns(layout, metrics, chronologicalPivotValues, options.sparklineMetrics);
   }
 
   return layout;

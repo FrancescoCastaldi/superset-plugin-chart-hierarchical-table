@@ -1,4 +1,4 @@
-import { ConditionalFormattingRule, ConditionalFormattingScope } from '../types';
+import { ConditionalFormattingRule, ConditionalFormattingScope, ConditionalIcon } from '../types';
 import { toFiniteNumber } from './goalBenchmark';
 
 /** Longest regex pattern that is compiled: longer regex rules never format. */
@@ -7,6 +7,15 @@ export const MAX_REGEX_PATTERN_LENGTH = 256;
 export const MAX_REGEX_INPUT_LENGTH = 1000;
 
 const SCOPES: readonly ConditionalFormattingScope[] = ['cell', 'row', 'column'];
+
+export const CONDITIONAL_ICONS: Record<ConditionalIcon, string> = {
+  arrow_up: '▲',
+  arrow_down: '▼',
+  dot: '●',
+  flag: '⚑',
+  check: '✓',
+  warning: '⚠',
+};
 
 export interface ConditionalFormatMatch {
   rule: ConditionalFormattingRule;
@@ -142,6 +151,7 @@ export function normalizeConditionalFormatting(raw: unknown): ConditionalFormatt
       ...entry,
       priority: toFiniteNumber(entry.priority) ?? index + 1,
       scope: SCOPES.includes(entry.scope) ? entry.scope : entry.highlightRow ? 'row' : 'cell',
+      icon: entry.icon in CONDITIONAL_ICONS ? entry.icon : undefined,
     });
   });
   return rules;

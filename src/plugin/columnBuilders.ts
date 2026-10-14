@@ -20,6 +20,7 @@ import {
 export const HIERARCHY_COLUMN_KEY = '__hierarchy_tree__';
 export const ROW_TOTALS_GROUP_KEY = '__pivot_row_totals__';
 export const PERIOD_COMPARISON_GROUP_KEY = '__period_comparison__';
+export const SPARKLINE_GROUP_KEY = '__sparklines__';
 
 export interface ValueFormat {
   numberFormat: string;
@@ -562,6 +563,41 @@ export function appendPeriodComparisonColumns(
       colSpan: count,
     });
   }
+}
+
+/**
+ * Trend columns of the single pivot layout: one column per metric whose cell draws the series
+ * over the periods (in chronological order). Metrics that are comparison operands or deltas
+ * have no trend of their own. Returns the number of columns added.
+ */
+export function appendSparklineColumns(
+  layout: ColumnLayout,
+  metrics: string[],
+  periods: string[],
+  selected: string[],
+): number {
+  if (periods.length < 2) return 0;
+  const candidates = metrics.filter(
+    m => !isComparisonOperandMetric(m) && !/delta|variazione/i.test(m) && (selected.length === 0 || selected.includes(m)),
+  );
+  const multiple = candidates.length > 1;
+  for (const m of candidates) {
+    const key = `${m}___SPARK`;
+    layout.columns.push({
+      key,
+      title: multiple ? `Trend ${m}` : 'Trend',
+      dataIndex: key,
+      isMetric: true,
+      baseMetric: m,
+      align: 'center',
+      width: 120,
+      sparkline: { metric: m, periods },
+    });
+  }
+  if (candidates.length > 0) {
+    layout.pivotHeaderGroups.push({ title: 'Trend', key: SPARKLINE_GROUP_KEY, colSpan: candidates.length });
+  }
+  return candidates.length;
 }
 
 /**

@@ -758,6 +758,90 @@ const config: ControlPanelConfig = {
           },
         ],
         [subsectionDivider()],
+        [subsectionHeader(t('Privacy (small numbers)'))],
+        [
+          {
+            name: 'suppressionThreshold',
+            config: {
+              type: 'TextControl',
+              isInt: true,
+              label: t('Suppress Counts Below'),
+              default: 0,
+              renderTrigger: true,
+              description: t(
+                'Hides the counts from 1 up to this value minus 1 (0 turns it off; 5 or 10 are usual for published health data). ' +
+                  'Ratios and deltas built on a hidden count are hidden too, and the hidden value never reaches sorting, colours or the CSV export.',
+              ),
+            },
+          },
+        ],
+        [
+          {
+            name: 'suppressionMetrics',
+            config: {
+              type: 'TextControl',
+              label: t('Metrics To Suppress'),
+              default: '',
+              renderTrigger: true,
+              description: t('Comma separated count metrics subject to suppression, e.g. casi, ricoveri.'),
+              visibility: ({ controls }: { controls: any }) => Number(controls?.suppressionThreshold?.value) > 0,
+            },
+          },
+        ],
+        [
+          {
+            name: 'complementarySuppression',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Complementary Suppression'),
+              default: true,
+              renderTrigger: true,
+              description: t(
+                'Also hides the smallest visible sibling of a lone hidden cell, so the hidden value cannot be recovered by subtracting from the parent total.',
+              ),
+              visibility: ({ controls }: { controls: any }) => Number(controls?.suppressionThreshold?.value) > 0,
+            },
+          },
+          {
+            name: 'suppressionLabel',
+            config: {
+              type: 'TextControl',
+              label: t('Suppressed Cell Label'),
+              default: '<{k}',
+              renderTrigger: true,
+              description: t('Text shown in place of a hidden value; {k} is replaced by the threshold.'),
+              visibility: ({ controls }: { controls: any }) => Number(controls?.suppressionThreshold?.value) > 0,
+            },
+          },
+        ],
+        [subsectionDivider()],
+        [subsectionHeader(t('Trend (Sparklines)'))],
+        [
+          {
+            name: 'showSparklines',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Show Trend Sparklines'),
+              default: false,
+              renderTrigger: true,
+              description: t(
+                'With exactly one pivot column (the periods), adds a Trend column per metric with a line over the periods in chronological order.',
+              ),
+            },
+          },
+          {
+            name: 'sparklineMetrics',
+            config: {
+              type: 'TextControl',
+              label: t('Sparkline Metrics'),
+              default: '',
+              renderTrigger: true,
+              description: t('Comma separated metrics that get a trend column; empty means every metric.'),
+              visibility: ({ controls }: { controls: any }) => Boolean(controls?.showSparklines?.value),
+            },
+          },
+        ],
+        [subsectionDivider()],
         [subsectionHeader(t('Advanced Rollup Calculations'))],
         [
           {

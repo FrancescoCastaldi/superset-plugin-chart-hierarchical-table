@@ -126,6 +126,8 @@ describe('controlPanel layout', () => {
       'Time Comparison & Period-over-Period Variance',
       'Goals (optional)',
       'Metric Semantics (optional)',
+      'Privacy (small numbers)',
+      'Trend (Sparklines)',
       'Advanced Rollup Calculations',
     ]);
   });

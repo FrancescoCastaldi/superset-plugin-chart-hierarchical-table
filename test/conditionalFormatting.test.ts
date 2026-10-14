@@ -242,3 +242,24 @@ describe('conditionalFormatting column metadata', () => {
     expect(build({})).not.toHaveProperty('conditionalFormatting');
   });
 });
+
+describe('rule indicators', () => {
+  it('keeps a known icon on a normalized rule and drops an unknown one', () => {
+    const [warn, bad, none] = normalizeConditionalFormatting([
+      { metric: 'attesa', operator: '>', targetValue: 30, colorScheme: 'custom', icon: 'warning' },
+      { metric: 'attesa', operator: '>', targetValue: 60, colorScheme: 'custom', icon: 'skull' },
+      { metric: 'attesa', operator: '>', targetValue: 90, colorScheme: 'custom' },
+    ]);
+    expect(warn.icon).toBe('warning');
+    expect(bad.icon).toBeUndefined();
+    expect(none.icon).toBeUndefined();
+  });
+
+  it('exposes the icon of the winning rule in the match', () => {
+    const rules = normalizeConditionalFormatting([
+      { metric: 'attesa', operator: '>', targetValue: 30, colorScheme: 'custom', icon: 'arrow_up' },
+    ]);
+    expect(applyConditionalFormatting(45, 'attesa', rules)?.rule.icon).toBe('arrow_up');
+    expect(applyConditionalFormatting(10, 'attesa', rules)).toBeNull();
+  });
+});
