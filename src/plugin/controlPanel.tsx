@@ -442,7 +442,7 @@ const config: ControlPanelConfig = {
             name: 'enableExport',
             config: {
               type: 'CheckboxControl',
-              label: t('Enable CSV / Excel Hierarchy Export'),
+              label: t('Enable CSV Hierarchy Export'),
               renderTrigger: true,
               default: true,
               description: t(
