@@ -109,6 +109,40 @@ export interface MetricDefinition {
   ci?: ConfidenceMethod;
   ciLevel?: number;
   compareTo?: SignalReference;
+  /** Table calculation modifier (e.g. pct_of_total, pct_of_parent, running_total, rank). */
+  calculation?: TableCalculationType;
+  calculationScope?: TableCalculationScope;
+  rankMethod?: RankMethod;
+  rankOrder?: 'desc' | 'asc';
+  calculationDisplayMode?: 'replace' | 'companion_column';
+}
+
+export type TableCalculationType =
+  | 'none'
+  | 'pct_of_total'
+  | 'pct_of_parent'
+  | 'running_total'
+  | 'diff_from_previous'
+  | 'diff_from_previous_pct'
+  | 'rank';
+
+export type TableCalculationScope = 'hierarchy' | 'periods';
+
+export type RankMethod = 'competition' | 'dense';
+
+export interface TableCalculationConfig {
+  metric: string;
+  type: TableCalculationType;
+  /** Direction: across sibling nodes in hierarchy or across pivot periods. Default: 'hierarchy' */
+  scope?: TableCalculationScope;
+  /** Rank method when type is 'rank'. Default: 'competition' */
+  rankMethod?: RankMethod;
+  /** Sort order for rank: 'desc' (highest value is rank 1, default) or 'asc' */
+  rankOrder?: 'desc' | 'asc';
+  /** 'replace' replaces metric value, 'companion_column' adds a new column next to metric. Default: 'companion_column' */
+  displayMode?: 'replace' | 'companion_column';
+  /** Optional custom title for the calculation column */
+  customTitle?: string;
 }
 
 export interface HierarchicalTableFormData extends QueryFormData {
@@ -196,6 +230,9 @@ export interface HierarchicalTableFormData extends QueryFormData {
 
   // Context Menu & Drill
   enableContextMenu?: boolean;
+
+  // Table Calculations & Measure Modifiers (F2)
+  tableCalculations?: TableCalculationConfig[];
 }
 
 export type MetricGoal = NonNullable<HierarchicalTableFormData['goals']>[number];
@@ -255,6 +292,8 @@ export interface TableColumn {
   polarity?: MetricPolarity;
   /** Trend column: the cell draws the series of `metric` over `periods` instead of a value. */
   sparkline?: { metric: string; periods: string[] };
+  /** Type of table calculation if this column represents a measure modifier. */
+  calculationType?: TableCalculationType;
 }
 
 export interface PivotHeaderGroup {

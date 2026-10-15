@@ -758,6 +758,24 @@ const config: ControlPanelConfig = {
           },
         ],
         [subsectionDivider()],
+        [subsectionHeader(t('Table Calculations (optional)'))],
+        [
+          {
+            name: 'tableCalculations',
+            config: {
+              type: 'TextAreaControl',
+              language: 'json',
+              label: t('Table Calculations & Measure Modifiers'),
+              default: '',
+              renderTrigger: true,
+              description: t(
+                'JSON list of table calculations and measure modifiers. Supported types: pct_of_total, pct_of_parent, running_total, diff_from_previous, diff_from_previous_pct, rank. ' +
+                  'Example: [{"metric": "sales", "type": "pct_of_parent", "display": "companion_column"}]',
+              ),
+            },
+          },
+        ],
+        [subsectionDivider()],
         [subsectionHeader(t('Privacy (small numbers)'))],
         [
           {

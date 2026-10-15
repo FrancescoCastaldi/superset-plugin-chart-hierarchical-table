@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-15
+### Added
+- **Measure Modifiers and Table Calculations (`tableCalculations`)**: New analytical engine in `src/utils/tableCalculations.ts` providing standard business intelligence table calculations and dynamic measure modifiers.
+- **Percent of Total (`pct_of_total`)**: Computes each node metric share relative to the overall Grand Total or scoped hierarchy total.
+- **Percent of Parent (`pct_of_parent`)**: Evaluates the percentage contribution of each branch relative to its parent row subtotals, guaranteeing exact additive balance across sibling groups.
+- **Running Total (`running_total`)**: Cumulative metric summation along ordered chronological pivot periods (`scope: "periods"`) or across hierarchical siblings (`scope: "siblings"`).
+- **Difference from Previous (`diff_from_previous` and `diff_from_previous_pct`)**: Period-over-period absolute and percentage variances calculated across chronological pivot intervals without altering raw query metrics.
+- **Sibling Ranking (`rank`)**: Computes competition (standard 1224) or dense (1223) rank order among sibling rows, sorted either descending or ascending.
+- **Companion Column and Replace Display Modes**: Table calculations can be appended as companion columns with customized titles and dedicated formatters, or directly replace the underlying metric cells.
+- **Explore Control (`Table Calculations (optional)`)**: Dedicated JSON control in `Comparison & Analysis` allowing analyst-driven configuration of calculations.
+
 ## [0.5.0] - 2026-10-15
 ### Added
 - **Native Apache Superset Context Menu (`Behavior.DrillBy` and `Behavior.DrillToDetail`)**: Support for Superset native right-click context menu on tree cells and rows. Generates binary filter clauses (`buildContextMenuFilters` in `src/plugin/contextMenu.ts`) for drill to detail, drill by, and cross-filtering.

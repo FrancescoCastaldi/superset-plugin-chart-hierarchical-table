@@ -10,6 +10,7 @@ import {
   ColumnLayout,
   appendPeriodComparisonColumns,
   appendSparklineColumns,
+  appendTableCalculationColumns,
   buildFlatColumns,
   buildMultiPivotColumns,
   buildSinglePivotColumns,
@@ -61,7 +62,9 @@ export function buildMetricLayout(
   const { pivotDimensions, pivotRowTotalsPosition, pivotTimeDeltaMode } = options;
 
   if (!options.isPivotMode) {
-    return buildFlatColumns(metrics, format);
+    const flatLayout = buildFlatColumns(metrics, format);
+    appendTableCalculationColumns(flatLayout, options.tableCalculations, format, false);
+    return flatLayout;
   }
 
   if (pivotDimensions.length >= 2) {
@@ -75,7 +78,7 @@ export function buildMetricLayout(
       computeHorizontalRowTotals(treeData, metrics, displayDim1Values, 'sum', options.dimensions);
     }
 
-    return buildMultiPivotColumns({
+    const twoWayLayout = buildMultiPivotColumns({
       metrics,
       displayDim1Values,
       dim2Values,
@@ -85,6 +88,8 @@ export function buildMetricLayout(
       columnSubtotalLabel: options.pivotColumnSubtotalLabel,
       format,
     });
+    appendTableCalculationColumns(twoWayLayout, options.tableCalculations, format, true);
+    return twoWayLayout;
   }
 
   const pivotKeys = collectDistinctPivotKeys(records, pivotDimensions);
@@ -131,6 +136,14 @@ export function buildMetricLayout(
   if (options.showSparklines) {
     appendSparklineColumns(layout, metrics, chronologicalPivotValues, options.sparklineMetrics);
   }
+
+  appendTableCalculationColumns(
+    layout,
+    options.tableCalculations,
+    format,
+    true,
+    chronologicalPivotValues,
+  );
 
   return layout;
 }

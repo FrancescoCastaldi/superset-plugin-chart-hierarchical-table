@@ -4,6 +4,7 @@ import {
   PivotRowTotalsPosition,
   PivotTimeDeltaMode,
   TableColumn,
+  TableCalculationConfig,
 } from '../types';
 import {
   ConditionalFormatMatch,
@@ -11,6 +12,10 @@ import {
   firstByPriority,
 } from '../utils/conditionalFormatting';
 import { formatMetricValue } from '../utils/formatters';
+import {
+  defaultCalculationTitle,
+  getCalculationFormatter,
+} from '../utils/tableCalculations';
 import {
   PERIOD_DELTA_PCT_SUFFIX,
   PERIOD_DELTA_SUFFIX,
@@ -644,3 +649,99 @@ export function buildSinglePivotColumns(params: SinglePivotColumnsParams): Colum
 
   return layout;
 }
+
+/**
+ * Appends or adapts columns for Table Calculations (modificatori di misura).
+ */
+export function appendTableCalculationColumns(
+  layout: ColumnLayout,
+  configs: TableCalculationConfig[],
+  format: ValueFormat,
+  isPivotMode: boolean,
+  pivotValues?: string[],
+): void {
+  if (!configs || configs.length === 0) return;
+
+  for (const config of configs) {
+    if (config.displayMode === 'replace') {
+      for (const col of layout.columns) {
+        if (col.baseMetric === config.metric || col.dataIndex === config.metric) {
+          col.calculationType = config.type;
+          col.formatter = getCalculationFormatter(config.type, format.numberFormat, format.currencySymbol);
+          if (config.customTitle) {
+            col.title = config.customTitle;
+          }
+        }
+      }
+      continue;
+    }
+
+    // companion_column mode
+    if (!isPivotMode) {
+      const idx = layout.columns.findIndex(c => c.dataIndex === config.metric || c.baseMetric === config.metric);
+      const calcKey = `${config.metric}___calc_${config.type}`;
+      const title = config.customTitle ?? defaultCalculationTitle(config);
+      const newCol: TableColumn = {
+        key: calcKey,
+        title,
+        dataIndex: calcKey,
+        isMetric: true,
+        baseMetric: title,
+        align: 'right',
+        width: 120,
+        formatter: getCalculationFormatter(config.type, format.numberFormat, format.currencySymbol),
+        calculationType: config.type,
+      };
+      if (idx >= 0) {
+        layout.columns.splice(idx + 1, 0, newCol);
+      } else {
+        layout.columns.push(newCol);
+      }
+      layout.metricKeys.push(calcKey);
+    } else {
+      if (config.scope === 'periods' && pivotValues && pivotValues.length > 0) {
+        for (const p of pivotValues) {
+          const srcKey = `${config.metric}___${p}`;
+          const calcKey = `${srcKey}___calc_${config.type}`;
+          const idx = layout.columns.findIndex(c => c.dataIndex === srcKey);
+          const title = config.customTitle ? `${config.customTitle} (${p})` : `${defaultCalculationTitle(config)} ${p}`;
+          const newCol: TableColumn = {
+            key: calcKey,
+            title,
+            dataIndex: calcKey,
+            isMetric: true,
+            pivotValue: p,
+            baseMetric: `${config.metric} (${config.type})`,
+            align: 'right',
+            width: 120,
+            formatter: getCalculationFormatter(config.type, format.numberFormat, format.currencySymbol),
+            calculationType: config.type,
+          };
+          if (idx >= 0) {
+            layout.columns.splice(idx + 1, 0, newCol);
+          } else {
+            layout.columns.push(newCol);
+          }
+          layout.metricKeys.push(calcKey);
+        }
+      } else {
+        const calcKey = `${config.metric}___calc_${config.type}`;
+        const title = config.customTitle ?? defaultCalculationTitle(config);
+        const newCol: TableColumn = {
+          key: calcKey,
+          title,
+          dataIndex: calcKey,
+          isMetric: true,
+          baseMetric: title,
+          align: 'right',
+          width: 120,
+          formatter: getCalculationFormatter(config.type, format.numberFormat, format.currencySymbol),
+          calculationType: config.type,
+        };
+        layout.columns.push(newCol);
+        layout.metricKeys.push(calcKey);
+      }
+    }
+  }
+}
+

@@ -17,6 +17,7 @@ import {
   findMetricDefinition,
   formatByDefinition,
 } from '../utils/metricSemantics';
+import { applyTableCalculations } from '../utils/tableCalculations';
 
 /**
  * Column with the number format and the polarity of its metric definition. Delta columns keep
@@ -76,6 +77,7 @@ export default function transformProps(
   });
   // Again with the grand total and the row totals, which only exist after the layout.
   applyMetricDefinitions(treeData, grandTotalNode, options.metricDefinitions, options.dimensions);
+  applyTableCalculations(treeData, grandTotalNode, options.tableCalculations);
   applyConfidenceIntervals(treeData, grandTotalNode, options.metricDefinitions, options.goals);
   // Last, so that nothing downstream (sorting, colours, export) ever sees a hidden value.
   applySuppression(treeData, options.suppression, options.metricDefinitions);

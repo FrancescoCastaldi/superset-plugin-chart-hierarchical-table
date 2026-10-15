@@ -19,6 +19,7 @@ import {
 import { normalizeConditionalFormatting } from '../utils/conditionalFormatting';
 import { normalizeGoals } from '../utils/goalBenchmark';
 import { normalizeMetricDefinitions } from '../utils/metricSemantics';
+import { normalizeTableCalculations, TableCalculationConfig } from '../utils/tableCalculations';
 import { DEFAULT_SUPPRESSION_LABEL, SuppressionOptions, parseSuppressionMetrics } from '../utils/suppression';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 
@@ -68,6 +69,7 @@ export interface TransformOptions {
   comparisonStrategy: ComparisonStrategy;
   goals: MetricGoal[];
   metricDefinitions: MetricDefinition[];
+  tableCalculations: TableCalculationConfig[];
   suppression: SuppressionOptions;
   showSparklines: boolean;
   sparklineMetrics: string[];
@@ -243,6 +245,10 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     ),
     goals: normalizeGoals(mergedFormData.goals),
     metricDefinitions: normalizeMetricDefinitions(mergedFormData.metricDefinitions),
+    tableCalculations: normalizeTableCalculations(
+      mergedFormData.tableCalculations ?? mergedFormData.table_calculations,
+      normalizeMetricDefinitions(mergedFormData.metricDefinitions),
+    ),
     suppression: {
       threshold: Math.max(0, Math.floor(Number(mergedFormData.suppressionThreshold) || 0)),
       metrics: parseSuppressionMetrics(mergedFormData.suppressionMetrics),
