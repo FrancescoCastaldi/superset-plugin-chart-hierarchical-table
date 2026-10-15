@@ -223,6 +223,8 @@ export interface TreeNode {
   dimension?: string;
   depth: number;
   path: string[];
+  /** Original database values along the dimension path, present only when they differ from the displayed string path. */
+  rawPath?: (string | number | boolean | null)[];
   isLeaf: boolean;
   children?: TreeNode[];
   metrics: Record<string, number | string | null>;

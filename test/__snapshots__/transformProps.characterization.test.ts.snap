@@ -899,6 +899,10 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
               "richieste_conf": "abc",
               "richieste_corr": "7",
             },
+            "rawPath": [
+              null,
+              "X",
+            ],
             "subtotals": {
               "delta_accesso_diretto_pct": null,
               "delta_richieste_pct": null,
@@ -923,6 +927,9 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
           "(Empty)",
         ],
         "rawData": undefined,
+        "rawPath": [
+          null,
+        ],
         "subtotals": {
           "accesso_diretto": 1,
           "accesso_diretto_conf": 1,
@@ -1432,6 +1439,10 @@ exports[`transformProps characterization (pre-refactor snapshot) flat with snake
               "richieste_conf": "abc",
               "richieste_corr": "7",
             },
+            "rawPath": [
+              null,
+              "X",
+            ],
             "subtotals": {
               "delta_accesso_diretto_pct": null,
               "delta_richieste_pct": null,
@@ -1456,6 +1467,9 @@ exports[`transformProps characterization (pre-refactor snapshot) flat with snake
           "(Empty)",
         ],
         "rawData": undefined,
+        "rawPath": [
+          null,
+        ],
         "subtotals": {
           "accesso_diretto": 1,
           "accesso_diretto_conf": 1,
@@ -6013,6 +6027,9 @@ exports[`transformProps characterization (pre-refactor snapshot) rawFormData mer
           "richieste_conf": "abc",
           "richieste_corr": "7",
         },
+        "rawPath": [
+          null,
+        ],
         "subtotals": {},
       },
     ],

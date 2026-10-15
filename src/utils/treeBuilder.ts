@@ -31,6 +31,7 @@ export function buildMultiDimensionTree(
   for (const record of records) {
     let currentLevelMap = rootMap;
     const currentPath: string[] = [];
+    const currentRawPath: (string | number | boolean | null)[] = [];
     let pathKey = '';
 
     // Construct pivot key for this record if pivotDimensions are present
@@ -52,13 +53,16 @@ export function buildMultiDimensionTree(
 
     for (let i = 0; i < dimensions.length; i++) {
       const dim = dimensions[i];
+      const rawVal = (record[dim] as string | number | boolean | null) ?? null;
       const val = toDimensionValue(record[dim]);
       currentPath.push(val);
+      currentRawPath.push(rawVal);
 
       pathKey = i === 0 ? val : `${pathKey} > ${val}`;
       const isLeaf = i === dimensions.length - 1;
 
       if (!currentLevelMap.has(val)) {
+        const hasDiff = currentRawPath.some((r, idx) => r !== currentPath[idx]);
         const nodeObj: any = {
           key: pathKey,
           id: pathKey,
@@ -66,6 +70,7 @@ export function buildMultiDimensionTree(
           dimension: dim,
           depth: i,
           path: [...currentPath],
+          ...(hasDiff ? { rawPath: [...currentRawPath] } : {}),
           isLeaf,
           metrics: {},
           subtotals: {},
@@ -167,6 +172,7 @@ export function buildMultiDimensionTree(
         dimension: item.dimension,
         depth: item.depth,
         path: item.path,
+        ...(item.rawPath ? { rawPath: item.rawPath } : {}),
         isLeaf: item.isLeaf,
         metrics: item.metrics,
         subtotals: item.subtotals,
