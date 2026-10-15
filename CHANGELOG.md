@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-15
+### Added
+- **Diverging Heatmap with 3-Stop Continuous Gradient (`diverging_heatmap`)**: New visual rendering engine in `src/utils/advancedCellVisuals.ts` supporting continuous three-stop color scales (Min, Neutral Midpoint, Max) with automatic WCAG AA text contrast selection (`#ffffff` or `#212529`) based on calculated background relative luminance.
+- **Polarity-Aware Color Mapping**: Heatmap colors and data bars strictly respect metric polarity (`higher_is_better` vs `lower_is_better`). For metrics where lower values represent positive outcomes (for example hospital waiting times or post-op complications), negative variances receive the positive palette color and positive variances receive the alert color.
+- **Bipolar Zero-Centered In-Cell Data Bars (`bipolar_data_bars`)**: Bi-directional in-cell data bars anchored to a vertical zero axis line, extending positive values to the right in green and negative values to the left in red.
+- **Explore Formatting Controls**: `minMaxDisplayMode` now includes `diverging_heatmap` and `bipolar_data_bars`, accompanied by `heatmapPalette` (`red_white_green`, `red_yellow_green`, `blue_white_red` for colorblind accessibility, and custom theme colors) and `divergingMidpoint`.
+
 ## [0.7.0] - 2026-10-15
 ### Added
 - **Dimension Limits per Hierarchy Level (Top N and Bottom N with Synthetic Others Aggregation)**: New dimension limiting engine in `src/utils/dimensionLimits.ts` inspired by Qlik Sense dimension boundaries. Allows analysts to limit deep, high-cardinality trees (for example hospital diagnosis codes, clinical procedures, cost centers) to the most significant Top N or Bottom N contributors per level while aggregating remaining branches into an exact synthetic row.

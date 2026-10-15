@@ -532,7 +532,9 @@ const config: ControlPanelConfig = {
                 ['none', t('Disabled')],
                 ['badges', t('Min/Max Pill Badges')],
                 ['heatmap', t('Cell Heatmap Gradient')],
+                ['diverging_heatmap', t('Diverging Heatmap (3-Stop Continuous)')],
                 ['data_bars', t('In-Cell Data Bars')],
+                ['bipolar_data_bars', t('Bipolar Data Bars (Zero-Centered)')],
               ],
               description: t(
                 'Visual formatting style for highlighting minimum and maximum values across columns.',
@@ -554,6 +556,40 @@ const config: ControlPanelConfig = {
               description: t(
                 'Scope used to calculate min and max values. Leaf nodes only prevents parent aggregations from distorting scale.',
               ),
+            },
+          },
+        ],
+        [
+          {
+            name: 'heatmapPalette',
+            config: {
+              type: 'SelectControl',
+              label: t('Diverging Heatmap Palette'),
+              default: 'red_white_green',
+              renderTrigger: true,
+              choices: [
+                ['red_white_green', t('Red - White - Green')],
+                ['red_yellow_green', t('Red - Yellow - Green')],
+                ['blue_white_red', t('Blue - White - Red (Colorblind Safe)')],
+                ['custom', t('Custom Theme Colors')],
+              ],
+              description: t('Continuous 3-stop color palette for diverging heatmap.'),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.minMaxDisplayMode?.value === 'diverging_heatmap',
+            },
+          },
+          {
+            name: 'divergingMidpoint',
+            config: {
+              type: 'TextControl',
+              label: t('Diverging Midpoint (optional)'),
+              default: '',
+              renderTrigger: true,
+              description: t(
+                'Numeric center value for the neutral color (e.g. 0, 100). If omitted, automatically defaults to 0 (if range spans negative and positive) or the mean of min and max.',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.minMaxDisplayMode?.value === 'diverging_heatmap',
             },
           },
         ],

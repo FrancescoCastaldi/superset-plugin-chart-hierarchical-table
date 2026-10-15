@@ -27,6 +27,7 @@ import { GOAL_STATUS_LABELS, computeGoalDelta, formatGoalDelta } from '../utils/
 import { CONDITIONAL_ICONS, firstByPriority } from '../utils/conditionalFormatting';
 import { buildColumnConditionalFormat } from '../plugin/columnBuilders';
 import { buildContextMenuFilters } from '../plugin/contextMenu';
+import { computeDivergingColor, computeBipolarDataBar } from '../utils/advancedCellVisuals';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 import { useFlatTreeVirtualization } from './useFlatTreeVirtualization';
 import './HierarchicalTable.css';
@@ -322,6 +323,15 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
         const cellStyle: React.CSSProperties = {};
         if (minMaxDisplayMode === 'heatmap' && inScope && isNumeric && range > 0) {
           cellStyle.backgroundColor = getHeatmapBgColor(normalized, theme.style);
+        } else if (minMaxDisplayMode === 'diverging_heatmap' && inScope && isNumeric && bound) {
+          const divResult = computeDivergingColor(val as number, bound.min, bound.max, {
+            polarity: col.polarity,
+            positiveColor: theme.positive,
+            negativeColor: theme.negative,
+            neutralColor: theme.neutral || '#ffffff',
+          });
+          cellStyle.backgroundColor = divResult.bgColor;
+          cellStyle.color = divResult.textColor;
         }
 
         return (
@@ -356,9 +366,36 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
                   </span>
                 )}
               </div>
-            ) : minMaxDisplayMode === 'data_bars' ? (
+            ) : minMaxDisplayMode === 'data_bars' || minMaxDisplayMode === 'bipolar_data_bars' ? (
               <div className="data-bar-container">
-                {inScope && isNumeric && range > 0 && (
+                {inScope && isNumeric && bound && minMaxDisplayMode === 'bipolar_data_bars' ? (
+                  (() => {
+                    const bar = computeBipolarDataBar(val as number, bound.min, bound.max, {
+                      polarity: col.polarity,
+                      positiveColor: theme.positive,
+                      negativeColor: theme.negative,
+                    });
+                    const zeroPct =
+                      bound.min < 0 && bound.max > 0
+                        ? (Math.abs(bound.min) / (Math.abs(bound.min) + bound.max)) * 100
+                        : 0;
+                    return (
+                      <>
+                        {bound.min < 0 && bound.max > 0 && (
+                          <div className="data-bar-zero-line" style={{ left: `${zeroPct}%` }} />
+                        )}
+                        <div
+                          className="data-bar-fill bipolar"
+                          style={{
+                            left: `${bar.leftPct}%`,
+                            width: `${bar.widthPct}%`,
+                            backgroundColor: bar.color,
+                          }}
+                        />
+                      </>
+                    );
+                  })()
+                ) : inScope && isNumeric && range > 0 ? (
                   <div
                     className={`data-bar-fill ${themeClass}`}
                     style={{
@@ -366,7 +403,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
                       ...(isCustom ? { backgroundColor: theme.neutral } : {}),
                     }}
                   />
-                )}
+                ) : null}
                 <span className="data-bar-value">{cellContent}</span>
               </div>
             ) : (

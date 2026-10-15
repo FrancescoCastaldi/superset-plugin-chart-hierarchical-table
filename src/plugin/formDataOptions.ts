@@ -11,6 +11,7 @@ import {
   MetricGoal,
   MinMaxDisplayMode,
   MinMaxScope,
+  HeatmapDivergingPalette,
   PivotRowTotalsPosition,
   PivotSortOrder,
   PivotTimeDeltaMode,
@@ -55,6 +56,9 @@ export interface TransformOptions {
   defaultSortOrder: SortOrder;
   minMaxDisplayMode: MinMaxDisplayMode;
   minMaxScope: MinMaxScope;
+  heatmapPalette?: HeatmapDivergingPalette;
+  divergingMidpoint?: number;
+  dataBarZeroAxis?: boolean;
   enableExport: boolean;
   showVarianceDelta: boolean;
   combineMetric: any;
@@ -216,6 +220,14 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     defaultSortOrder: defaultSortOrder || default_sort_order || 'none',
     minMaxDisplayMode: minMaxDisplayMode || min_max_display_mode || 'none',
     minMaxScope: minMaxScope || min_max_scope || 'leaves_only',
+    heatmapPalette: mergedFormData.heatmapPalette || mergedFormData.heatmap_palette || 'red_white_green',
+    divergingMidpoint:
+      mergedFormData.divergingMidpoint !== undefined &&
+      mergedFormData.divergingMidpoint !== '' &&
+      Number.isFinite(Number(mergedFormData.divergingMidpoint))
+        ? Number(mergedFormData.divergingMidpoint)
+        : undefined,
+    dataBarZeroAxis: Boolean(mergedFormData.dataBarZeroAxis ?? mergedFormData.data_bar_zero_axis),
     enableExport: enableExport ?? enable_export ?? true,
     showVarianceDelta,
     combineMetric: combineMetric ?? combine_metric ?? true,

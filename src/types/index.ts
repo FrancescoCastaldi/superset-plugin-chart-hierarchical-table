@@ -24,7 +24,34 @@ export type SortExpression =
 /** Placement of null, NaN and undefined sort values; unset behaves as 'bottom'. */
 export type NullHandling = 'bottom' | 'top' | 'exclude';
 
-export type MinMaxDisplayMode = 'none' | 'badges' | 'heatmap' | 'data_bars';
+export type MinMaxDisplayMode =
+  | 'none'
+  | 'badges'
+  | 'heatmap'
+  | 'diverging_heatmap'
+  | 'data_bars'
+  | 'bipolar_data_bars';
+
+export type HeatmapDivergingPalette =
+  | 'red_white_green'
+  | 'red_yellow_green'
+  | 'blue_white_red'
+  | 'custom';
+
+export interface DivergingColorOptions {
+  midpoint?: number;
+  palette?: HeatmapDivergingPalette;
+  positiveColor?: string;
+  negativeColor?: string;
+  neutralColor?: string;
+  polarity?: MetricPolarity;
+}
+
+export interface BipolarDataBarOptions {
+  positiveColor?: string;
+  negativeColor?: string;
+  polarity?: MetricPolarity;
+}
 
 export type MinMaxScope = 'leaves_only' | 'level_aware' | 'all_nodes';
 
@@ -252,6 +279,11 @@ export interface HierarchicalTableFormData extends QueryFormData {
 
   // Dimension Limits & Top N (F3)
   dimensionLimits?: DimensionLimitRule[] | string;
+
+  // Diverging Heatmap & Bipolar Data Bars (F4)
+  divergingMidpoint?: number | string;
+  heatmapPalette?: HeatmapDivergingPalette;
+  dataBarZeroAxis?: boolean;
 }
 
 export type MetricGoal = NonNullable<HierarchicalTableFormData['goals']>[number];
