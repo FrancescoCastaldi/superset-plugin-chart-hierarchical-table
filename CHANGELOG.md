@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-15
+### Added
+- **Native Apache Superset Context Menu (`Behavior.DrillBy` and `Behavior.DrillToDetail`)**: Support for Superset native right-click context menu on tree cells and rows. Generates binary filter clauses (`buildContextMenuFilters` in `src/plugin/contextMenu.ts`) for drill to detail, drill by, and cross-filtering.
+- **Hierarchical Path Preservation with `TreeNode.rawPath`**: Tree nodes record original database values along the dimension path (`TreeNode.rawPath`) to ensure accurate drill-down filters even when dimension values undergo string formatting or label transformations.
+- **Pivot Dimension Context Filtering**: Right-clicking on pivoted metric cells adds exact filter clauses for single or composite pivot dimensions (for example `mese` and `canale`), while excluding `ROW_TOTAL` and `SUBTOTAL` columns.
+- **Privacy-Preserving Drill Omission**: Cells suppressed by small-number privacy rules (`node.suppressed`) automatically omit drill to detail and drill by filters to prevent identification leaks.
+- **Grand Total Context Menu**: Right-clicking on grand total cells retains applicable pivot filters while correctly omitting hierarchy dimension constraints.
+- **Explore Control (`enableContextMenu`)**: Checkbox control in `Comparison & Analysis` allowing users to toggle contextual right-click menu actions dynamically.
+
 ## [0.4.1] - 2026-10-15
 ### Fixed
 - **Share Metrics `% <Target>` on Parent Rows, Grand Total and Row Totals**: metrics named `% <Target>` (for example `% Totem`, `% Portale`) without a `metricDefinitions` entry were left empty (`-`) on parent rows, `Grand Total` and the horizontal `ROW_TOTAL` columns. `recomputeDerivedMetrics` now evaluates them as `Target / Totale * 100` from the aggregated operands, looking up the numerator by base name and the denominator among the metrics named `Totale`, `Total`, `Volume` or `Tot`; a zero denominator gives an empty cell. On leaf rows the value is recomputed too, so a SQL metric that returns a fraction (`0.4`) is shown on the same 0 to 100 scale as the parents. `% Self ...` metrics keep their dedicated rules, and an explicit `ratio` definition still wins. Covered by new scenarios in `test/aggregations.test.ts`.

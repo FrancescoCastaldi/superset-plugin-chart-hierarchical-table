@@ -45,7 +45,7 @@ export default function transformProps(
   chartProps: HierarchicalTableChartProps,
 ): HierarchicalTableTransformedProps {
   const { width, height, formData = {} as any, rawFormData = {} as any, queriesData, hooks, filterState } = chartProps as any;
-  const { onAddFilter, setDataMask } = hooks || {};
+  const { onAddFilter, setDataMask, onContextMenu } = hooks || {};
 
   const options = resolveTransformOptions({ ...rawFormData, ...formData });
   const dataRecords: DataRecord[] = queriesData?.[0]?.data || [];
@@ -118,6 +118,8 @@ export default function transformProps(
     compactMode: options.compactMode,
     stripedRows: options.stripedRows,
     emitFilter: options.isCrossFilterActive,
+    enableContextMenu: options.enableContextMenu,
+    onContextMenu,
     // Omitted when unset so charts without goals keep their previous props shape.
     ...(options.goals.length > 0 ? { goals: options.goals } : {}),
     ...(options.conditionalFormatting.length > 0

@@ -12,7 +12,7 @@ const metadata = new ChartMetadata({
   description: t(
     'A deep-hierarchy tree table and matrix grid supporting multi-level dimension drill-down, parent-child adjacency graphs, roll-up aggregations, and native Superset 6.1.0 cross-filtering.',
   ),
-  behaviors: [Behavior.InteractiveChart, Behavior.DrillToDetail],
+  behaviors: [Behavior.InteractiveChart, Behavior.DrillToDetail, Behavior.DrillBy],
   category: t('Table'),
   tags: [
     t('StratumTree'),

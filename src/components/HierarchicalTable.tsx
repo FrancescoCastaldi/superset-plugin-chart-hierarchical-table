@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import {
   HierarchicalTableTransformedProps,
   TreeNode,
+  TableColumn,
   SortOrder,
   MinMaxBoundsMap,
   MinMaxDisplayMode,
@@ -25,6 +26,7 @@ import { buildCsvRows, downloadCsv, serializeCsv } from '../utils/csvExport';
 import { GOAL_STATUS_LABELS, computeGoalDelta, formatGoalDelta } from '../utils/goalBenchmark';
 import { CONDITIONAL_ICONS, firstByPriority } from '../utils/conditionalFormatting';
 import { buildColumnConditionalFormat } from '../plugin/columnBuilders';
+import { buildContextMenuFilters } from '../plugin/contextMenu';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 import { useFlatTreeVirtualization } from './useFlatTreeVirtualization';
 import './HierarchicalTable.css';
@@ -117,6 +119,7 @@ interface HierarchicalTableRowProps {
   theme: ResolvedTheme;
   onToggleExpand: (key: string) => void;
   onNodeClick: (node: TreeNode) => void;
+  onContextMenu?: (e: React.MouseEvent, node: TreeNode, col?: TableColumn) => void;
 }
 
 const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
@@ -133,6 +136,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
   theme,
   onToggleExpand,
   onNodeClick,
+  onContextMenu,
 }: HierarchicalTableRowProps) {
   const hasChildren = Boolean(node.children && node.children.length > 0);
   const themeClass = `theme-${theme.style}`;
@@ -166,9 +170,13 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
         'parent-row': hasChildren,
         'selected-filter-row': isFilterSelected,
       })}
+      onContextMenu={onContextMenu ? e => onContextMenu(e, node) : undefined}
     >
       {/* Hierarchy Column */}
-      <td className="hierarchy-cell">
+      <td
+        className="hierarchy-cell"
+        onContextMenu={onContextMenu ? e => onContextMenu(e, node) : undefined}
+      >
         <div className="tree-cell-content" style={{ paddingLeft: `${paddingLeft}px` }}>
           {emitFilter && (
             <input
@@ -207,7 +215,13 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
       {/* Metric / Pivot Columns */}
       {displayCols.map((col, index) => {
         if (!renderValues) {
-          return <td key={col.key} className="metric-cell empty-metric-cell" />;
+          return (
+            <td
+              key={col.key}
+              className="metric-cell empty-metric-cell"
+              onContextMenu={onContextMenu ? e => onContextMenu(e, node, col) : undefined}
+            />
+          );
         }
 
         if (col.sparkline) {
@@ -217,7 +231,11 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
             return typeof v === 'number' ? v : null;
           });
           return (
-            <td key={col.key} className="metric-cell sparkline-cell">
+            <td
+              key={col.key}
+              className="metric-cell sparkline-cell"
+              onContextMenu={onContextMenu ? e => onContextMenu(e, node, col) : undefined}
+            >
               <Sparkline values={series} polarity={col.polarity} label={`${metric}: ${periods[0]} to ${periods[periods.length - 1]}`} />
             </td>
           );
@@ -314,6 +332,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
               'pivot-subtotal-cell': col.key.includes('___SUBTOTAL'),
             })}
             style={format ? format.style : cellStyle}
+            onContextMenu={onContextMenu ? e => onContextMenu(e, node, col) : undefined}
           >
             {minMaxDisplayMode === 'badges' ? (
               <div className="metric-cell-badges-wrapper">
@@ -383,9 +402,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     compactMode = false,
     stripedRows = true,
     emitFilter = true,
+    enableContextMenu = true,
     goals = NO_GOALS,
     conditionalFormatting = NO_RULES,
     theme = DEFAULT_THEME,
+    onContextMenu,
     onCrossFilter,
     onClearFilter,
   } = props;
@@ -618,6 +639,32 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     }
   }, [onClearFilter]);
 
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, targetNode: TreeNode | null, targetColumn?: TableColumn) => {
+      if (!enableContextMenu || !onContextMenu) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const filters = buildContextMenuFilters(
+        { node: targetNode, column: targetColumn },
+        {
+          dimensions,
+          hierarchyType: props.hierarchyType,
+          idColumn: props.formData?.idColumn,
+          pivotDimensions: props.pivotColumns,
+        },
+      );
+      onContextMenu(e.clientX, e.clientY, filters);
+    },
+    [
+      enableContextMenu,
+      onContextMenu,
+      dimensions,
+      props.hierarchyType,
+      props.formData?.idColumn,
+      props.pivotColumns,
+    ],
+  );
+
   // Flatten visible tree nodes according to expanded state
   const visibleRows = useMemo(() => {
     const rows: TreeNode[] = [];
@@ -713,13 +760,25 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   }
 
   const grandTotalRow = showGrandTotal && grandTotalNode && (
-    <tr className="grand-total-row">
-      <td className="hierarchy-cell">
+    <tr
+      className="grand-total-row"
+      onContextMenu={onContextMenu ? e => handleContextMenu(e, null) : undefined}
+    >
+      <td
+        className="hierarchy-cell"
+        onContextMenu={onContextMenu ? e => handleContextMenu(e, null) : undefined}
+      >
         <span className="node-name">{grandTotalNode.name}</span>
       </td>
       {displayCols.map(col => {
         if (activeDisplayMode === 'leaves_only') {
-          return <td key={col.key} className="metric-cell empty-metric-cell" />;
+          return (
+            <td
+              key={col.key}
+              className="metric-cell empty-metric-cell"
+              onContextMenu={onContextMenu ? e => handleContextMenu(e, null, col) : undefined}
+            />
+          );
         }
         const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
         const isDelta = columnMetaMap.get(col.key)?.isDelta ?? false;
@@ -731,6 +790,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             className={classNames('metric-cell', {
               'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
             })}
+            onContextMenu={onContextMenu ? e => handleContextMenu(e, null, col) : undefined}
           >
             {isNuovo ? (
               <span className="badge-delta-nuovo">Nuovo</span>
@@ -1072,6 +1132,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   theme={theme}
                   onToggleExpand={toggleExpand}
                   onNodeClick={handleNodeClick}
+                  onContextMenu={handleContextMenu}
                 />
               );
             })}

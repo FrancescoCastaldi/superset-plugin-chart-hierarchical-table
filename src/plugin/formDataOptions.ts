@@ -47,6 +47,7 @@ export interface TransformOptions {
   numberFormat: string;
   currencySymbol: string;
   isCrossFilterActive: boolean;
+  enableContextMenu: boolean;
   enableHierarchicalSort: boolean;
   defaultSortColumn: string;
   defaultSortOrder: SortOrder;
@@ -141,6 +142,8 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     emitFilter,
     enableCrossFiltering,
     enable_cross_filtering,
+    enableContextMenu,
+    enable_context_menu,
     enableHierarchicalSort,
     enable_hierarchical_sort,
     enableSorting,
@@ -199,6 +202,9 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     currencySymbol,
     isCrossFilterActive: Boolean(
       emitFilter ?? emit_filter ?? enableCrossFiltering ?? enable_cross_filtering ?? true,
+    ),
+    enableContextMenu: Boolean(
+      enableContextMenu ?? enable_context_menu ?? true,
     ),
     enableHierarchicalSort:
       enableHierarchicalSort ?? enable_hierarchical_sort ?? enableSorting ?? enable_sorting ?? true,

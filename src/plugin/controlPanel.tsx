@@ -893,6 +893,18 @@ const config: ControlPanelConfig = {
               ),
             },
           },
+          {
+            name: 'enableContextMenu',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Enable Context Menu'),
+              renderTrigger: true,
+              default: true,
+              description: t(
+                'Show contextual menu on right click for drill to detail, drill by, and cross-filtering actions.',
+              ),
+            },
+          },
         ],
       ],
     },

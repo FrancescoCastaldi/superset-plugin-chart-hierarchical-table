@@ -162,6 +162,7 @@ describe('controlPanel layout', () => {
         'metricDefinitions',
         'aggregationMode',
         'emit_filter',
+        'enableContextMenu',
       ]),
     );
 

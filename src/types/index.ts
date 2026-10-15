@@ -3,6 +3,7 @@ import {
   ChartDataResponse,
   QueryFormData,
   DataRecord,
+  ContextMenuFilters,
 } from '@superset-ui/core';
 import type { ResolvedTheme, ThemeProfileName } from '../utils/themes';
 
@@ -192,6 +193,9 @@ export interface HierarchicalTableFormData extends QueryFormData {
   // Cross Filtering (Superset 6.1.0)
   emit_filter?: boolean;
   enableCrossFiltering?: boolean;
+
+  // Context Menu & Drill
+  enableContextMenu?: boolean;
 }
 
 export type MetricGoal = NonNullable<HierarchicalTableFormData['goals']>[number];
@@ -298,6 +302,7 @@ export interface HierarchicalTableTransformedProps {
   compactMode: boolean;
   stripedRows: boolean;
   emitFilter: boolean;
+  enableContextMenu?: boolean;
   goals?: MetricGoal[];
   conditionalFormatting?: ConditionalFormattingRule[];
   theme?: ResolvedTheme;
@@ -306,6 +311,7 @@ export interface HierarchicalTableTransformedProps {
     selectedValues?: string[];
     filters?: any[];
   };
+  onContextMenu?: (clientX: number, clientY: number, filters?: ContextMenuFilters) => void;
   onCrossFilter?: (
     dimension: string,
     value: string | string[],
@@ -330,6 +336,6 @@ export type HierarchicalTableChartProps = ChartProps & {
   hooks?: {
     setDataMask?: (dataMask: any) => void;
     onAddFilter?: (filter: any) => void;
-    onContextMenu?: (event: any) => void;
+    onContextMenu?: (clientX: number, clientY: number, filters?: ContextMenuFilters) => void;
   };
 };
