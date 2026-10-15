@@ -776,3 +776,56 @@ describe('Chart 105 (Accettazione Totale, Operatore, Self, Self - Fallite, % Sel
 });
 
 
+describe('Generic share metrics (% Totem = Totem / Totale * 100)', () => {
+  const pivotLeaf = (name: string, totale: number, totem: number, portale: number): TreeNode =>
+    leaf(name, 1, {
+      'Totale___September': totale,
+      'Totem___September': totem,
+      'Portale___September': portale,
+      '% Totem___September': null,
+      '% Portale___September': null,
+    });
+
+  it('recomputes the share from the aggregated operands instead of leaving it empty', () => {
+    const m = recompute({ Totale: 400, Totem: 100, Portale: 50, '% Totem': null, '% Portale': null });
+    expect(m['% Totem']).toBe(25);
+    expect(m['% Portale']).toBe(12.5);
+  });
+
+  it('rescales a fractional SQL value to the 0-100 percentage of the operands', () => {
+    expect(recompute({ Totale: 200, Totem: 80, '% Totem': 0.4 })['% Totem']).toBe(40);
+  });
+
+  it('returns null when the total is zero and leaves the value untouched without operands', () => {
+    expect(recompute({ Totale: 0, Totem: 0, '% Totem': 12 })['% Totem']).toBeNull();
+    expect(recompute({ '% Totem': 12 })['% Totem']).toBe(12);
+  });
+
+  it('fills parent rows, grand total and ROW_TOTAL with the ratio of sums', () => {
+    const keys = [
+      'Totale___September',
+      'Totem___September',
+      'Portale___September',
+      '% Totem___September',
+      '% Portale___September',
+    ];
+    const roots = [
+      parent('Ancona', 0, [pivotLeaf('Ancona > Sede A', 100, 40, 10), pivotLeaf('Ancona > Sede B', 300, 60, 90)]),
+      parent('Pesaro', 0, [pivotLeaf('Pesaro > Sede C', 100, 50, 0)]),
+    ];
+
+    rollupTreeMetrics(roots, keys, 'sum');
+    // Ancona: 100 / 400 and 100 / 400
+    expect(roots[0].metrics['% Totem___September']).toBe(25);
+    expect(roots[0].metrics['% Portale___September']).toBe(25);
+
+    const gt = computeGrandTotal(roots, keys, 'sum');
+    // 150 / 500 and 100 / 500
+    expect(gt.metrics['% Totem___September']).toBe(30);
+    expect(gt.metrics['% Portale___September']).toBe(20);
+
+    computeHorizontalRowTotals([...roots, gt], ['Totale', 'Totem', 'Portale', '% Totem', '% Portale'], ['September'], 'sum');
+    expect(gt.metrics['% Totem___ROW_TOTAL']).toBe(30);
+    expect(gt.metrics['% Portale___ROW_TOTAL']).toBe(20);
+  });
+});

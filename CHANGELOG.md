@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-15
+### Fixed
+- **Share Metrics `% <Target>` on Parent Rows, Grand Total and Row Totals**: metrics named `% <Target>` (for example `% Totem`, `% Portale`) without a `metricDefinitions` entry were left empty (`-`) on parent rows, `Grand Total` and the horizontal `ROW_TOTAL` columns. `recomputeDerivedMetrics` now evaluates them as `Target / Totale * 100` from the aggregated operands, looking up the numerator by base name and the denominator among the metrics named `Totale`, `Total`, `Volume` or `Tot`; a zero denominator gives an empty cell. On leaf rows the value is recomputed too, so a SQL metric that returns a fraction (`0.4`) is shown on the same 0 to 100 scale as the parents. `% Self ...` metrics keep their dedicated rules, and an explicit `ratio` definition still wins. Covered by new scenarios in `test/aggregations.test.ts`.
+- **Fallback Weight for Derived Metrics**: when a derived metric cannot be recomputed from its operands, the weighted mean of the children now prefers a `Totale`/`Total`/`Volume` metric of the same pivot column, and the last resort is `Totale` instead of `richieste_corr`. The match is made on the base metric name, so the `___SUBTOTAL` and `___ROW_TOTAL` pivot suffixes are not mistaken for a total metric.
+
 ## [0.4.0] - 2026-10-15
 ### Added
 - **Metric Definitions (`metricDefinitions`)**: new JSON control in `Comparison & Analysis` that states what each metric means and wins over the name-based guesses. Types: `sum`, `mean` (optional `weight` metric), `distinct_count` (`entityDimension`: MAX at and below that level, SUM above), `ratio` (`numerator`, `denominator`, `scale`: parent rows, grand total and row totals are a ratio of sums, never an average of ratios), `delta_pct` (`current`, `baseline`) and `none` (empty on parent rows). Each entry can also set `format` (`integer`, `decimal`, `percent`, `duration` in seconds, `days`, `currency`), `decimals` and `polarity` (`higher_is_better`, `lower_is_better`). Malformed entries are dropped, and charts without definitions behave exactly as before. Logic in `src/utils/metricSemantics.ts`; covered by `test/metricSemantics.test.ts` and `test/transformPipeline.metricDefinitions.test.ts`.
@@ -154,7 +159,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release for the Hierarchical Table plugin.
 
-[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.1...v0.3.2

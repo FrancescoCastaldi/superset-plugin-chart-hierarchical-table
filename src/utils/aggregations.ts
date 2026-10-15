@@ -238,7 +238,15 @@ function explicitWeightedValue(nodes: TreeNode[], metric: string, weightColumn: 
 function derivedFallbackWeightKey(metric: string, metricNames: string[], explicitWeight: string): string {
   const { suffix } = splitMetricKey(metric);
   if (explicitWeight) return explicitWeight + suffix;
+  // Match 'total' on the base name only: pivot suffixes such as ___SUBTOTAL and ___ROW_TOTAL contain it too.
+  const isTotalName = (k: string): boolean => splitMetricKey(k).base.toLowerCase().includes('total');
   return (
+    metricNames.find(
+      k =>
+        k.endsWith(suffix) &&
+        (isTotalName(k) || k.toLowerCase().includes('volume')) &&
+        !isDerivedMetric(k),
+    ) ||
     metricNames.find(
       k =>
         (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume') || k.toLowerCase().includes('corr')) &&
@@ -247,10 +255,11 @@ function derivedFallbackWeightKey(metric: string, metricNames: string[], explici
     metricNames.find(
       k =>
         k.endsWith(suffix) &&
-        (k.toLowerCase().includes('totale') || k.toLowerCase().includes('operatore') || k.toLowerCase().includes('serviti')) &&
+        (k.toLowerCase().includes('operatore') || k.toLowerCase().includes('serviti')) &&
         !isDerivedMetric(k),
     ) ||
-    `richieste_corr${suffix}`
+    metricNames.find(k => isTotalName(k) && !isDerivedMetric(k)) ||
+    `Totale${suffix}`
   );
 }
 
@@ -601,6 +610,33 @@ export function recomputeDerivedMetrics(
 
       if (typeof fallVal === 'number' && typeof opVal === 'number' && opVal > 0) {
         metrics[key] = Math.round((fallVal * 1000.0) / opVal) / 10;
+      }
+    }
+
+    // 6c. Generic percentage share / ratio (% <MetricName> = <MetricName> / Totale * 100)
+    else if (base.trim().startsWith('%')) {
+      const targetName = base.replace(/^\s*%/, '').trim().toLowerCase();
+      const numKey =
+        allMetricKeys.find(
+          k =>
+            k.endsWith(suffix) &&
+            splitMetricKey(k).base.trim().toLowerCase() === targetName &&
+            !isDerivedMetric(k),
+        ) || `${targetName}${suffix}`;
+
+      const totKey =
+        allMetricKeys.find(
+          k =>
+            k.endsWith(suffix) &&
+            ['totale', 'total', 'volume', 'tot'].includes(splitMetricKey(k).base.trim().toLowerCase()) &&
+            !isDerivedMetric(k),
+        ) || `Totale${suffix}`;
+
+      const numVal = metrics[numKey];
+      const totVal = metrics[totKey];
+
+      if (typeof numVal === 'number' && typeof totVal === 'number') {
+        metrics[key] = totVal > 0 ? Math.round((numVal * 1000.0) / totVal) / 10 : null;
       }
     }
   }
