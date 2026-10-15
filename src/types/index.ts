@@ -145,6 +145,22 @@ export interface TableCalculationConfig {
   customTitle?: string;
 }
 
+export type DimensionLimitMode = 'top' | 'bottom';
+
+export interface DimensionLimitRule {
+  /** Target depth level (0 = root level, 1 = first child level, etc.) or dimension name. */
+  level?: number;
+  dimension?: string;
+  /** Maximum number of elements to show before collapsing remainder into Others. 0 or undefined means no limit. */
+  limit: number;
+  /** Metric key to sort by when determining Top N. If unspecified, defaults to the first metric. */
+  metric?: string;
+  /** Direction: 'top' (highest values first, default) or 'bottom' (lowest values first). */
+  mode?: DimensionLimitMode;
+  /** Label for the synthetic node. Defaults to 'Altri ({k})' where {k} is the collapsed count. */
+  othersLabel?: string;
+}
+
 export interface HierarchicalTableFormData extends QueryFormData {
   // Dimension & Metric Controls
   hierarchyType: HierarchyType;
@@ -233,6 +249,9 @@ export interface HierarchicalTableFormData extends QueryFormData {
 
   // Table Calculations & Measure Modifiers (F2)
   tableCalculations?: TableCalculationConfig[];
+
+  // Dimension Limits & Top N (F3)
+  dimensionLimits?: DimensionLimitRule[] | string;
 }
 
 export type MetricGoal = NonNullable<HierarchicalTableFormData['goals']>[number];
@@ -275,6 +294,10 @@ export interface TreeNode {
   intervals?: Record<string, CellInterval>;
   /** Label shown in place of the hidden value of a small-number-suppressed cell, by metric key. */
   suppressed?: Record<string, string>;
+  /** True if this node is a synthetic aggregated 'Others' row grouping excluded items beyond dimension limits. */
+  isOthers?: boolean;
+  /** Count of original items collapsed into this synthetic 'Others' row. */
+  othersCount?: number;
 }
 
 export interface TableColumn {

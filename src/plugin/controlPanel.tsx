@@ -955,6 +955,23 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [
+          {
+            name: 'dimensionLimits',
+            config: {
+              type: 'TextAreaControl',
+              language: 'json',
+              label: t('Dimension Limits & Top N (optional)'),
+              default: '',
+              renderTrigger: true,
+              description: t(
+                'JSON array of dimension limit rules per hierarchy level or dimension name. ' +
+                  'Limits the visible branches to the Top N (or Bottom N) and collapses the rest into a synthetic "Others" row with exact metric sum. ' +
+                  'Example: [{"level": 1, "limit": 5, "metric": "volume", "mode": "top", "othersLabel": "Altri ({k})"}]',
+              ),
+            },
+          },
+        ],
       ],
     },
   ],

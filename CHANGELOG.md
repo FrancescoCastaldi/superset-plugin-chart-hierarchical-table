@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-15
+### Added
+- **Dimension Limits per Hierarchy Level (Top N and Bottom N with Synthetic Others Aggregation)**: New dimension limiting engine in `src/utils/dimensionLimits.ts` inspired by Qlik Sense dimension boundaries. Allows analysts to limit deep, high-cardinality trees (for example hospital diagnosis codes, clinical procedures, cost centers) to the most significant Top N or Bottom N contributors per level while aggregating remaining branches into an exact synthetic row.
+- **Mathematical Additive Invariant Preservation**: The synthetic "Others" node (`isOthers: true`, `othersCount: K`) computes the exact metric sum of all excluded siblings, ensuring parent subtotals and the overall Grand Total remain mathematically identical to the full dataset down to the penny.
+- **Configurable Labels and Placeholders**: Dimension limit rules support custom templated labels via `{k}` or `{count}` placeholders (defaulting to `Altri ({k})`).
+- **Context Menu Protection on Synthetic Rows**: Right-clicking on an "Others" row in the tree automatically excludes the synthetic label from the leaf dimension filter, filtering instead by valid ancestor dimensions to prevent empty SQL drill queries.
+- **Explore Control (`Dimension Limits & Top N (optional)`)**: JSON configuration control in `Performance & Limits` supporting level-specific or dimension-specific boundaries.
+
 ## [0.6.0] - 2026-10-15
 ### Added
 - **Measure Modifiers and Table Calculations (`tableCalculations`)**: New analytical engine in `src/utils/tableCalculations.ts` providing standard business intelligence table calculations and dynamic measure modifiers.

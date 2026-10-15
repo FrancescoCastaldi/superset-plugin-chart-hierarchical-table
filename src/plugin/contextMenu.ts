@@ -65,6 +65,8 @@ export function buildContextMenuFilters(
       for (let i = 0; i < path.length; i++) {
         const col = dimensions[i];
         if (!col) continue;
+        // Skip synthetic "Others" leaf label since it is not an actual database value
+        if (node.isOthers && i === path.length - 1) continue;
         const val = rawPath && i in rawPath ? rawPath[i] : path[i];
         // Livelli con valore null o (Empty) esclusi
         if (val === null || val === undefined || val === '(Empty)') continue;

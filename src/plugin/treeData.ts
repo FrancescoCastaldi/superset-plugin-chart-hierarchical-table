@@ -2,6 +2,7 @@ import { DataRecord } from '@superset-ui/core';
 import { TreeNode } from '../types';
 import { buildMultiDimensionTree, buildParentChildTree } from '../utils/treeBuilder';
 import { computeTreeTimeComparison } from '../utils/timeComparison';
+import { applyDimensionLimits } from '../utils/dimensionLimits';
 import { TransformOptions } from './formDataOptions';
 
 export type TreeDataOptions = Pick<
@@ -16,6 +17,7 @@ export type TreeDataOptions = Pick<
   | 'showVarianceDelta'
   | 'weightColumn'
   | 'aggregationMode'
+  | 'dimensionLimits'
 >;
 
 /**
@@ -44,7 +46,7 @@ export function buildTreeData(
   const { hierarchyType, dimensions, pivotDimensions } = options;
   let metrics = [...options.metrics];
 
-  const treeData =
+  let treeData =
     hierarchyType === 'multi_dimension'
       ? buildMultiDimensionTree(
           records,
@@ -63,6 +65,10 @@ export function buildTreeData(
           options.weightColumn,
           options.aggregationMode,
         );
+
+  if (options.dimensionLimits && options.dimensionLimits.length > 0) {
+    treeData = applyDimensionLimits(treeData, options.dimensionLimits, metrics[0]);
+  }
 
   if (options.showVarianceDelta && hierarchyType === 'multi_dimension' && dimensions.length > 0) {
     metrics = applyVarianceDelta(treeData, metrics);

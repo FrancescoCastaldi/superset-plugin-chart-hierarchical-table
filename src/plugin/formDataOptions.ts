@@ -17,6 +17,7 @@ import {
   SortOrder,
 } from '../types';
 import { normalizeConditionalFormatting } from '../utils/conditionalFormatting';
+import { normalizeDimensionLimits, DimensionLimitRule } from '../utils/dimensionLimits';
 import { normalizeGoals } from '../utils/goalBenchmark';
 import { normalizeMetricDefinitions } from '../utils/metricSemantics';
 import { normalizeTableCalculations, TableCalculationConfig } from '../utils/tableCalculations';
@@ -70,6 +71,7 @@ export interface TransformOptions {
   goals: MetricGoal[];
   metricDefinitions: MetricDefinition[];
   tableCalculations: TableCalculationConfig[];
+  dimensionLimits: DimensionLimitRule[];
   suppression: SuppressionOptions;
   showSparklines: boolean;
   sparklineMetrics: string[];
@@ -248,6 +250,9 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     tableCalculations: normalizeTableCalculations(
       mergedFormData.tableCalculations ?? mergedFormData.table_calculations,
       normalizeMetricDefinitions(mergedFormData.metricDefinitions),
+    ),
+    dimensionLimits: normalizeDimensionLimits(
+      mergedFormData.dimensionLimits ?? mergedFormData.dimension_limits,
     ),
     suppression: {
       threshold: Math.max(0, Math.floor(Number(mergedFormData.suppressionThreshold) || 0)),
