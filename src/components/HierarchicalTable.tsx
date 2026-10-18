@@ -16,6 +16,9 @@ import {
   MetricGoal,
   ConditionalFormattingRule,
   HeatmapDivergingPalette,
+  WhatIfAdjustment,
+  WhatIfBaseline,
+  WhatIfScenario,
 } from '../types';
 import {
   filterTreeBySearch,
@@ -32,6 +35,9 @@ import { buildContextMenuFilters } from '../plugin/contextMenu';
 import { computeDivergingColor, computeBipolarDataBar } from '../utils/advancedCellVisuals';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 import { useFlatTreeVirtualization } from './useFlatTreeVirtualization';
+import { applyWhatIfScenario, computeWhatIfDelta } from '../utils/whatIfEngine';
+import { createScenarioManager } from '../utils/whatIfScenarioManager';
+import WhatIfToolbar from './WhatIfToolbar';
 import './HierarchicalTable.css';
 
 export type { ColumnMeta } from '../utils/tableColumns';
@@ -124,6 +130,7 @@ interface HierarchicalTableRowProps {
   dataBarZeroAxis?: boolean;
   theme: ResolvedTheme;
   showVarianceDelta?: boolean;
+  whatIfBaseline?: WhatIfBaseline;
   onToggleExpand: (key: string) => void;
   onNodeClick: (node: TreeNode) => void;
   onContextMenu?: (e: React.MouseEvent, node: TreeNode, col?: TableColumn) => void;
@@ -145,6 +152,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
   dataBarZeroAxis,
   theme,
   showVarianceDelta,
+  whatIfBaseline,
   onToggleExpand,
   onNodeClick,
   onContextMenu,
@@ -351,12 +359,42 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
             </span>
           ) : null;
 
+        // What-If baseline and delta badge
+        const baselineVal = whatIfBaseline?.nodeBaselines?.get(node.key)?.[col.key];
+        const isSimulatedModified =
+          typeof val === 'number' &&
+          typeof baselineVal === 'number' &&
+          Math.abs(val - baselineVal) > 0.0001;
+
+        let whatIfBadge: React.ReactNode = null;
+        if (isSimulatedModified) {
+          const delta = computeWhatIfDelta(val as number, baselineVal);
+          if (delta.pct !== null) {
+            const isPositive = delta.pct > 0;
+            const isGood =
+              col?.polarity === 'lower_is_better' ? !isPositive : isPositive;
+            const badgeClass = isGood ? 'whatif-delta-good' : 'whatif-delta-bad';
+            const arrow = isPositive ? '▲ +' : '▼ ';
+            const formattedCurrent = col.formatter ? col.formatter(val) : String(val);
+            const formattedBase = col.formatter ? col.formatter(baselineVal) : String(baselineVal);
+            whatIfBadge = (
+              <span
+                className={classNames('whatif-delta-badge', badgeClass)}
+                title={`Simulato: ${formattedCurrent} (Base: ${formattedBase}, Scostamento: ${delta.pct > 0 ? '+' : ''}${delta.pct.toFixed(1)}%)`}
+              >
+                {arrow}{Math.abs(delta.pct).toFixed(1)}%
+              </span>
+            );
+          }
+        }
+
         const interval = node.intervals?.[col.key];
         const suppressedLabel = node.suppressed?.[col.key];
         const withGoal = (
           <>
             {baseContent}
             {varianceBadge}
+            {whatIfBadge}
             {meta?.goal && isNumeric && (
               <GoalBadge value={numericVal} goal={meta.goal} formatter={meta.formatter} />
             )}
@@ -406,6 +444,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
             className={classNames('metric-cell', format?.className, {
               'pivot-row-totals-cell': col.key.includes('___ROW_TOTAL'),
               'pivot-subtotal-cell': col.key.includes('___SUBTOTAL'),
+              'whatif-modified-cell': isSimulatedModified,
             })}
             style={format ? format.style : cellStyle}
             onContextMenu={onContextMenu ? e => onContextMenu(e, node, col) : undefined}
@@ -514,12 +553,93 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     conditionalFormatting = NO_RULES,
     theme = DEFAULT_THEME,
     metrics = [],
+    enableWhatIf = false,
+    whatIfBaseline: externalWhatIfBaseline,
+    onWhatIfChange,
     onContextMenu,
     onCrossFilter,
     onClearFilter,
     onReorderMetrics,
   } = props;
   const nullHandling = props.formData?.nullHandling;
+
+  // What-If Simulation State
+  const [whatIfAdjustments, setWhatIfAdjustments] = useState<WhatIfAdjustment[]>([]);
+  const [activeScenarioName, setActiveScenarioName] = useState<string | undefined>();
+  const scenarioManager = useMemo(() => createScenarioManager(), []);
+  const [savedScenarios, setSavedScenarios] = useState<WhatIfScenario[]>(() => scenarioManager.list());
+
+  const whatIfResult = useMemo(() => {
+    if (whatIfAdjustments.length === 0 || whatIfAdjustments.every(a => a.factor === 1)) {
+      return null;
+    }
+    return applyWhatIfScenario(
+      data,
+      grandTotalNode,
+      whatIfAdjustments,
+      metrics,
+      props.formData?.aggregationMode || 'sum',
+      props.formData?.weightColumn,
+      dimensions,
+      props.formData?.metricDefinitions,
+      activeScenarioName ? { id: 'active', name: activeScenarioName } : undefined,
+    );
+  }, [data, grandTotalNode, whatIfAdjustments, metrics, props.formData, dimensions, activeScenarioName]);
+
+  const effectiveTreeData = whatIfResult?.simulatedTree ?? data;
+  const effectiveGrandTotalNode = whatIfResult?.simulatedGrandTotal ?? grandTotalNode;
+  const effectiveWhatIfBaseline = externalWhatIfBaseline ?? whatIfResult?.baseline;
+
+  const handleResetWhatIf = useCallback(() => {
+    setWhatIfAdjustments([]);
+    setActiveScenarioName(undefined);
+    if (onWhatIfChange) onWhatIfChange(null);
+  }, [onWhatIfChange]);
+
+  const handleAdjustmentsChange = useCallback(
+    (newAdjustments: WhatIfAdjustment[]) => {
+      setWhatIfAdjustments(newAdjustments);
+      if (onWhatIfChange) {
+        if (newAdjustments.length === 0 || newAdjustments.every(a => a.factor === 1)) {
+          onWhatIfChange(null);
+        } else {
+          onWhatIfChange({
+            id: 'custom',
+            name: activeScenarioName || 'Personalizzato',
+            adjustments: newAdjustments,
+            createdAt: Date.now(),
+          });
+        }
+      }
+    },
+    [onWhatIfChange, activeScenarioName],
+  );
+
+  const handleSaveScenario = useCallback(
+    (name: string) => {
+      const id = `scenario_${Date.now()}`;
+      const newScen: WhatIfScenario = {
+        id,
+        name,
+        adjustments: whatIfAdjustments,
+        createdAt: Date.now(),
+      };
+      scenarioManager.save(newScen);
+      setSavedScenarios(scenarioManager.list());
+      setActiveScenarioName(name);
+      if (onWhatIfChange) onWhatIfChange(newScen);
+    },
+    [whatIfAdjustments, scenarioManager, onWhatIfChange],
+  );
+
+  const handleLoadScenario = useCallback(
+    (scen: WhatIfScenario) => {
+      setWhatIfAdjustments(scen.adjustments);
+      setActiveScenarioName(scen.name);
+      if (onWhatIfChange) onWhatIfChange(scen);
+    },
+    [onWhatIfChange],
+  );
 
   const [activeDisplayMode, setActiveDisplayMode] = useState<HierarchyValueDisplayMode>(
     valueDisplayMode || 'all',
@@ -619,9 +739,9 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         }
       }
     }
-    collectAllKeys(data);
+    collectAllKeys(effectiveTreeData);
     setExpandedKeys(allKeys);
-  }, [data]);
+  }, [effectiveTreeData]);
 
   const handleCollapseAll = useCallback(() => {
     setExpandedKeys(new Set<string>());
@@ -742,10 +862,10 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   // Sibling-aware recursive in-tree sorting
   const sortedData = useMemo(() => {
     if (!enableHierarchicalSort || sortDirection === 'none' || !sortColumn) {
-      return data;
+      return effectiveTreeData;
     }
-    return sortTreeByExpression(data, sortColumn, sortDirection, nullHandling, dimensions, grandTotalPosition);
-  }, [data, dimensions, enableHierarchicalSort, grandTotalPosition, nullHandling, sortColumn, sortDirection]);
+    return sortTreeByExpression(effectiveTreeData, sortColumn, sortDirection, nullHandling, dimensions, grandTotalPosition);
+  }, [effectiveTreeData, dimensions, enableHierarchicalSort, grandTotalPosition, nullHandling, sortColumn, sortDirection]);
 
   // Filtered data tree based on search
   const filteredData = useMemo(() => {
@@ -892,8 +1012,8 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   const minMaxBounds = useMemo(() => {
     if (minMaxDisplayMode === 'none') return null;
     const metricKeys = displayCols.map(c => c.key);
-    return calculateMinMaxBounds(data, metricKeys, minMaxScope);
-  }, [data, displayCols, minMaxDisplayMode, minMaxScope]);
+    return calculateMinMaxBounds(effectiveTreeData, metricKeys, minMaxScope);
+  }, [effectiveTreeData, displayCols, minMaxDisplayMode, minMaxScope]);
 
   const renderSortIndicator = (columnKey: string) => {
     if (!enableHierarchicalSort) return null;
@@ -921,7 +1041,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
       nodes: filteredData,
       displayMode: rowDisplayMode,
       showGrandTotal,
-      grandTotalNode,
+      grandTotalNode: effectiveGrandTotalNode,
       grandTotalPosition,
     });
     downloadCsv(serializeCsv(rows));
@@ -929,10 +1049,33 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     displayCols,
     columns,
     showGrandTotal,
-    grandTotalNode,
+    effectiveGrandTotalNode,
     grandTotalPosition,
     filteredData,
     rowDisplayMode,
+  ]);
+
+  const handleExportWhatIfCSV = useCallback(() => {
+    const rows = buildCsvRows({
+      columns,
+      displayCols,
+      nodes: filteredData,
+      displayMode: rowDisplayMode,
+      showGrandTotal,
+      grandTotalNode: effectiveGrandTotalNode,
+      grandTotalPosition,
+      whatIfBaseline: effectiveWhatIfBaseline,
+    });
+    downloadCsv(serializeCsv(rows), 'stratum_whatif_simulation.csv');
+  }, [
+    displayCols,
+    columns,
+    showGrandTotal,
+    effectiveGrandTotalNode,
+    grandTotalPosition,
+    filteredData,
+    rowDisplayMode,
+    effectiveWhatIfBaseline,
   ]);
 
   if (!data || data.length === 0) {
@@ -943,7 +1086,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     );
   }
 
-  const grandTotalRow = showGrandTotal && grandTotalNode && (
+  const grandTotalRow = showGrandTotal && effectiveGrandTotalNode && (
     <tr
       className="grand-total-row"
       onContextMenu={onContextMenu ? e => handleContextMenu(e, null) : undefined}
@@ -952,7 +1095,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         className="hierarchy-cell"
         onContextMenu={onContextMenu ? e => handleContextMenu(e, null) : undefined}
       >
-        <span className="node-name">{grandTotalNode.name}</span>
+        <span className="node-name">{effectiveGrandTotalNode.name}</span>
       </td>
       {displayCols.map(col => {
         if (activeDisplayMode === 'leaves_only') {
@@ -964,7 +1107,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             />
           );
         }
-        const val = grandTotalNode.metrics?.[col.key] ?? grandTotalNode.subtotals?.[col.key];
+        const val = effectiveGrandTotalNode.metrics?.[col.key] ?? effectiveGrandTotalNode.subtotals?.[col.key];
         const isDelta = columnMetaMap.get(col.key)?.isDelta ?? false;
         const isNuovo = val === 'Nuovo';
 
@@ -975,7 +1118,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             : null;
           if (pivotDeltaPctKey) {
             const rawDelta =
-              grandTotalNode.metrics?.[pivotDeltaPctKey] ?? grandTotalNode.subtotals?.[pivotDeltaPctKey];
+              effectiveGrandTotalNode.metrics?.[pivotDeltaPctKey] ?? effectiveGrandTotalNode.subtotals?.[pivotDeltaPctKey];
             if (typeof rawDelta === 'number' && Number.isFinite(rawDelta)) {
               gtVarianceDelta = rawDelta;
             }
@@ -984,7 +1127,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             const baseMetric = col.baseMetric ?? col.key.split('___')[0];
             const refDeltaPctKey = `${baseMetric}___period_delta_pct`;
             const rawRefDelta =
-              grandTotalNode.metrics?.[refDeltaPctKey] ?? grandTotalNode.subtotals?.[refDeltaPctKey];
+              effectiveGrandTotalNode.metrics?.[refDeltaPctKey] ?? effectiveGrandTotalNode.subtotals?.[refDeltaPctKey];
             if (typeof rawRefDelta === 'number' && Number.isFinite(rawRefDelta)) {
               gtVarianceDelta = rawRefDelta;
             }
@@ -1002,11 +1145,41 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             </span>
           ) : null;
 
+        // What-If delta badge on Grand Total
+        const gtBaselineVal = effectiveWhatIfBaseline?.nodeBaselines?.get(effectiveGrandTotalNode.key)?.[col.key];
+        const isGtSimulatedModified =
+          typeof val === 'number' &&
+          typeof gtBaselineVal === 'number' &&
+          Math.abs(val - gtBaselineVal) > 0.0001;
+
+        let gtWhatIfBadge: React.ReactNode = null;
+        if (isGtSimulatedModified) {
+          const delta = computeWhatIfDelta(val as number, gtBaselineVal);
+          if (delta.pct !== null) {
+            const isPositive = delta.pct > 0;
+            const isGood =
+              col?.polarity === 'lower_is_better' ? !isPositive : isPositive;
+            const badgeClass = isGood ? 'whatif-delta-good' : 'whatif-delta-bad';
+            const arrow = isPositive ? '▲ +' : '▼ ';
+            const formattedCurrent = col.formatter ? col.formatter(val) : String(val);
+            const formattedBase = col.formatter ? col.formatter(gtBaselineVal) : String(gtBaselineVal);
+            gtWhatIfBadge = (
+              <span
+                className={classNames('whatif-delta-badge', badgeClass)}
+                title={`Totale Simulato: ${formattedCurrent} (Base: ${formattedBase}, Scostamento: ${delta.pct > 0 ? '+' : ''}${delta.pct.toFixed(1)}%)`}
+              >
+                {arrow}{Math.abs(delta.pct).toFixed(1)}%
+              </span>
+            );
+          }
+        }
+
         return (
           <td
             key={col.key}
             className={classNames('metric-cell', {
               'pivot-row-totals-cell': col.key.endsWith('___ROW_TOTAL'),
+              'whatif-modified-cell': isGtSimulatedModified,
             })}
             onContextMenu={onContextMenu ? e => handleContextMenu(e, null, col) : undefined}
           >
@@ -1022,6 +1195,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               <>
                 {col?.formatter ? col.formatter(val) : String(val ?? '-')}
                 {gtVarianceBadge}
+                {gtWhatIfBadge}
               </>
             )}
           </td>
@@ -1032,6 +1206,20 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
   return (
     <div className="superset-hierarchical-table-container" style={containerStyle}>
+      {(enableWhatIf || Boolean(externalWhatIfBaseline)) && (
+        <WhatIfToolbar
+          metrics={metrics}
+          metricDefinitions={props.formData?.metricDefinitions}
+          adjustments={whatIfAdjustments}
+          onAdjustmentsChange={handleAdjustmentsChange}
+          onReset={handleResetWhatIf}
+          onSaveScenario={handleSaveScenario}
+          onLoadScenario={handleLoadScenario}
+          onExportWithSimulation={handleExportWhatIfCSV}
+          savedScenarios={savedScenarios}
+          activeScenarioName={activeScenarioName}
+        />
+      )}
       {/* Toolbar */}
       <div className="superset-hierarchical-table-toolbar">
         <div className="table-toolbar-left">
@@ -1422,6 +1610,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   dataBarZeroAxis={dataBarZeroAxis}
                   theme={theme}
                   showVarianceDelta={Boolean(showVarianceDelta)}
+                  whatIfBaseline={effectiveWhatIfBaseline}
                   onToggleExpand={toggleExpand}
                   onNodeClick={handleNodeClick}
                   onContextMenu={handleContextMenu}

@@ -1,4 +1,5 @@
-import { HierarchyValueDisplayMode, TableColumn, TreeNode } from '../types';
+import { HierarchyValueDisplayMode, TableColumn, TreeNode, WhatIfBaseline } from '../types';
+import { computeWhatIfDelta } from './whatIfEngine';
 
 export const CSV_EXPORT_FILENAME = 'stratum_tree_export.csv';
 
@@ -17,6 +18,7 @@ export interface CsvExportParams {
   showGrandTotal: boolean;
   grandTotalNode?: TreeNode;
   grandTotalPosition: 'top' | 'bottom';
+  whatIfBaseline?: WhatIfBaseline;
 }
 
 function cellValue(node: TreeNode, key: string): string {
@@ -29,7 +31,7 @@ function cellValue(node: TreeNode, key: string): string {
 /**
  * Rows of the CSV export: header, optional grand total, then the full tree in pre-order
  * (collapsed nodes included) with the hierarchy indented by two spaces per level.
- * Raw metric values are exported, not the formatted strings.
+ * When whatIfBaseline is provided, columns are enriched with Base, Simulato, and Delta %.
  */
 export function buildCsvRows({
   columns,
@@ -39,19 +41,68 @@ export function buildCsvRows({
   showGrandTotal,
   grandTotalNode,
   grandTotalPosition,
+  whatIfBaseline,
 }: CsvExportParams): string[][] {
-  const headerRow = [
-    columns[0]?.title || 'Hierarchy',
-    ...displayCols.map(c => (c.baseMetric ? `${c.baseMetric} (${c.title || c.key})` : c.title || c.key)),
-  ];
+  const hasWhatIf = Boolean(
+    whatIfBaseline &&
+    whatIfBaseline.nodeBaselines &&
+    whatIfBaseline.nodeBaselines.size > 0,
+  );
+
+  const headerRow: string[] = [columns[0]?.title || 'Hierarchy'];
+  if (hasWhatIf) {
+    for (const c of displayCols) {
+      const baseTitle = c.baseMetric ? `${c.baseMetric} (${c.title || c.key})` : c.title || c.key;
+      headerRow.push(`${baseTitle} (Base)`);
+      headerRow.push(`${baseTitle} (Simulato)`);
+      headerRow.push(`${baseTitle} (Δ%)`);
+    }
+  } else {
+    headerRow.push(
+      ...displayCols.map(c => (c.baseMetric ? `${c.baseMetric} (${c.title || c.key})` : c.title || c.key)),
+    );
+  }
 
   const rows: string[][] = [headerRow];
+
+  function extractNodeMetricCells(node: TreeNode, renderValues: boolean): string[] {
+    if (!renderValues) {
+      return hasWhatIf
+        ? new Array(displayCols.length * 3).fill('')
+        : new Array(displayCols.length).fill('');
+    }
+    if (!hasWhatIf) {
+      return displayCols.map(c => cellValue(node, c.key));
+    }
+    const result: string[] = [];
+    for (const c of displayCols) {
+      const simValStr = cellValue(node, c.key);
+      const baseRaw = whatIfBaseline!.nodeBaselines.get(node.key)?.[c.key];
+      const baseValStr = baseRaw !== null && baseRaw !== undefined ? String(baseRaw) : simValStr;
+      const simNum =
+        typeof node.metrics?.[c.key] === 'number'
+          ? (node.metrics[c.key] as number)
+          : typeof node.subtotals?.[c.key] === 'number'
+          ? (node.subtotals[c.key] as number)
+          : null;
+      const baseNum = typeof baseRaw === 'number' ? baseRaw : null;
+      let deltaPctStr = '';
+      if (simNum !== null && baseNum !== null) {
+        const delta = computeWhatIfDelta(simNum, baseNum);
+        if (delta.pct !== null) {
+          deltaPctStr = `${delta.pct > 0 ? '+' : ''}${delta.pct.toFixed(1)}%`;
+        }
+      }
+      result.push(baseValStr, simValStr, deltaPctStr);
+    }
+    return result;
+  }
 
   const gtRow =
     showGrandTotal && grandTotalNode
       ? [
           grandTotalNode.name,
-          ...displayCols.map(c => (displayMode === 'leaves_only' ? '' : cellValue(grandTotalNode, c.key))),
+          ...extractNodeMetricCells(grandTotalNode, displayMode !== 'leaves_only'),
         ]
       : null;
 
@@ -65,7 +116,7 @@ export function buildCsvRows({
       const renderValues = shouldRenderMetricValue(node, displayMode);
       rows.push([
         indent + node.name,
-        ...displayCols.map(c => (renderValues ? cellValue(node, c.key) : '')),
+        ...extractNodeMetricCells(node, renderValues),
       ]);
       if (node.children && node.children.length > 0) {
         traverseForExport(node.children);

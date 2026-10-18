@@ -30,7 +30,7 @@ export const ExploreControlPanel: React.FC<ExploreControlPanelProps> = ({
     <div className="studio-sidebar">
       <div className="sidebar-header">
         <span>⚙️ Superset Explore Controls</span>
-        <span className="studio-badge">StratumTree v0.8.4</span>
+        <span className="studio-badge">StratumTree v0.9.0</span>
       </div>
 
       <div className="sidebar-content">
@@ -383,8 +383,8 @@ export const ExploreControlPanel: React.FC<ExploreControlPanelProps> = ({
           </div>
         </ControlAccordion>
 
-        {/* 3. Comparison & Analysis (v0.5.0, v0.6.0) */}
-        <ControlAccordion title="Comparison & Analysis" icon="⚡" badge="v0.6.0" defaultOpen={true}>
+        {/* 3. Comparison & Analysis (v0.5.0, v0.6.0, v0.9.0) */}
+        <ControlAccordion title="Comparison & Analysis" icon="⚡" badge="v0.9.0" defaultOpen={true}>
           <label className="control-toggle">
             <input
               type="checkbox"
@@ -392,6 +392,18 @@ export const ExploreControlPanel: React.FC<ExploreControlPanelProps> = ({
               onChange={(e) => onChange('enable_context_menu', e.target.checked)}
             />
             <span>Enable Superset Context Menu (Drill/Filter)</span>
+          </label>
+
+          <label className="control-toggle">
+            <input
+              type="checkbox"
+              checked={Boolean(formData.enableWhatIf ?? formData.enable_what_if)}
+              onChange={(e) => {
+                onChange('enableWhatIf', e.target.checked);
+                onChange('enable_what_if', e.target.checked);
+              }}
+            />
+            <span>🪄 Enable What-If Simulation & Scenarios (v0.9.0)</span>
           </label>
 
           <div className="control-group">

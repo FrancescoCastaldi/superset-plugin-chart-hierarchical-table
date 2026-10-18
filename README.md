@@ -24,6 +24,7 @@ Frontend visualization plugin for **Apache Superset 6.1.0+** providing a rich, i
 - **Confidence Intervals and Significance Signal**: Wilson and Poisson intervals on ratios, with a marker only when the whole interval lies above or below the parent, the total or the goal.
 - **Small-Number Suppression**: Hides counts below a threshold with complementary suppression, so published tables do not disclose small cells (hidden values never reach sorting, colours or the CSV export).
 - **Trend Sparklines and Indicators**: A Trend column per metric over the periods, and icons on conditional formatting rules.
+- **Interactive What-If Simulation & Scenario Manager**: Real-time simulation toolbar with sliders (-50% to +50%), leaf-level multiplier recalculation, ratio and subtotal rollup consistency, polarity-aware in-cell delta badges (▲/▼), preset scenario saving in session storage, and enriched CSV export.
 
 ## Installation & Setup
 

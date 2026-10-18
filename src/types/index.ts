@@ -284,6 +284,9 @@ export interface HierarchicalTableFormData extends QueryFormData {
   divergingMidpoint?: number | string;
   heatmapPalette?: HeatmapDivergingPalette;
   dataBarZeroAxis?: boolean;
+
+  // What-If Simulation & Scenarios
+  enableWhatIf?: boolean;
 }
 
 export type MetricGoal = NonNullable<HierarchicalTableFormData['goals']>[number];
@@ -297,6 +300,35 @@ export interface GoalDelta {
   /** Signed percentage of the target; null when the target is zero. */
   deltaPct: number | null;
   status: GoalStatus;
+}
+
+/** Adjustment rule for a single metric in a What-If scenario. */
+export interface WhatIfAdjustment {
+  metric: string;
+  /** Multiplicative factor: 1.10 means +10%, 0.85 means -15%. */
+  factor: number;
+}
+
+/** A named What-If scenario with its adjustments. */
+export interface WhatIfScenario {
+  id: string;
+  name: string;
+  adjustments: WhatIfAdjustment[];
+  createdAt: number;
+}
+
+/** Snapshot of the baseline tree before simulation, for delta rendering. */
+export interface WhatIfBaseline {
+  /** Original metric values per node key, for tooltip display. */
+  nodeBaselines: Map<string, Record<string, number | null>>;
+}
+
+/** Result of applying a What-If scenario to a tree. */
+export interface WhatIfResult {
+  simulatedTree: TreeNode[];
+  simulatedGrandTotal: TreeNode | undefined;
+  baseline: WhatIfBaseline;
+  activeScenario?: WhatIfScenario;
 }
 
 /** Confidence interval of a ratio cell, in the units of the cell value. */
@@ -419,6 +451,9 @@ export interface HierarchicalTableTransformedProps {
   ) => void;
   onClearFilter?: () => void;
   onReorderMetrics?: (metrics: string[]) => void;
+  enableWhatIf?: boolean;
+  whatIfBaseline?: WhatIfBaseline;
+  onWhatIfChange?: (scenario: WhatIfScenario | null) => void;
 }
 
 export interface SelectedFilterItem {
@@ -437,5 +472,6 @@ export type HierarchicalTableChartProps = ChartProps & {
     onAddFilter?: (filter: any) => void;
     onContextMenu?: (clientX: number, clientY: number, filters?: ContextMenuFilters) => void;
     onReorderMetrics?: (metrics: string[]) => void;
+    onWhatIfChange?: (scenario: WhatIfScenario | null) => void;
   };
 };

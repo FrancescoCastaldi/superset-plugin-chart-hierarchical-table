@@ -84,6 +84,7 @@ export interface TransformOptions {
   /** Weight metric of the weighted_avg roll-up; empty for every other aggregation mode. */
   weightColumn: string;
   theme: ResolvedTheme;
+  enableWhatIf: boolean;
 }
 
 const TIME_GRAINS: readonly ComparisonTimeGrain[] = ['auto', 'day', 'week', 'month', 'quarter', 'year'];
@@ -366,5 +367,6 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
         mergedFormData.theme,
       mergedFormData,
     ),
+    enableWhatIf: Boolean(mergedFormData.enableWhatIf ?? mergedFormData.enable_what_if),
   };
 }

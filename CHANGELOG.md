@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-10-18
+### Added
+- **Interactive What-If Simulation Engine (`whatIfEngine.ts`)**: Pure deterministic calculation engine applying percentage multipliers strictly to leaf nodes and recalculating parent rollups, weighted averages, and grand totals with mathematical rigor. Ratio metrics (like length of stay) recalculate from simulated operands rather than averaging averages.
+- **Polarity-Aware In-Cell Delta Badges**: Directional delta badges (`▲`/`▼`) rendered directly inside simulated metric cells with polarity awareness (`higher_is_better` vs `lower_is_better`), baseline value tooltips, and distinct background highlighting.
+- **Interactive What-If Toolbar (`WhatIfToolbar.tsx`)**: Responsive simulation control panel with metric range sliders (-50% to +50%), manual numeric percentage inputs, active simulation status badge, instant reset button, and collapsible preset scenario manager.
+- **Scenario Manager (`whatIfScenarioManager.ts`)**: Persistence layer supporting saving, loading, and renaming up to 10 simulation presets in `sessionStorage` with graceful in-memory fallback.
+- **Enriched CSV Export**: Automatic generation of Base, Simulato, and Delta % columns in CSV export when What-If simulation is active, preserving full auditability of simulated data.
+- **Dev Studio Integration**: Added What-If simulation toggle in Explore Control Panel under Comparison & Analysis, with live event hook logging (`onWhatIfChange`) in Diagnostics Drawer.
+
 ## [0.8.4] - 2026-10-18
 ### Added
 - **Responsive Viewport-Constrained Sizing**: Bound chart dimensions directly to the live viewport container in Dev Studio via `ResizeObserver`, ensuring `transformProps` receives exact pixel width and height without manual window resize events.

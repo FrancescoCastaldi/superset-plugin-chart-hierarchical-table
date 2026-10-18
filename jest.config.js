@@ -6,6 +6,7 @@ module.exports = {
   // The host Superset provides @superset-ui/chart-controls at runtime; it is not installed here.
   moduleNameMapper: {
     '^@superset-ui/chart-controls$': '<rootDir>/test/__mocks__/chartControlsMock.ts',
+    '\\.css$': '<rootDir>/test/__mocks__/styleMock.js',
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],

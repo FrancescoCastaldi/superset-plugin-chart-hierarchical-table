@@ -99,6 +99,8 @@ export default function App() {
         grand_total_position: ['grandTotalPosition'],
         enableContextMenu: ['enable_context_menu'],
         enable_context_menu: ['enableContextMenu'],
+        enableWhatIf: ['enable_what_if'],
+        enable_what_if: ['enableWhatIf'],
         showVarianceDelta: ['show_variance_delta'],
         show_variance_delta: ['showVarianceDelta'],
         pivotTimeDeltaMode: ['pivot_time_delta_mode'],
@@ -181,6 +183,13 @@ export default function App() {
           onReorderMetrics: (nextMetrics: string[]) => {
             addLog('reorder', 'onReorderMetrics (Drag & Drop)', nextMetrics);
             handleFormChange('metrics', nextMetrics);
+          },
+          onWhatIfChange: (scen: any) => {
+            if (scen) {
+              addLog('perf', `What-If Scenario: ${scen.name || 'Attivo'}`, scen.adjustments);
+            } else {
+              addLog('perf', 'What-If: Reset Baseline ripristinato');
+            }
           },
         },
         filterState: {},

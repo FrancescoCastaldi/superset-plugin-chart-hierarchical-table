@@ -156,4 +156,45 @@ describe('csvExport', () => {
   it('downloadCsv is a no-op outside the browser', () => {
     expect(() => downloadCsv('a,b')).not.toThrow();
   });
+
+  it('enriches CSV with Base, Simulato, and Delta % columns when whatIfBaseline is provided', () => {
+    const whatIfBaseline = {
+      nodeBaselines: new Map([
+        ['Lazio', { richieste_corr: 150, delta_richieste_pct: null, 'totale___2026-09': 9 }],
+        ['Lazio > ASL1', { richieste_corr: 80, delta_richieste_pct: null, 'totale___2026-09': 0 }],
+        ['__grand_total__', { richieste_corr: 150, delta_richieste_pct: null, 'totale___2026-09': 9 }],
+      ]),
+    };
+
+    const rows = buildCsvRows({
+      columns,
+      displayCols,
+      nodes: tree,
+      displayMode: 'all',
+      showGrandTotal: true,
+      grandTotalNode,
+      grandTotalPosition: 'top',
+      whatIfBaseline,
+    });
+
+    // Check header
+    expect(rows[0]).toEqual([
+      'regione / asl',
+      'richieste_corr (Base)',
+      'richieste_corr (Simulato)',
+      'richieste_corr (Δ%)',
+      'delta_richieste_pct (Base)',
+      'delta_richieste_pct (Simulato)',
+      'delta_richieste_pct (Δ%)',
+      '2026-09 (totale) (Base)',
+      '2026-09 (totale) (Simulato)',
+      '2026-09 (totale) (Δ%)',
+    ]);
+
+    // Check ASL1 row (simulated 100 vs baseline 80 = +25.0%)
+    const asl1Row = rows.find(r => r[0].includes('ASL1'))!;
+    expect(asl1Row[1]).toBe('80');
+    expect(asl1Row[2]).toBe('100');
+    expect(asl1Row[3]).toBe('+25.0%');
+  });
 });
