@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ControlAccordion } from './ControlAccordion';
 import { MetricDefinitionsEditor } from './MetricDefinitionsEditor';
 import { PeriodComparisonEditor } from './PeriodComparisonEditor';
+import { reorderArray, reorderMetricsWithPosition } from '../../../src/utils/metricReorder';
 
 interface ExploreControlPanelProps {
   formData: Record<string, any>;
@@ -18,6 +19,13 @@ export const ExploreControlPanel: React.FC<ExploreControlPanelProps> = ({
   availableMetrics,
   records = [],
 }) => {
+  const [draggedChipIndex, setDraggedChipIndex] = useState<number | null>(null);
+  const [dragOverChipIndex, setDragOverChipIndex] = useState<number | null>(null);
+  const [dragOverPosition, setDragOverPosition] = useState<'before' | 'after' | null>(null);
+
+  const activeMetrics: string[] = formData.metrics || [];
+  const remainingMetrics = availableMetrics.filter((m) => !activeMetrics.includes(m));
+
   return (
     <div className="studio-sidebar">
       <div className="sidebar-header">
@@ -174,28 +182,146 @@ export const ExploreControlPanel: React.FC<ExploreControlPanelProps> = ({
         {/* 2. Metrics & Aggregations */}
         <ControlAccordion title="Metrics & Aggregations" icon="📊" defaultOpen={true}>
           <div className="control-group">
-            <label className="control-label">Active Metrics</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-              {availableMetrics.map((met) => {
-                const isSelected = (formData.metrics || []).includes(met);
-                return (
-                  <button
-                    key={met}
-                    type="button"
-                    className={`btn-pill ${isSelected ? 'primary' : ''}`}
-                    style={{ fontSize: '11px', padding: '3px 8px' }}
-                    onClick={() => {
-                      const current = [...(formData.metrics || [])];
-                      const next = isSelected ? current.filter((m) => m !== met) : [...current, met];
-                      onChange('metrics', next);
-                    }}
-                  >
-                    {isSelected ? '✓ ' : '+ '}
-                    {met}
-                  </button>
-                );
-              })}
-            </div>
+            <label className="control-label">Active Metrics (Drag or use arrows to reorder)</label>
+            {activeMetrics.length === 0 ? (
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic', padding: '6px 0' }}>
+                Nessuna metrica attiva. Aggiungine una dalle metriche disponibili sotto.
+              </div>
+            ) : (
+              <div className="metric-chips-container">
+                {activeMetrics.map((met, index) => {
+                  const isDragging = draggedChipIndex === index;
+                  const isTargetBefore = dragOverChipIndex === index && dragOverPosition === 'before';
+                  const isTargetAfter = dragOverChipIndex === index && dragOverPosition === 'after';
+
+                  const chipClasses = [
+                    'metric-chip',
+                    isDragging ? 'is-dragging' : '',
+                    isTargetBefore ? 'drop-target-before' : '',
+                    isTargetAfter ? 'drop-target-after' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+
+                  return (
+                    <div
+                      key={met}
+                      draggable={true}
+                      className={chipClasses}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', met);
+                        e.dataTransfer.effectAllowed = 'move';
+                        setDraggedChipIndex(index);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const isBefore = e.clientX < rect.left + rect.width / 2;
+                        setDragOverChipIndex(index);
+                        setDragOverPosition(isBefore ? 'before' : 'after');
+                      }}
+                      onDragLeave={() => {
+                        if (dragOverChipIndex === index) {
+                          setDragOverChipIndex(null);
+                          setDragOverPosition(null);
+                        }
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedChipIndex !== null && draggedChipIndex !== index) {
+                          const reordered = reorderMetricsWithPosition(
+                            activeMetrics,
+                            activeMetrics[draggedChipIndex],
+                            met,
+                            dragOverPosition || 'before',
+                          );
+                          onChange('metrics', reordered);
+                        }
+                        setDraggedChipIndex(null);
+                        setDragOverChipIndex(null);
+                        setDragOverPosition(null);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedChipIndex(null);
+                        setDragOverChipIndex(null);
+                        setDragOverPosition(null);
+                      }}
+                    >
+                      <span className="metric-chip-handle" title="Trascina per riordinare">
+                        ⠿
+                      </span>
+                      <span className="metric-chip-badge">#{index + 1}</span>
+                      <span className="metric-chip-name">{met}</span>
+                      <div className="metric-chip-actions">
+                        <button
+                          type="button"
+                          className="metric-chip-btn"
+                          disabled={index === 0}
+                          title="Sposta prima"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (index > 0) {
+                              onChange('metrics', reorderArray(activeMetrics, index, index - 1));
+                            }
+                          }}
+                        >
+                          ◀
+                        </button>
+                        <button
+                          type="button"
+                          className="metric-chip-btn"
+                          disabled={index === activeMetrics.length - 1}
+                          title="Sposta dopo"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (index < activeMetrics.length - 1) {
+                              onChange('metrics', reorderArray(activeMetrics, index, index + 1));
+                            }
+                          }}
+                        >
+                          ▶
+                        </button>
+                        <button
+                          type="button"
+                          className="metric-chip-btn btn-remove"
+                          title="Rimuovi metrica"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onChange('metrics', activeMetrics.filter((m) => m !== met));
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {remainingMetrics.length > 0 && (
+              <div style={{ marginTop: '10px' }}>
+                <label className="control-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  + Aggiungi Metrica Disponibile
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                  {remainingMetrics.map((met) => (
+                    <button
+                      key={met}
+                      type="button"
+                      className="btn-pill"
+                      style={{ fontSize: '11px', padding: '3px 8px' }}
+                      onClick={() => {
+                        onChange('metrics', [...activeMetrics, met]);
+                      }}
+                    >
+                      + {met}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="control-group">

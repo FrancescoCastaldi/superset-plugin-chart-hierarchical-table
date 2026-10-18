@@ -460,3 +460,107 @@ body {
   border-color: var(--accent-blue);
 }
 
+/* Metric Reordering Chips in Dev Studio */
+.metric-chips-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.metric-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--text-main);
+  user-select: none;
+  cursor: grab;
+  transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+  position: relative;
+}
+
+.metric-chip:hover {
+  border-color: var(--border-accent);
+}
+
+.metric-chip.is-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.metric-chip.drop-target-before {
+  border-top: 2px solid var(--accent-blue);
+}
+
+.metric-chip.drop-target-after {
+  border-bottom: 2px solid var(--accent-blue);
+}
+
+.metric-chip-handle {
+  color: var(--text-muted);
+  cursor: grab;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.metric-chip.is-dragging .metric-chip-handle {
+  cursor: grabbing;
+}
+
+.metric-chip-badge {
+  background: rgba(47, 129, 247, 0.2);
+  color: #58a6ff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.metric-chip-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-chip-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.metric-chip-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.metric-chip-btn:hover:not(:disabled) {
+  color: var(--text-main);
+  background: var(--bg-sidebar);
+  border-color: var(--border-color);
+}
+
+.metric-chip-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.metric-chip-btn.btn-remove:hover {
+  color: var(--accent-red);
+  background: rgba(218, 54, 51, 0.15);
+  border-color: rgba(218, 54, 51, 0.3);
+}
+
