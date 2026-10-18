@@ -156,6 +156,10 @@ export default function App() {
           onContextMenu: (filters: any) => {
             addLog('context_menu', 'onContextMenu (Native Drill)', filters);
           },
+          onReorderMetrics: (nextMetrics: string[]) => {
+            addLog('reorder', 'onReorderMetrics (Drag & Drop)', nextMetrics);
+            handleFormChange('metrics', nextMetrics);
+          },
         },
         filterState: {},
       } as any);

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 export interface LogEntry {
   id: string;
   time: string;
-  type: 'filter' | 'context_menu' | 'sort' | 'expand' | 'perf';
+  type: 'filter' | 'context_menu' | 'sort' | 'expand' | 'perf' | 'reorder';
   message: string;
   payload?: any;
 }
