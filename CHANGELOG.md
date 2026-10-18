@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-10-18
+### Added
+- **Drag and Drop Metrics Reordering (`onReorderMetrics`)**: Native HTML5 drag and drop metrics reordering supporting both interactive chips in the Explore Control Panel and direct column header reordering on the table grid.
+- **Draggable Metric Chips in Control Panel**: Replaced simple button pills with rich, accessible chips featuring drag handles (`⠿`), numerical position badges (`#1`, `#2`...), move arrows (`◀`/`▶`) for keyboard and mobile accessibility, quick removal (`✕`), drop indicators, and quick-add buttons for remaining dataset metrics.
+- **Direct Table Column Header Reordering**: Table metric headers (`<th>`) in flat and pivot modes become draggable when `onReorderMetrics` is configured, highlighting drop targets with clean visual drop indicators and seamlessly reordering metrics without triggering accidental sorting.
+- **Pure Reordering Helpers (`src/utils/metricReorder.ts`)**: Added deterministic pure array and metric key reordering helpers (`reorderArray`, `reorderMetricsByKey`, `reorderMetricsWithPosition`, `getMetricKeyFromColumn`) with full unit test coverage.
+- **Dev Studio Live Hook Integration**: Wired `onReorderMetrics` into Dev Studio `App.tsx` and `DiagnosticsDrawer`, providing live event logging and instantaneous chart grid synchronization across all scenarios.
+
 ## [0.8.1] - 2026-10-18
 ### Added
 - **In-Cell Variance Badges (`showVarianceDelta`)**: Complete rendering pipeline for inline variation percentage badges (`.delta-badge`) displaying `▲ +X.X%` or `▼ -X.X%` directly beside numeric values across flat hierarchy tables, horizontal pivot matrices, and grand total rows.

@@ -30,7 +30,7 @@ export const ExploreControlPanel: React.FC<ExploreControlPanelProps> = ({
     <div className="studio-sidebar">
       <div className="sidebar-header">
         <span>⚙️ Superset Explore Controls</span>
-        <span className="studio-badge">StratumTree v0.8.0</span>
+        <span className="studio-badge">StratumTree v0.8.2</span>
       </div>
 
       <div className="sidebar-content">
