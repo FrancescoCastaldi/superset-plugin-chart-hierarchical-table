@@ -906,6 +906,7 @@ th.sortable-header:hover .sort-indicator-inactive::after {
   cursor: grab;
   user-select: none;
   opacity: 0.6;
+  pointer-events: none;
 }
 
 .hierarchical-table th.draggable-metric-th:hover .drag-handle-icon {

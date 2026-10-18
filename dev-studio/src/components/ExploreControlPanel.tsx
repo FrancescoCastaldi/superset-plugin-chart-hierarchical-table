@@ -221,7 +221,10 @@ export const ExploreControlPanel: React.FC<ExploreControlPanelProps> = ({
                         setDragOverChipIndex(index);
                         setDragOverPosition(isBefore ? 'before' : 'after');
                       }}
-                      onDragLeave={() => {
+                      onDragLeave={(e) => {
+                        if (e.currentTarget.contains(e.relatedTarget as Node)) {
+                          return;
+                        }
                         if (dragOverChipIndex === index) {
                           setDragOverChipIndex(null);
                           setDragOverPosition(null);
@@ -229,12 +232,24 @@ export const ExploreControlPanel: React.FC<ExploreControlPanelProps> = ({
                       }}
                       onDrop={(e) => {
                         e.preventDefault();
-                        if (draggedChipIndex !== null && draggedChipIndex !== index) {
+                        const sourceMetric =
+                          e.dataTransfer.getData('text/plain') ||
+                          (draggedChipIndex !== null ? activeMetrics[draggedChipIndex] : null);
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const isBefore = e.clientX < rect.left + rect.width / 2;
+                        const effectivePosition =
+                          dragOverChipIndex === index && dragOverPosition
+                            ? dragOverPosition
+                            : isBefore
+                            ? 'before'
+                            : 'after';
+
+                        if (sourceMetric && sourceMetric !== met && activeMetrics.includes(sourceMetric)) {
                           const reordered = reorderMetricsWithPosition(
                             activeMetrics,
-                            activeMetrics[draggedChipIndex],
+                            sourceMetric,
                             met,
-                            dragOverPosition || 'before',
+                            effectivePosition,
                           );
                           onChange('metrics', reordered);
                         }

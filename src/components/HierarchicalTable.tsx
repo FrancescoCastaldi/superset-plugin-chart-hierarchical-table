@@ -648,6 +648,17 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   const [dropTargetCol, setDropTargetCol] = useState<{ metric: string; position: 'before' | 'after' } | null>(null);
   const isDraggingColumnRef = useRef(false);
 
+  // Pure base metrics list (excluding synthetic deltas / table calculations)
+  const baseMetrics = useMemo(() => {
+    const formMetrics = props.formData?.metrics;
+    if (Array.isArray(formMetrics) && formMetrics.length > 0) {
+      return formMetrics.map((m: any) =>
+        typeof m === 'string' ? m : m?.label || m?.metric_name || String(m),
+      );
+    }
+    return metrics.filter(m => !m.includes('___'));
+  }, [props.formData?.metrics, metrics]);
+
   const handleColumnDragStart = useCallback((e: React.DragEvent, metricKey: string) => {
     isDraggingColumnRef.current = true;
     setDraggedMetricCol(metricKey);
@@ -663,16 +674,33 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     setDropTargetCol({ metric: targetMetricKey, position: isBefore ? 'before' : 'after' });
   }, []);
 
-  const handleColumnDragLeave = useCallback((targetMetricKey: string) => {
+  const handleColumnDragLeave = useCallback((e: React.DragEvent, targetMetricKey: string) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) {
+      return;
+    }
     setDropTargetCol(prev => (prev?.metric === targetMetricKey ? null : prev));
   }, []);
 
   const handleColumnDrop = useCallback((e: React.DragEvent, targetMetricKey: string) => {
     e.preventDefault();
     const sourceMetric = e.dataTransfer.getData('text/plain') || draggedMetricCol;
-    const position = dropTargetCol?.position || 'before';
-    if (sourceMetric && targetMetricKey && sourceMetric !== targetMetricKey && onReorderMetrics && metrics.length > 0) {
-      const nextMetrics = reorderMetricsWithPosition(metrics, sourceMetric, targetMetricKey, position);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isBefore = e.clientX < rect.left + rect.width / 2;
+    const position =
+      dropTargetCol && dropTargetCol.metric === targetMetricKey
+        ? dropTargetCol.position
+        : isBefore
+        ? 'before'
+        : 'after';
+
+    if (
+      sourceMetric &&
+      targetMetricKey &&
+      sourceMetric !== targetMetricKey &&
+      onReorderMetrics &&
+      baseMetrics.length > 0
+    ) {
+      const nextMetrics = reorderMetricsWithPosition(baseMetrics, sourceMetric, targetMetricKey, position);
       onReorderMetrics(nextMetrics);
     }
     setDraggedMetricCol(null);
@@ -680,7 +708,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     setTimeout(() => {
       isDraggingColumnRef.current = false;
     }, 100);
-  }, [draggedMetricCol, dropTargetCol, metrics, onReorderMetrics]);
+  }, [baseMetrics, draggedMetricCol, dropTargetCol, onReorderMetrics]);
 
   const handleColumnDragEnd = useCallback(() => {
     setDraggedMetricCol(null);
@@ -1156,7 +1184,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   {props.pivotHeaderGroups.map(group => {
                     const isSortable = Boolean(enableHierarchicalSort);
                     const isGroupActive = sortColumn === group.key && sortDirection !== 'none';
-                    const groupMetricKey = onReorderMetrics && metrics.includes(group.key) ? group.key : null;
+                    const groupMetricKey = onReorderMetrics && baseMetrics.includes(group.key) ? group.key : null;
                     const isGroupDraggable = Boolean(groupMetricKey);
                     const isGroupDragging = draggedMetricCol === groupMetricKey;
                     const isGroupTargetBefore = dropTargetCol?.metric === groupMetricKey && dropTargetCol.position === 'before';
@@ -1169,7 +1197,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                         draggable={isGroupDraggable}
                         onDragStart={isGroupDraggable ? e => handleColumnDragStart(e, groupMetricKey!) : undefined}
                         onDragOver={isGroupDraggable ? e => handleColumnDragOver(e, groupMetricKey!) : undefined}
-                        onDragLeave={isGroupDraggable ? () => handleColumnDragLeave(groupMetricKey!) : undefined}
+                        onDragLeave={isGroupDraggable ? e => handleColumnDragLeave(e, groupMetricKey!) : undefined}
                         onDrop={isGroupDraggable ? e => handleColumnDrop(e, groupMetricKey!) : undefined}
                         onDragEnd={isGroupDraggable ? handleColumnDragEnd : undefined}
                         className={classNames('metric-group-header', {
@@ -1225,8 +1253,8 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   {displayCols.map(col => {
                     const isSortable = Boolean(enableHierarchicalSort);
                     const isColActive = sortColumn === col.key && sortDirection !== 'none';
-                    const subMetricKey = onReorderMetrics ? getMetricKeyFromColumn(col, metrics) : null;
-                    const isSubDraggable = Boolean(onReorderMetrics && subMetricKey);
+                    const subMetricKey = onReorderMetrics ? getMetricKeyFromColumn(col, baseMetrics) : null;
+                    const isSubDraggable = Boolean(onReorderMetrics && subMetricKey && (props.combineMetric || !props.isPivotMode));
                     const isSubDragging = draggedMetricCol === subMetricKey;
                     const isSubTargetBefore = dropTargetCol?.metric === subMetricKey && dropTargetCol.position === 'before';
                     const isSubTargetAfter = dropTargetCol?.metric === subMetricKey && dropTargetCol.position === 'after';
@@ -1237,7 +1265,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                         draggable={isSubDraggable}
                         onDragStart={isSubDraggable ? e => handleColumnDragStart(e, subMetricKey!) : undefined}
                         onDragOver={isSubDraggable ? e => handleColumnDragOver(e, subMetricKey!) : undefined}
-                        onDragLeave={isSubDraggable ? () => handleColumnDragLeave(subMetricKey!) : undefined}
+                        onDragLeave={isSubDraggable ? e => handleColumnDragLeave(e, subMetricKey!) : undefined}
                         onDrop={isSubDraggable ? e => handleColumnDrop(e, subMetricKey!) : undefined}
                         onDragEnd={isSubDraggable ? handleColumnDragEnd : undefined}
                         className={classNames('metric-header pivot-sub-header', {
@@ -1301,7 +1329,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     (sortColumn === sortKey ||
                       (col.isHierarchyDimension && isHierarchySortKey(sortColumn, dimensions))) &&
                     sortDirection !== 'none';
-                  const flatMetricKey = onReorderMetrics ? getMetricKeyFromColumn(col, metrics) : null;
+                  const flatMetricKey = onReorderMetrics ? getMetricKeyFromColumn(col, baseMetrics) : null;
                   const isFlatDraggable = Boolean(onReorderMetrics && flatMetricKey);
                   const isFlatDragging = draggedMetricCol === flatMetricKey;
                   const isFlatTargetBefore = dropTargetCol?.metric === flatMetricKey && dropTargetCol.position === 'before';
@@ -1313,7 +1341,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                       draggable={isFlatDraggable}
                       onDragStart={isFlatDraggable ? e => handleColumnDragStart(e, flatMetricKey!) : undefined}
                       onDragOver={isFlatDraggable ? e => handleColumnDragOver(e, flatMetricKey!) : undefined}
-                      onDragLeave={isFlatDraggable ? () => handleColumnDragLeave(flatMetricKey!) : undefined}
+                      onDragLeave={isFlatDraggable ? e => handleColumnDragLeave(e, flatMetricKey!) : undefined}
                       onDrop={isFlatDraggable ? e => handleColumnDrop(e, flatMetricKey!) : undefined}
                       onDragEnd={isFlatDraggable ? handleColumnDragEnd : undefined}
                       className={classNames({

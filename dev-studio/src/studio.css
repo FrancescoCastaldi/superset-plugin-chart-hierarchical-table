@@ -506,6 +506,7 @@ body {
   cursor: grab;
   font-size: 14px;
   line-height: 1;
+  pointer-events: none;
 }
 
 .metric-chip.is-dragging .metric-chip-handle {
@@ -520,6 +521,7 @@ body {
   font-size: 10px;
   font-family: var(--font-mono);
   font-weight: 600;
+  pointer-events: none;
 }
 
 .metric-chip-name {
@@ -528,6 +530,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 .metric-chip-actions {

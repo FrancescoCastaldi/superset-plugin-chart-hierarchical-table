@@ -176,7 +176,7 @@ export default function App() {
         error: err?.message || String(err),
       };
     }
-  }, [formData, scenario.data, addLog]);
+  }, [formData, scenario.data, addLog, handleFormChange]);
 
   // Count rendered tree nodes
   const nodeCount = useMemo(() => {

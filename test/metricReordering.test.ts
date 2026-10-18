@@ -157,6 +157,44 @@ describe('metricReorder utils', () => {
       };
       expect(getMetricKeyFromColumn(col, activeMetrics)).toBe('costo');
     });
+
+    it('disambiguates between substring metrics avoiding suffix collision', () => {
+      const nestedMetrics = ['degenza', 'media_degenza'];
+      const col: TableColumn = {
+        key: 'custom_col',
+        title: 'Totale',
+        isMetric: true,
+        baseMetric: 'Totale media_degenza',
+      };
+      expect(getMetricKeyFromColumn(col, nestedMetrics)).toBe('media_degenza');
+    });
+
+    it('enforces word boundaries when searching inside baseMetric', () => {
+      const metricsList = ['degenza'];
+      const col: TableColumn = {
+        key: 'custom_col',
+        title: 'Prolungata',
+        isMetric: true,
+        baseMetric: 'degenza_prolungata',
+      };
+      expect(getMetricKeyFromColumn(col, metricsList)).toBeNull();
+    });
+
+    it('identifies table calculation and sparkline composite keys', () => {
+      const colCalc: TableColumn = {
+        key: 'costo___calc_pct_of_total',
+        title: '% Totale',
+        isMetric: true,
+      };
+      expect(getMetricKeyFromColumn(colCalc, activeMetrics)).toBe('costo');
+
+      const colSpark: TableColumn = {
+        key: 'ricoveri___SPARK',
+        title: 'Trend',
+        isMetric: true,
+      };
+      expect(getMetricKeyFromColumn(colSpark, activeMetrics)).toBe('ricoveri');
+    });
   });
 });
 
@@ -299,6 +337,67 @@ describe('HierarchicalTable draggable header rendering', () => {
     expect(html).toContain('metric-group-header');
     expect(html).toContain('draggable-metric-th');
     expect(html).toContain('drag-handle-icon');
+  });
+
+  it('does not make level 2 period sub-columns draggable in separated pivot mode', () => {
+    const pivotChartProps: HierarchicalTableChartProps = {
+      ...baseChartProps,
+      formData: {
+        ...baseChartProps.formData,
+        columns: ['anno'],
+        pivot_columns: ['anno'],
+        combineMetric: false,
+        combine_metric: false,
+      } as any,
+      queriesData: [
+        {
+          data: [
+            { regione: 'Lazio', anno: '2022', ricoveri: 100, costo: 5000 },
+            { regione: 'Lazio', anno: '2023', ricoveri: 110, costo: 5200 },
+          ],
+        },
+      ] as any,
+    };
+
+    const transformed = transformProps({
+      ...pivotChartProps,
+      hooks: {
+        onReorderMetrics: jest.fn(),
+      },
+    } as any);
+
+    const html = renderToStaticMarkup(React.createElement(HierarchicalTable, transformed));
+
+    // Group headers (ricoveri, costo) have draggable attributes
+    expect(html).toContain('metric-group-header');
+    expect(html).toContain('⠿');
+
+    // Sub-columns for 2022, 2023 must NOT have draggable class or drag handle icon
+    const subHeaderRow = html.split('pivot-sub-header-row')[1];
+    expect(subHeaderRow).toBeDefined();
+    expect(subHeaderRow).not.toContain('draggable-metric-th');
+  });
+
+  it('filters out synthetic variance deltas from reorder operations', () => {
+    const varianceProps: HierarchicalTableChartProps = {
+      ...baseChartProps,
+      formData: {
+        ...baseChartProps.formData,
+        showVarianceDelta: true,
+        show_variance_delta: true,
+      } as any,
+    };
+
+    const transformed = transformProps({
+      ...varianceProps,
+      hooks: {
+        onReorderMetrics: jest.fn(),
+      },
+    } as any);
+
+    expect(transformed.metrics).toContain('ricoveri___delta');
+    const html = renderToStaticMarkup(React.createElement(HierarchicalTable, transformed));
+    expect(html).toContain('draggable-metric-th');
   });
 });
 

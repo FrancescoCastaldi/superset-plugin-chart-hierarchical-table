@@ -89,15 +89,27 @@ export function getMetricKeyFromColumn(col: TableColumn, metrics: string[]): str
   if (metrics.includes(col.key)) {
     return col.key;
   }
+  if (col.dataIndex && metrics.includes(col.dataIndex)) {
+    return col.dataIndex;
+  }
   const prefix = col.key.split('___')[0];
   if (metrics.includes(prefix)) {
     return prefix;
   }
+  if (col.dataIndex) {
+    const dataIndexPrefix = col.dataIndex.split('___')[0];
+    if (metrics.includes(dataIndexPrefix)) {
+      return dataIndexPrefix;
+    }
+  }
   if (col.baseMetric) {
-    const found = metrics.find(
-      m => col.baseMetric === m || col.baseMetric?.startsWith(m) || col.baseMetric?.endsWith(m),
-    );
-    if (found) return found;
+    const sortedMetrics = [...metrics].sort((a, b) => b.length - a.length);
+    for (const m of sortedMetrics) {
+      const regex = new RegExp(`(^|[^a-zA-Z0-9_])${m}([^a-zA-Z0-9_]|$)`);
+      if (regex.test(col.baseMetric)) {
+        return m;
+      }
+    }
   }
   return null;
 }
