@@ -872,3 +872,43 @@ th.sortable-header:hover .sort-indicator-inactive::after {
   margin-left: 4px;
   font-size: 0.8em;
 }
+
+/* Drag and Drop Metric Column Headers */
+.hierarchical-table th.draggable-metric-th {
+  cursor: grab;
+  position: relative;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.hierarchical-table th.draggable-metric-th:active {
+  cursor: grabbing;
+}
+
+.hierarchical-table th.col-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.hierarchical-table th.col-drop-target-before {
+  box-shadow: inset 3px 0 0 #2563eb;
+  background-color: rgba(37, 99, 235, 0.08) !important;
+}
+
+.hierarchical-table th.col-drop-target-after {
+  box-shadow: inset -3px 0 0 #2563eb;
+  background-color: rgba(37, 99, 235, 0.08) !important;
+}
+
+.hierarchical-table th .drag-handle-icon {
+  margin-right: 4px;
+  color: #9ca3af;
+  font-size: 11px;
+  cursor: grab;
+  user-select: none;
+  opacity: 0.6;
+}
+
+.hierarchical-table th.draggable-metric-th:hover .drag-handle-icon {
+  opacity: 1;
+  color: #4b5563;
+}
