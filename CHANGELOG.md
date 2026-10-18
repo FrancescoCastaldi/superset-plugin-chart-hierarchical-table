@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4] - 2026-10-18
+### Added
+- **Responsive Viewport-Constrained Sizing**: Bound chart dimensions directly to the live viewport container in Dev Studio via `ResizeObserver`, ensuring `transformProps` receives exact pixel width and height without manual window resize events.
+- **High-Contrast Bidirectional Scrollbars**: Enhanced native scrollbars in `src/components/HierarchicalTable.css` with 10px width and height, `#94a3b8` thumb with 2px `#f1f5f9` border padding, `#64748b` hover state, and Firefox `scrollbar-color: #94a3b8 #f1f5f9` for instant visual discovery across light and dark themes.
+
+### Fixed
+- **Dev Studio Scrollbar Clipping and Double Scrolling**: Removed unconstrained `overflow: auto` and hardcoded 1200x700px dimensions from `.chart-wrapper` and `.chart-canvas` in `studio.css`, locking scrolling exclusively to the authoritative `.table-scroll-wrapper` container. Both horizontal and vertical scrollbars now stay permanently visible and pinned within the visible viewport above the diagnostics drawer.
+
 ## [0.8.3] - 2026-10-18
 ### Added
 - **Natural Time Grain Auto-Detection (`detectNaturalGrain`)**: Pure deterministic utility in `src/utils/timeComparison.ts` that automatically infers the natural temporal granularity (`year`, `quarter`, `month`, `week`, `day`) from active pivot period keys.

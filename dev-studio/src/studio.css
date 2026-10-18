@@ -252,22 +252,28 @@ body {
 
 .chart-wrapper {
   flex: 1;
-  overflow: auto;
-  padding: 16px;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 12px;
   display: flex;
   flex-direction: column;
 }
 
 .chart-canvas {
   flex: 1;
+  min-height: 0;
+  min-width: 0;
   background: #ffffff;
   color: #212529;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 8px;
-  overflow: auto;
-  min-height: 400px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
 /* Diagnostics & Event Drawer */

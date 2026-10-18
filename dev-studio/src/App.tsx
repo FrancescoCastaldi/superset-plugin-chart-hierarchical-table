@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import transformProps from '../../src/plugin/transformProps';
 import HierarchicalTable from '../../src/components/HierarchicalTable';
 import '../../src/components/HierarchicalTable.css';
@@ -139,13 +139,35 @@ export default function App() {
     return Object.keys(scenario.data[0]).filter((k) => typeof scenario.data[0][k] === 'number');
   }, [scenario.data]);
 
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [canvasDimensions, setCanvasDimensions] = useState<{ width: number; height: number }>({
+    width: 1200,
+    height: 600,
+  });
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const updateSize = () => {
+      if (canvasRef.current) {
+        const { clientWidth, clientHeight } = canvasRef.current;
+        if (clientWidth > 0 && clientHeight > 0) {
+          setCanvasDimensions({ width: clientWidth, height: clientHeight });
+        }
+      }
+    };
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(canvasRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // Run transformProps pipeline with timing
   const { transformedProps, execTimeMs, error } = useMemo(() => {
     const t0 = performance.now();
     try {
       const props = transformProps({
-        width: 1200,
-        height: 700,
+        width: canvasDimensions.width,
+        height: canvasDimensions.height,
         formData,
         rawFormData: formData,
         queriesData: [{ data: scenario.data }],
@@ -233,8 +255,12 @@ export default function App() {
                 <p style={{ marginTop: '8px' }}>{error}</p>
               </div>
             ) : transformedProps ? (
-              <div className="chart-canvas">
-                <HierarchicalTable {...transformedProps} />
+              <div ref={canvasRef} className="chart-canvas">
+                <HierarchicalTable
+                  {...transformedProps}
+                  width={canvasDimensions.width}
+                  height={canvasDimensions.height}
+                />
               </div>
             ) : (
               <div>Caricamento tabella...</div>

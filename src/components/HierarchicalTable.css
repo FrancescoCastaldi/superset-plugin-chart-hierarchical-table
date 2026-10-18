@@ -106,28 +106,29 @@
   max-height: 100%;
   max-width: 100%;
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: #94a3b8 #f1f5f9;
   -webkit-overflow-scrolling: touch;
 }
 
 /* Chrome, Edge, Safari Webkit scrollbar */
 .table-scroll-wrapper::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 .table-scroll-wrapper::-webkit-scrollbar-track {
   background: #f1f5f9;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .table-scroll-wrapper::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #94a3b8;
+  border-radius: 6px;
+  border: 2px solid #f1f5f9;
 }
 
 .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #64748b;
 }
 
 .table-scroll-wrapper::-webkit-scrollbar-corner {
