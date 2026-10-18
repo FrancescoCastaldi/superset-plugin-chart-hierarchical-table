@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Pure Reordering Helpers (`src/utils/metricReorder.ts`)**: Added deterministic pure array and metric key reordering helpers (`reorderArray`, `reorderMetricsByKey`, `reorderMetricsWithPosition`, `getMetricKeyFromColumn`) with full unit test coverage.
 - **Dev Studio Live Hook Integration**: Wired `onReorderMetrics` into Dev Studio `App.tsx` and `DiagnosticsDrawer`, providing live event logging and instantaneous chart grid synchronization across all scenarios.
 
+### Fixed
+- **Base Metrics Isolation**: Table drop handler now filters against pure base metrics (`props.formData.metrics`), preventing synthetic delta metrics (such as `${metric}___delta`) and table calculations from contaminating `formData.metrics`.
+- **Metric Name Disambiguation in Column Resolution**: Hardened `getMetricKeyFromColumn` with word boundary matching and length-descending sorting, preventing collisions when a metric name is a substring or suffix of another metric.
+- **Separated Pivot Header Drag Guard**: Restricted draggable headers in separated pivot mode (`combineMetric: false`) to Level 1 metric groups, preventing Level 2 period values from becoming erroneously draggable.
+- **Drag Leave Bubbling and Position Loss**: Protected `onDragLeave` in both table headers and Control Panel chips against child element bubbling (`e.currentTarget.contains`), and added direct `clientX` drop position calculation fallback.
+- **Cross-Component Drag and Drop**: Enabled dropping table headers dragged from the grid directly onto Control Panel chips.
+
+
 ## [0.8.1] - 2026-10-18
 ### Added
 - **In-Cell Variance Badges (`showVarianceDelta`)**: Complete rendering pipeline for inline variation percentage badges (`.delta-badge`) displaying `▲ +X.X%` or `▼ -X.X%` directly beside numeric values across flat hierarchy tables, horizontal pivot matrices, and grand total rows.
