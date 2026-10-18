@@ -144,8 +144,14 @@ describe('time comparison by reference period and strategy', () => {
   it('parses the supported pivot key formats as UTC period starts', () => {
     expect(parsePeriodKey('2026')?.toISOString()).toBe('2026-01-01T00:00:00.000Z');
     expect(parsePeriodKey('2026-Q3')?.toISOString()).toBe('2026-07-01T00:00:00.000Z');
+    expect(parsePeriodKey('Q2')?.toISOString()).toBe('2026-04-01T00:00:00.000Z');
     expect(parsePeriodKey('2026-02')?.toISOString()).toBe('2026-02-01T00:00:00.000Z');
+    expect(parsePeriodKey('2026/03')?.toISOString()).toBe('2026-03-01T00:00:00.000Z');
+    expect(parsePeriodKey('04/2026')?.toISOString()).toBe('2026-04-01T00:00:00.000Z');
     expect(parsePeriodKey('2026-02-14T10:30:00')?.toISOString()).toBe('2026-02-14T00:00:00.000Z');
+    expect(parsePeriodKey('14/02/2026')?.toISOString()).toBe('2026-02-14T00:00:00.000Z');
+    expect(parsePeriodKey('Gennaio 2026')?.toISOString()).toBe('2026-01-01T00:00:00.000Z');
+    expect(parsePeriodKey('Mar 2026')?.toISOString()).toBe('2026-03-01T00:00:00.000Z');
     expect(parsePeriodKey(String(Date.UTC(2026, 4, 1)))?.toISOString()).toBe('2026-05-01T00:00:00.000Z');
     expect(parsePeriodKey('2026-13')).toBeNull();
     expect(parsePeriodKey('SSN')).toBeNull();

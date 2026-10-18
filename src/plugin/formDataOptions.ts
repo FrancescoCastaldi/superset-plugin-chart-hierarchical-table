@@ -11,14 +11,17 @@ import {
   MetricGoal,
   MinMaxDisplayMode,
   MinMaxScope,
+  HeatmapDivergingPalette,
   PivotRowTotalsPosition,
   PivotSortOrder,
   PivotTimeDeltaMode,
   SortOrder,
 } from '../types';
 import { normalizeConditionalFormatting } from '../utils/conditionalFormatting';
+import { normalizeDimensionLimits, DimensionLimitRule } from '../utils/dimensionLimits';
 import { normalizeGoals } from '../utils/goalBenchmark';
 import { normalizeMetricDefinitions } from '../utils/metricSemantics';
+import { normalizeTableCalculations, TableCalculationConfig } from '../utils/tableCalculations';
 import { DEFAULT_SUPPRESSION_LABEL, SuppressionOptions, parseSuppressionMetrics } from '../utils/suppression';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 
@@ -47,11 +50,15 @@ export interface TransformOptions {
   numberFormat: string;
   currencySymbol: string;
   isCrossFilterActive: boolean;
+  enableContextMenu: boolean;
   enableHierarchicalSort: boolean;
   defaultSortColumn: string;
   defaultSortOrder: SortOrder;
   minMaxDisplayMode: MinMaxDisplayMode;
   minMaxScope: MinMaxScope;
+  heatmapPalette?: HeatmapDivergingPalette;
+  divergingMidpoint?: number;
+  dataBarZeroAxis?: boolean;
   enableExport: boolean;
   showVarianceDelta: boolean;
   combineMetric: any;
@@ -67,6 +74,8 @@ export interface TransformOptions {
   comparisonStrategy: ComparisonStrategy;
   goals: MetricGoal[];
   metricDefinitions: MetricDefinition[];
+  tableCalculations: TableCalculationConfig[];
+  dimensionLimits: DimensionLimitRule[];
   suppression: SuppressionOptions;
   showSparklines: boolean;
   sparklineMetrics: string[];
@@ -131,16 +140,24 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     showGrandTotal = true,
     grandTotalPosition = 'top',
     grand_total_position,
-    stickyHeader = true,
-    enableSearch = true,
-    compactMode = false,
-    stripedRows = true,
-    numberFormat = 'SMART_NUMBER',
-    currencySymbol = '',
+    stickyHeader,
+    sticky_header,
+    enableSearch,
+    enable_search,
+    compactMode,
+    compact_mode,
+    stripedRows,
+    striped_rows,
+    numberFormat,
+    number_format,
+    currencySymbol,
+    currency_symbol,
     emit_filter,
     emitFilter,
     enableCrossFiltering,
     enable_cross_filtering,
+    enableContextMenu,
+    enable_context_menu,
     enableHierarchicalSort,
     enable_hierarchical_sort,
     enableSorting,
@@ -174,8 +191,19 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     pivot_time_delta_lag,
   } = mergedFormData;
 
-  const dimensions = getColumnNames(groupby || hierarchyDimensions || hierarchy_dimensions);
-  const pivotDimensions = getColumnNames(mergedFormData.columns || mergedFormData.pivot_columns);
+  const dimensions = getColumnNames(
+    groupby ||
+    hierarchyDimensions ||
+    hierarchy_dimensions ||
+    mergedFormData.tree_dimensions ||
+    mergedFormData.treeDimensions ||
+    mergedFormData.dimensions,
+  );
+  const pivotDimensions = getColumnNames(
+    mergedFormData.columns ||
+    mergedFormData.pivot_columns ||
+    mergedFormData.pivotColumns,
+  );
 
   return {
     hierarchyType,
@@ -186,19 +214,34 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     parentIdColumn: getColumnName(parentIdColumn),
     labelColumn: getColumnName(labelColumn),
     isPivotMode: hierarchyType === 'multi_dimension' && pivotDimensions.length > 0,
-    initialExpandDepth: expandAllByDefault || expand_all_by_default ? -1 : initialExpandDepth,
+    initialExpandDepth:
+      expandAllByDefault || expand_all_by_default
+        ? -1
+        : Number(initialExpandDepth ?? mergedFormData.initial_expand_depth ?? mergedFormData.expand_level ?? 1),
     valueDisplayMode: valueDisplayMode || value_display_mode || 'all',
-    showSubtotals: showSubtotals ?? showRollupTotals ?? show_rollup_totals ?? true,
-    showGrandTotal,
+    showSubtotals:
+      showSubtotals ??
+      showRollupTotals ??
+      show_rollup_totals ??
+      mergedFormData.subtotals_enabled ??
+      true,
+    showGrandTotal:
+      showGrandTotal ??
+      mergedFormData.show_grand_total ??
+      mergedFormData.grand_total_enabled ??
+      true,
     grandTotalPosition: grandTotalPosition || grand_total_position || 'top',
-    stickyHeader,
-    enableSearch,
-    compactMode,
-    stripedRows,
-    numberFormat,
-    currencySymbol,
+    stickyHeader: Boolean(stickyHeader ?? sticky_header ?? true),
+    enableSearch: Boolean(enableSearch ?? enable_search ?? true),
+    compactMode: Boolean(compactMode ?? compact_mode ?? false),
+    stripedRows: Boolean(stripedRows ?? striped_rows ?? true),
+    numberFormat: numberFormat || number_format || 'SMART_NUMBER',
+    currencySymbol: currencySymbol || currency_symbol || '',
     isCrossFilterActive: Boolean(
       emitFilter ?? emit_filter ?? enableCrossFiltering ?? enable_cross_filtering ?? true,
+    ),
+    enableContextMenu: Boolean(
+      enableContextMenu ?? enable_context_menu ?? true,
     ),
     enableHierarchicalSort:
       enableHierarchicalSort ?? enable_hierarchical_sort ?? enableSorting ?? enable_sorting ?? true,
@@ -206,6 +249,18 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     defaultSortOrder: defaultSortOrder || default_sort_order || 'none',
     minMaxDisplayMode: minMaxDisplayMode || min_max_display_mode || 'none',
     minMaxScope: minMaxScope || min_max_scope || 'leaves_only',
+    heatmapPalette: mergedFormData.heatmapPalette || mergedFormData.heatmap_palette || 'red_white_green',
+    divergingMidpoint:
+      mergedFormData.divergingMidpoint !== undefined &&
+      mergedFormData.divergingMidpoint !== '' &&
+      Number.isFinite(Number(mergedFormData.divergingMidpoint))
+        ? Number(mergedFormData.divergingMidpoint)
+        : mergedFormData.diverging_midpoint !== undefined &&
+          mergedFormData.diverging_midpoint !== '' &&
+          Number.isFinite(Number(mergedFormData.diverging_midpoint))
+        ? Number(mergedFormData.diverging_midpoint)
+        : undefined,
+    dataBarZeroAxis: Boolean(mergedFormData.dataBarZeroAxis ?? mergedFormData.data_bar_zero_axis),
     enableExport: enableExport ?? enable_export ?? true,
     showVarianceDelta,
     combineMetric: combineMetric ?? combine_metric ?? true,
@@ -236,12 +291,33 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
       mergedFormData.comparisonType,
     ),
     goals: normalizeGoals(mergedFormData.goals),
-    metricDefinitions: normalizeMetricDefinitions(mergedFormData.metricDefinitions),
+    metricDefinitions: normalizeMetricDefinitions(
+      mergedFormData.metricDefinitions ?? mergedFormData.metric_definitions,
+    ),
+    tableCalculations: normalizeTableCalculations(
+      mergedFormData.tableCalculations ?? mergedFormData.table_calculations,
+      normalizeMetricDefinitions(mergedFormData.metricDefinitions ?? mergedFormData.metric_definitions),
+    ),
+    dimensionLimits: normalizeDimensionLimits(
+      mergedFormData.dimensionLimits ?? mergedFormData.dimension_limits,
+    ),
     suppression: {
-      threshold: Math.max(0, Math.floor(Number(mergedFormData.suppressionThreshold) || 0)),
-      metrics: parseSuppressionMetrics(mergedFormData.suppressionMetrics),
-      label: String(mergedFormData.suppressionLabel ?? '').trim() || DEFAULT_SUPPRESSION_LABEL,
-      complementary: mergedFormData.complementarySuppression ?? true,
+      threshold: Math.max(
+        0,
+        Math.floor(
+          Number(mergedFormData.suppressionThreshold ?? mergedFormData.suppression_threshold) || 0,
+        ),
+      ),
+      metrics: parseSuppressionMetrics(
+        mergedFormData.suppressionMetrics ?? mergedFormData.suppression_metrics,
+      ),
+      label:
+        String(mergedFormData.suppressionLabel ?? mergedFormData.suppression_label ?? '').trim() ||
+        DEFAULT_SUPPRESSION_LABEL,
+      complementary:
+        mergedFormData.complementarySuppression ??
+        mergedFormData.complementary_suppression ??
+        true,
     },
     showSparklines: Boolean(mergedFormData.showSparklines),
     sparklineMetrics: parseSuppressionMetrics(mergedFormData.sparklineMetrics),
@@ -251,6 +327,13 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
       mergedFormData.aggregationMode === 'weighted_avg'
         ? String(mergedFormData.weightColumn ?? '').trim()
         : '',
-    theme: getTheme(mergedFormData.themeProfile, mergedFormData),
+    theme: getTheme(
+      mergedFormData.themeProfile ??
+        mergedFormData.theme_profile ??
+        mergedFormData.theme_palette ??
+        mergedFormData.themePalette ??
+        mergedFormData.theme,
+      mergedFormData,
+    ),
   };
 }

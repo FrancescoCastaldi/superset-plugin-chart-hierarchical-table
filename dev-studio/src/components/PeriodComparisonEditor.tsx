@@ -1,0 +1,429 @@
+import React, { useMemo } from 'react';
+import { parsePeriodKey } from '../../../src/utils/timeComparison';
+
+interface PeriodComparisonEditorProps {
+  formData: any;
+  availableDimensions: string[];
+  records: any[];
+  onChange: (key: string, value: any) => void;
+}
+
+export const PeriodComparisonEditor: React.FC<PeriodComparisonEditorProps> = ({
+  formData,
+  availableDimensions = [],
+  records = [],
+  onChange,
+}) => {
+  // Current form values with aliases
+  const pivotColumns: string[] = useMemo(() => {
+    const cols = formData.columns || formData.pivot_columns || formData.pivotColumns;
+    if (Array.isArray(cols)) return cols;
+    if (typeof cols === 'string' && cols.trim() !== '') return [cols];
+    return [];
+  }, [formData.columns, formData.pivot_columns, formData.pivotColumns]);
+
+  const strategy = formData.comparisonStrategy || formData.comparisonType || 'prev_period';
+  const referencePeriod = formData.comparisonReferencePeriod || formData.referencePeriod || 'current';
+  const timeGrain = formData.comparisonTimeGrain || formData.timeGrain || 'month';
+  const showVarianceDelta = Boolean(formData.showVarianceDelta);
+  const pivotTimeDeltaMode = formData.pivotTimeDeltaMode || formData.pivot_time_delta_mode || 'none';
+  const pivotTimeDeltaLag = Number(formData.pivotTimeDeltaLag || formData.pivot_time_delta_lag || 1);
+
+  // Active status: is the reference period delta column currently active?
+  const isPeriodComparisonActive =
+    pivotColumns.length === 1 &&
+    ((strategy === 'prev_period' && referencePeriod !== 'current') ||
+      strategy === 'prev_year_same_period' ||
+      strategy === 'budget_target');
+
+  // Detect candidate temporal / datetime columns from the database / dataset
+  const temporalCandidates = useMemo(() => {
+    const list: { col: string; reason: string; sample: string }[] = [];
+    const dateRegex = /date|data|time|timestamp|anno|year|mese|month|trimestre|quarter|periodo|giorno|day|__timestamp/i;
+
+    for (const dim of availableDimensions) {
+      // Check column name heuristic
+      const matchesName = dateRegex.test(dim);
+
+      // Check record sample values
+      let parsesDate = false;
+      let sampleVal = '';
+      for (const rec of records.slice(0, 10)) {
+        if (rec[dim] !== undefined && rec[dim] !== null) {
+          sampleVal = String(rec[dim]);
+          if (parsePeriodKey(sampleVal)) {
+            parsesDate = true;
+            break;
+          }
+        }
+      }
+
+      if (matchesName || parsesDate) {
+        list.push({
+          col: dim,
+          reason: parsesDate ? 'Valori data riconosciuti' : 'Nome colonna temporale',
+          sample: sampleVal || 'N/A',
+        });
+      }
+    }
+    return list;
+  }, [availableDimensions, records]);
+
+  // Inspect the active pivot column values
+  const activePivotInspection = useMemo(() => {
+    if (pivotColumns.length !== 1) return null;
+    const col = pivotColumns[0];
+    const sampleValues: string[] = [];
+    let validCount = 0;
+
+    for (const rec of records) {
+      const val = rec[col];
+      if (val !== undefined && val !== null) {
+        const strVal = String(val);
+        if (!sampleValues.includes(strVal) && sampleValues.length < 5) {
+          sampleValues.push(strVal);
+        }
+        if (parsePeriodKey(strVal)) {
+          validCount++;
+        }
+      }
+    }
+
+    const isValid = sampleValues.some((v) => Boolean(parsePeriodKey(v)));
+    return {
+      col,
+      sampleValues,
+      validCount,
+      isValid,
+    };
+  }, [pivotColumns, records]);
+
+  // Handler to set a temporal column as the pivot column
+  const handleSetPivotColumn = (colName: string) => {
+    onChange('columns', [colName]);
+    onChange('pivot_columns', [colName]);
+    onChange('pivotColumns', [colName]);
+
+    // If delta was disabled or on 'current', set to 'previous' so it works immediately
+    if (referencePeriod === 'current') {
+      onChange('comparisonReferencePeriod', 'previous');
+      onChange('referencePeriod', 'previous');
+      onChange('comparisonStrategy', 'prev_period');
+      onChange('comparisonType', 'prev_period');
+    }
+  };
+
+  // Handler to toggle reference period delta
+  const handleToggleDelta = (enabled: boolean) => {
+    if (enabled) {
+      onChange('comparisonStrategy', strategy === 'none' ? 'prev_period' : strategy);
+      onChange('comparisonType', strategy === 'none' ? 'prev_period' : strategy);
+      onChange('comparisonReferencePeriod', 'previous');
+      onChange('referencePeriod', 'previous');
+    } else {
+      onChange('comparisonReferencePeriod', 'current');
+      onChange('referencePeriod', 'current');
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* 1. Diagnostic Banner / Requirements Checker */}
+      {pivotColumns.length === 0 ? (
+        <div
+          style={{
+            background: 'rgba(234, 179, 8, 0.1)',
+            border: '1px solid rgba(234, 179, 8, 0.3)',
+            borderRadius: '6px',
+            padding: '10px 12px',
+            fontSize: '12px',
+            color: '#cbd5e1',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#facc15', fontWeight: 600, marginBottom: '4px' }}>
+            <span>⚠️</span>
+            <span>Requisito Mancante: Colonna Pivot Temporale</span>
+          </div>
+          <p style={{ margin: '0 0 8px 0', lineHeight: '1.4' }}>
+            Il confronto temporale opera lungo l&apos;asse orizzontale dei periodi. Attualmente la tabella è in modalità <strong>Flat</strong> (nessuna colonna pivot).
+          </p>
+
+          {temporalCandidates.length > 0 ? (
+            <div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>
+                💡 <strong>Colonne temporali / datetime rilevate nel database:</strong>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {temporalCandidates.map((c) => (
+                  <button
+                    key={c.col}
+                    type="button"
+                    onClick={() => handleSetPivotColumn(c.col)}
+                    style={{
+                      background: '#1e293b',
+                      border: '1px solid #38bdf8',
+                      color: '#38bdf8',
+                      borderRadius: '4px',
+                      padding: '4px 8px',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title={`Imposta ${c.col} come colonna pivot (${c.reason})`}
+                  >
+                    <span>📅 Imposta <strong>{c.col}</strong> come Pivot</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+              Seleziona una colonna con date o periodi (es. <code>anno</code>, <code>mese</code>, <code>data</code> o <code>__timestamp</code>) nella sezione <strong>1. Data -&gt; Columns (Pivot)</strong>.
+            </div>
+          )}
+        </div>
+      ) : pivotColumns.length > 1 ? (
+        <div
+          style={{
+            background: 'rgba(59, 130, 246, 0.1)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '6px',
+            padding: '10px 12px',
+            fontSize: '12px',
+            color: '#cbd5e1',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#60a5fa', fontWeight: 600, marginBottom: '4px' }}>
+            <span>ℹ️</span>
+            <span>Multi-Pivot Attivo ({pivotColumns.join(' × ')})</span>
+          </div>
+          <p style={{ margin: 0, lineHeight: '1.4' }}>
+            Hai selezionato più dimensioni pivot. Il confronto temporale standard analizza 1 singola colonna temporale orizzontale. Per aggregazioni multi-pivot complesse, puoi utilizzare la sezione <strong>Table Calculations (% Totale, Running Total)</strong>.
+          </p>
+        </div>
+      ) : (
+        /* Exactly 1 pivot column */
+        <div
+          style={{
+            background: activePivotInspection?.isValid ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            border: `1px solid ${activePivotInspection?.isValid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+            borderRadius: '6px',
+            padding: '8px 12px',
+            fontSize: '12px',
+            color: '#cbd5e1',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ fontWeight: 600, color: activePivotInspection?.isValid ? '#34d399' : '#f87171' }}>
+              {activePivotInspection?.isValid ? '✅ Colonna Pivot Temporale Convalidata' : '⚠️ Formato Date Non Riconosciuto'}
+            </span>
+            <code style={{ background: '#0f172a', padding: '1px 5px', borderRadius: '3px', color: '#38bdf8' }}>
+              {pivotColumns[0]}
+            </code>
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+            Valori campione rilevati: {activePivotInspection?.sampleValues.map((v) => `'${v}'`).join(', ') || 'Nessun valore'}
+          </div>
+          {!activePivotInspection?.isValid && (
+            <div style={{ fontSize: '11px', color: '#fca5a5', marginTop: '4px' }}>
+              I valori non sono date riconosciute (formati supportati: <code>YYYY</code>, <code>YYYY-MM</code>, <code>YYYY-MM-DD</code>, <code>Q1-Q4</code>, <code>Gennaio..Dicembre</code>, timestamp ISO).
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 2. Master Toggle for Period Comparison */}
+      <div
+        style={{
+          background: '#0f172a',
+          border: '1px solid #334155',
+          borderRadius: '6px',
+          padding: '10px 12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '12px', color: '#f8fafc' }}>
+              Colonna Delta Periodo (Δ vs Riferimento)
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>
+              Aggiunge a fine tabella la colonna con scostamento assoluto (Δ) e percentuale (Δ%)
+            </div>
+          </div>
+          <label className="control-toggle" style={{ margin: 0 }}>
+            <input
+              type="checkbox"
+              checked={isPeriodComparisonActive}
+              disabled={pivotColumns.length !== 1}
+              onChange={(e) => handleToggleDelta(e.target.checked)}
+            />
+            <span />
+          </label>
+        </div>
+
+        {/* Detailed Controls when active */}
+        {isPeriodComparisonActive && (
+          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '10px', borderTop: '1px solid #1e293b' }}>
+            {/* Strategy */}
+            <div>
+              <label className="control-label">Strategia di Confronto (Comparison Baseline)</label>
+              <select
+                className="control-select"
+                value={strategy}
+                onChange={(e) => {
+                  onChange('comparisonStrategy', e.target.value);
+                  onChange('comparisonType', e.target.value);
+                }}
+              >
+                <option value="prev_period">Periodo Precedente (DoD / WoW / MoM / QoQ / YoY)</option>
+                <option value="prev_year_same_period">Stesso Periodo Anno Scorso (YoY - 12 mesi fa)</option>
+                <option value="budget_target">Target / Budget Pianificato (da Metric Goals)</option>
+              </select>
+            </div>
+
+            {/* Reference Period (shown when prev_period) */}
+            {strategy === 'prev_period' && (
+              <div>
+                <label className="control-label">Periodo di Riferimento (Reference Baseline)</label>
+                <select
+                  className="control-select"
+                  value={referencePeriod}
+                  onChange={(e) => {
+                    onChange('comparisonReferencePeriod', e.target.value);
+                    onChange('referencePeriod', e.target.value);
+                  }}
+                >
+                  <option value="previous">Ultimo periodo completato vs precedente (Δ vs previous period)</option>
+                  <option value="ytd">Media progressiva Year-to-Date (Δ vs YTD average)</option>
+                  <option value="current">Periodo corrente vs se stesso (Delta zero)</option>
+                </select>
+              </div>
+            )}
+
+            {/* Time Grain */}
+            <div>
+              <label className="control-label">Granularità Temporale (Time Grain)</label>
+              <select
+                className="control-select"
+                value={timeGrain}
+                onChange={(e) => {
+                  onChange('comparisonTimeGrain', e.target.value);
+                  onChange('timeGrain', e.target.value);
+                }}
+              >
+                <option value="day">📅 Giorno (DoD - Day-over-Day)</option>
+                <option value="week">📆 Settimana (WoW - Week-over-Week)</option>
+                <option value="month">🗓️ Mese (MoM - Month-over-Month)</option>
+                <option value="quarter">📊 Trimestre (QoQ - Quarter-over-Quarter)</option>
+                <option value="year">📈 Anno (YoY - Year-over-Year)</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 3. In-Grid Pivot Column Deltas (pivotTimeDeltaMode) */}
+      <div
+        style={{
+          background: '#0f172a',
+          border: '1px solid #334155',
+          borderRadius: '6px',
+          padding: '10px 12px',
+        }}
+      >
+        <div style={{ fontWeight: 600, fontSize: '12px', color: '#f8fafc', marginBottom: '4px' }}>
+          Delta Nativi Colonne Pivot (Variazione su ciascun periodo)
+        </div>
+        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>
+          Calcola automaticamente il delta temporale colonna-per-colonna lungo i periodi pivot
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <div>
+            <label className="control-label" style={{ fontSize: '10px' }}>Tipo di Delta</label>
+            <select
+              className="control-select"
+              value={pivotTimeDeltaMode}
+              onChange={(e) => {
+                onChange('pivotTimeDeltaMode', e.target.value);
+                onChange('pivot_time_delta_mode', e.target.value);
+              }}
+            >
+              <option value="none">Nessuno (Solo valori)</option>
+              <option value="absolute">Delta Assoluto (Δ)</option>
+              <option value="percentage">Delta Percentuale (Δ%)</option>
+              <option value="both">Entrambi (Δ e Δ%)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="control-label" style={{ fontSize: '10px' }}>Passo Temporale (Lag)</label>
+            <select
+              className="control-select"
+              value={pivotTimeDeltaLag}
+              disabled={pivotTimeDeltaMode === 'none'}
+              onChange={(e) => {
+                onChange('pivotTimeDeltaLag', Number(e.target.value));
+                onChange('pivot_time_delta_lag', Number(e.target.value));
+              }}
+            >
+              <option value={1}>1 Periodo (MoM / QoQ)</option>
+              <option value={2}>2 Periodi</option>
+              <option value={3}>3 Periodi</option>
+              <option value={12}>12 Periodi (Stesso mese anno prec.)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Variance Badges Toggle */}
+      <label className="control-toggle" style={{ margin: '4px 0' }}>
+        <input
+          type="checkbox"
+          checked={showVarianceDelta}
+          onChange={(e) => onChange('showVarianceDelta', e.target.checked)}
+        />
+        <span>Mostra Badge Variazione (Δ%) sulle celle numeriche</span>
+      </label>
+
+      {/* 5. Live Explanation / Result Preview */}
+      <div
+        style={{
+          background: '#1e293b',
+          border: '1px solid #334155',
+          borderRadius: '6px',
+          padding: '8px 12px',
+          fontSize: '11px',
+          lineHeight: '1.4',
+          color: '#94a3b8',
+        }}
+      >
+        <strong style={{ color: '#f1f5f9' }}>🎯 Risultato calcolato in tabella:</strong>
+        {isPeriodComparisonActive ? (
+          <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
+            <li>
+              Viene generata a fine griglia la colonna: <strong style={{ color: '#38bdf8' }}>{referencePeriod === 'ytd' ? 'Δ vs YTD average' : 'Δ vs previous period'}</strong> con valori assoluti e scostamento percentuale.
+            </li>
+            {showVarianceDelta && (
+              <li>
+                Sulle celle metriche compariranno i badge colorati di variazione percentuale rispetto alla baseline.
+              </li>
+            )}
+            {pivotTimeDeltaMode !== 'none' && (
+              <li>
+                Ciascun periodo orizzontale includerà le colonne di variazione diretta ({pivotTimeDeltaMode === 'both' ? 'Δ e Δ%' : pivotTimeDeltaMode}) con passo lag di {pivotTimeDeltaLag} periodo/i.
+              </li>
+            )}
+          </ul>
+        ) : (
+          <div style={{ marginTop: '2px', color: '#64748b' }}>
+            Nessuna colonna di confronto temporale finale attiva. Attiva il toggle sopra o seleziona una colonna pivot per visualizzare gli scostamenti.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

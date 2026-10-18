@@ -126,6 +126,7 @@ describe('controlPanel layout', () => {
       'Time Comparison & Period-over-Period Variance',
       'Goals (optional)',
       'Metric Semantics (optional)',
+      'Table Calculations (optional)',
       'Privacy (small numbers)',
       'Trend (Sparklines)',
       'Advanced Rollup Calculations',
@@ -160,8 +161,10 @@ describe('controlPanel layout', () => {
         'comparisonType',
         'goals',
         'metricDefinitions',
+        'tableCalculations',
         'aggregationMode',
         'emit_filter',
+        'enableContextMenu',
       ]),
     );
 

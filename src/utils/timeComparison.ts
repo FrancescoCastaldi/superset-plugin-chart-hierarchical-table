@@ -33,24 +33,87 @@ function utcDate(year: number, month: number, day: number): Date | null {
   return date.getUTCMonth() === month && date.getUTCDate() === day ? date : null;
 }
 
+const MONTH_NAMES_MAP: Record<string, number> = {
+  gennaio: 0, gen: 0, january: 0, jan: 0,
+  febbraio: 1, feb: 1, february: 1,
+  marzo: 2, mar: 2, march: 2,
+  aprile: 3, apr: 3, april: 3,
+  maggio: 4, mag: 4, may: 4,
+  giugno: 5, giu: 5, june: 5, jun: 5,
+  luglio: 6, lug: 6, july: 6, jul: 6,
+  agosto: 7, ago: 7, august: 7, aug: 7,
+  settembre: 8, set: 8, september: 8, sep: 8,
+  ottobre: 9, ott: 9, october: 9, oct: 9,
+  novembre: 10, nov: 10, november: 10,
+  dicembre: 11, dic: 11, december: 11, dec: 11,
+};
+
 /**
  * UTC start of the period named by a pivot key: `YYYY`, `YYYY-Qn`, `YYYY-MM`,
- * `YYYY-MM-DD` (any time part is dropped) or epoch milliseconds. Other keys are not periods.
+ * `YYYY-MM-DD` (any time part is dropped), slashes, Italian/English month names,
+ * quarter only (Q1-Q4), or epoch timestamps. Other keys are not periods.
  */
 export function parsePeriodKey(key: string): Date | null {
   const k = key.trim();
-  let m = /^(\d{4})$/.exec(k);
+  let m: RegExpExecArray | null = null;
+
+  // 1. Year only (YYYY)
+  m = /^(\d{4})$/.exec(k);
   if (m) return utcDate(+m[1], 0, 1);
+
+  // 2. Year and Quarter (YYYY-Qn, YYYY Qn)
   m = /^(\d{4})[-\s]?Q([1-4])$/i.exec(k);
   if (m) return utcDate(+m[1], (+m[2] - 1) * 3, 1);
-  m = /^(\d{4})-(\d{2})$/.exec(k);
+
+  // 3. Quarter only (Q1 - Q4, default to 2026 anchor year)
+  m = /^Q([1-4])$/i.exec(k);
+  if (m) return utcDate(2026, (+m[1] - 1) * 3, 1);
+
+  // 4. Year and Month with dash or slash (YYYY-MM or YYYY/MM)
+  m = /^(\d{4})[-/](\d{1,2})$/.exec(k);
   if (m) return +m[2] >= 1 && +m[2] <= 12 ? utcDate(+m[1], +m[2] - 1, 1) : null;
-  m = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/.exec(k);
+
+  // 5. Month and Year (MM/YYYY or MM-YYYY)
+  m = /^(\d{1,2})[-/](\d{4})$/.exec(k);
+  if (m) return +m[1] >= 1 && +m[1] <= 12 ? utcDate(+m[2], +m[1] - 1, 1) : null;
+
+  // 6. Year-Month-Day (YYYY-MM-DD or YYYY/MM/DD with optional time part)
+  m = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s].*)?$/.exec(k);
   if (m) return +m[2] >= 1 && +m[2] <= 12 ? utcDate(+m[1], +m[2] - 1, +m[3]) : null;
+
+  // 7. Day-Month-Year (DD/MM/YYYY or DD-MM-YYYY)
+  m = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[T\s].*)?$/.exec(k);
+  if (m) return +m[2] >= 1 && +m[2] <= 12 ? utcDate(+m[3], +m[2] - 1, +m[1]) : null;
+
+  // 8. Month name with year (e.g. Gennaio 2026, Gen 2026, Jan 2026)
+  m = /^([a-zA-Z]+)[\s\-_/]+(\d{4})$/.exec(k);
+  if (m) {
+    const monthIdx = MONTH_NAMES_MAP[m[1].toLowerCase()];
+    if (monthIdx !== undefined) return utcDate(+m[2], monthIdx, 1);
+  }
+  m = /^(\d{4})[\s\-_/]+([a-zA-Z]+)$/.exec(k);
+  if (m) {
+    const monthIdx = MONTH_NAMES_MAP[m[2].toLowerCase()];
+    if (monthIdx !== undefined) return utcDate(+m[1], monthIdx, 1);
+  }
+
+  // 9. Month name only (e.g. Gennaio, Feb, March, default to 2026 anchor year)
+  m = /^([a-zA-Z]+)$/.exec(k);
+  if (m) {
+    const monthIdx = MONTH_NAMES_MAP[m[1].toLowerCase()];
+    if (monthIdx !== undefined) return utcDate(2026, monthIdx, 1);
+  }
+
+  // 10. Epoch timestamps: milliseconds (11-13 digits) or seconds (10 digits)
   if (/^\d{11,13}$/.test(k)) {
     const d = new Date(Number(k));
     return utcDate(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
   }
+  if (/^\d{10}$/.test(k)) {
+    const d = new Date(Number(k) * 1000);
+    return utcDate(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  }
+
   return null;
 }
 

@@ -3,6 +3,7 @@ import {
   ChartDataResponse,
   QueryFormData,
   DataRecord,
+  ContextMenuFilters,
 } from '@superset-ui/core';
 import type { ResolvedTheme, ThemeProfileName } from '../utils/themes';
 
@@ -23,7 +24,34 @@ export type SortExpression =
 /** Placement of null, NaN and undefined sort values; unset behaves as 'bottom'. */
 export type NullHandling = 'bottom' | 'top' | 'exclude';
 
-export type MinMaxDisplayMode = 'none' | 'badges' | 'heatmap' | 'data_bars';
+export type MinMaxDisplayMode =
+  | 'none'
+  | 'badges'
+  | 'heatmap'
+  | 'diverging_heatmap'
+  | 'data_bars'
+  | 'bipolar_data_bars';
+
+export type HeatmapDivergingPalette =
+  | 'red_white_green'
+  | 'red_yellow_green'
+  | 'blue_white_red'
+  | 'custom';
+
+export interface DivergingColorOptions {
+  midpoint?: number;
+  palette?: HeatmapDivergingPalette;
+  positiveColor?: string;
+  negativeColor?: string;
+  neutralColor?: string;
+  polarity?: MetricPolarity;
+}
+
+export interface BipolarDataBarOptions {
+  positiveColor?: string;
+  negativeColor?: string;
+  polarity?: MetricPolarity;
+}
 
 export type MinMaxScope = 'leaves_only' | 'level_aware' | 'all_nodes';
 
@@ -108,6 +136,56 @@ export interface MetricDefinition {
   ci?: ConfidenceMethod;
   ciLevel?: number;
   compareTo?: SignalReference;
+  /** Table calculation modifier (e.g. pct_of_total, pct_of_parent, running_total, rank). */
+  calculation?: TableCalculationType;
+  calculationScope?: TableCalculationScope;
+  rankMethod?: RankMethod;
+  rankOrder?: 'desc' | 'asc';
+  calculationDisplayMode?: 'replace' | 'companion_column';
+}
+
+export type TableCalculationType =
+  | 'none'
+  | 'pct_of_total'
+  | 'pct_of_parent'
+  | 'running_total'
+  | 'diff_from_previous'
+  | 'diff_from_previous_pct'
+  | 'rank';
+
+export type TableCalculationScope = 'hierarchy' | 'periods';
+
+export type RankMethod = 'competition' | 'dense';
+
+export interface TableCalculationConfig {
+  metric: string;
+  type: TableCalculationType;
+  /** Direction: across sibling nodes in hierarchy or across pivot periods. Default: 'hierarchy' */
+  scope?: TableCalculationScope;
+  /** Rank method when type is 'rank'. Default: 'competition' */
+  rankMethod?: RankMethod;
+  /** Sort order for rank: 'desc' (highest value is rank 1, default) or 'asc' */
+  rankOrder?: 'desc' | 'asc';
+  /** 'replace' replaces metric value, 'companion_column' adds a new column next to metric. Default: 'companion_column' */
+  displayMode?: 'replace' | 'companion_column';
+  /** Optional custom title for the calculation column */
+  customTitle?: string;
+}
+
+export type DimensionLimitMode = 'top' | 'bottom';
+
+export interface DimensionLimitRule {
+  /** Target depth level (0 = root level, 1 = first child level, etc.) or dimension name. */
+  level?: number;
+  dimension?: string;
+  /** Maximum number of elements to show before collapsing remainder into Others. 0 or undefined means no limit. */
+  limit: number;
+  /** Metric key to sort by when determining Top N. If unspecified, defaults to the first metric. */
+  metric?: string;
+  /** Direction: 'top' (highest values first, default) or 'bottom' (lowest values first). */
+  mode?: DimensionLimitMode;
+  /** Label for the synthetic node. Defaults to 'Altri ({k})' where {k} is the collapsed count. */
+  othersLabel?: string;
 }
 
 export interface HierarchicalTableFormData extends QueryFormData {
@@ -192,6 +270,20 @@ export interface HierarchicalTableFormData extends QueryFormData {
   // Cross Filtering (Superset 6.1.0)
   emit_filter?: boolean;
   enableCrossFiltering?: boolean;
+
+  // Context Menu & Drill
+  enableContextMenu?: boolean;
+
+  // Table Calculations & Measure Modifiers (F2)
+  tableCalculations?: TableCalculationConfig[];
+
+  // Dimension Limits & Top N (F3)
+  dimensionLimits?: DimensionLimitRule[] | string;
+
+  // Diverging Heatmap & Bipolar Data Bars (F4)
+  divergingMidpoint?: number | string;
+  heatmapPalette?: HeatmapDivergingPalette;
+  dataBarZeroAxis?: boolean;
 }
 
 export type MetricGoal = NonNullable<HierarchicalTableFormData['goals']>[number];
@@ -223,6 +315,8 @@ export interface TreeNode {
   dimension?: string;
   depth: number;
   path: string[];
+  /** Original database values along the dimension path, present only when they differ from the displayed string path. */
+  rawPath?: (string | number | boolean | null)[];
   isLeaf: boolean;
   children?: TreeNode[];
   metrics: Record<string, number | string | null>;
@@ -232,6 +326,10 @@ export interface TreeNode {
   intervals?: Record<string, CellInterval>;
   /** Label shown in place of the hidden value of a small-number-suppressed cell, by metric key. */
   suppressed?: Record<string, string>;
+  /** True if this node is a synthetic aggregated 'Others' row grouping excluded items beyond dimension limits. */
+  isOthers?: boolean;
+  /** Count of original items collapsed into this synthetic 'Others' row. */
+  othersCount?: number;
 }
 
 export interface TableColumn {
@@ -249,6 +347,8 @@ export interface TableColumn {
   polarity?: MetricPolarity;
   /** Trend column: the cell draws the series of `metric` over `periods` instead of a value. */
   sparkline?: { metric: string; periods: string[] };
+  /** Type of table calculation if this column represents a measure modifier. */
+  calculationType?: TableCalculationType;
 }
 
 export interface PivotHeaderGroup {
@@ -292,10 +392,14 @@ export interface HierarchicalTableTransformedProps {
   defaultSortOrder?: SortOrder;
   minMaxDisplayMode?: MinMaxDisplayMode;
   minMaxScope?: MinMaxScope;
+  heatmapPalette?: HeatmapDivergingPalette;
+  divergingMidpoint?: number;
+  dataBarZeroAxis?: boolean;
   enableExport?: boolean;
   compactMode: boolean;
   stripedRows: boolean;
   emitFilter: boolean;
+  enableContextMenu?: boolean;
   goals?: MetricGoal[];
   conditionalFormatting?: ConditionalFormattingRule[];
   theme?: ResolvedTheme;
@@ -304,6 +408,7 @@ export interface HierarchicalTableTransformedProps {
     selectedValues?: string[];
     filters?: any[];
   };
+  onContextMenu?: (clientX: number, clientY: number, filters?: ContextMenuFilters) => void;
   onCrossFilter?: (
     dimension: string,
     value: string | string[],
@@ -328,6 +433,6 @@ export type HierarchicalTableChartProps = ChartProps & {
   hooks?: {
     setDataMask?: (dataMask: any) => void;
     onAddFilter?: (filter: any) => void;
-    onContextMenu?: (event: any) => void;
+    onContextMenu?: (clientX: number, clientY: number, filters?: ContextMenuFilters) => void;
   };
 };

@@ -17,6 +17,7 @@ import {
   findMetricDefinition,
   formatByDefinition,
 } from '../utils/metricSemantics';
+import { applyTableCalculations } from '../utils/tableCalculations';
 
 /**
  * Column with the number format and the polarity of its metric definition. Delta columns keep
@@ -45,7 +46,7 @@ export default function transformProps(
   chartProps: HierarchicalTableChartProps,
 ): HierarchicalTableTransformedProps {
   const { width, height, formData = {} as any, rawFormData = {} as any, queriesData, hooks, filterState } = chartProps as any;
-  const { onAddFilter, setDataMask } = hooks || {};
+  const { onAddFilter, setDataMask, onContextMenu } = hooks || {};
 
   const options = resolveTransformOptions({ ...rawFormData, ...formData });
   const dataRecords: DataRecord[] = queriesData?.[0]?.data || [];
@@ -76,6 +77,7 @@ export default function transformProps(
   });
   // Again with the grand total and the row totals, which only exist after the layout.
   applyMetricDefinitions(treeData, grandTotalNode, options.metricDefinitions, options.dimensions);
+  applyTableCalculations(treeData, grandTotalNode, options.tableCalculations);
   applyConfidenceIntervals(treeData, grandTotalNode, options.metricDefinitions, options.goals);
   // Last, so that nothing downstream (sorting, colours, export) ever sees a hidden value.
   applySuppression(treeData, options.suppression, options.metricDefinitions);
@@ -114,10 +116,19 @@ export default function transformProps(
     defaultSortOrder: options.defaultSortOrder,
     minMaxDisplayMode: options.minMaxDisplayMode,
     minMaxScope: options.minMaxScope,
+    ...(options.heatmapPalette && options.heatmapPalette !== 'red_white_green'
+      ? { heatmapPalette: options.heatmapPalette }
+      : {}),
+    ...(options.divergingMidpoint !== undefined
+      ? { divergingMidpoint: options.divergingMidpoint }
+      : {}),
+    ...(options.dataBarZeroAxis ? { dataBarZeroAxis: options.dataBarZeroAxis } : {}),
     enableExport: options.enableExport,
     compactMode: options.compactMode,
     stripedRows: options.stripedRows,
     emitFilter: options.isCrossFilterActive,
+    enableContextMenu: options.enableContextMenu,
+    onContextMenu,
     // Omitted when unset so charts without goals keep their previous props shape.
     ...(options.goals.length > 0 ? { goals: options.goals } : {}),
     ...(options.conditionalFormatting.length > 0

@@ -6,6 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **Visual Showcase & Headless Asset Capture**: High-resolution scenario screenshots (Healthcare, Sales Multi-Pivot, 5k-Row Virtualization Stress Test, Superset REST API Modal) and animated GIF demo (`docs/images/dev_studio_demo.gif`) embedded into repository documentation and README.md with zero AI punctuation.
+- **Live Dev Studio (Superset Explore Workbench)**: Interactive development and testing environment located in `dev-studio/` powered by Vite and React 18 with sub-50ms Hot Module Reloading (HMR).
+- **Superset Explore Control Panel Replica**: 5 collapsible accordion sections (Data, Customize, Comparison & Analysis, Table Calculations & Cell Visuals, Performance & Limits) reflecting all Superset configuration controls with two-way state binding.
+- **Diagnostics & Event Drawer**: Real-time monitor logging Superset `setDataMask` cross-filter payloads, Context Menu drill actions, and pipeline execution time in milliseconds.
+- **Benchmark Scenarios**: Included out-of-the-box datasets for Healthcare and Sanita (with deltas and privacy suppression <5), Sales Multi-Pivot (with table calculations and bipolar bars), and High-Volume Stress Test (5,000-row tree).
+- **Launcher Scripts**: Root `npm run dev`, `npm run dev:build`, and double-clickable `dev.bat` for Windows environments.
+- **Superset REST API Integration (`POST /api/v1/chart/`)**: Support for programmatic chart creation conforming to official Superset `ChartPostSchema`. Includes CLI script `scripts/create_chart_api.py`, interactive modal dialog in Dev Studio with JSON payload export, copyable cURL, Python and PowerShell templates, and live in-browser REST client with automated JWT authentication and CSRF token management.
+- **Interactive Metric Definitions Manager (`MetricDefinitionsEditor`)**: Replaced raw JSON textarea with an interactive visual builder in the Explore Control Panel. Automatically detects active chart metrics and provides visual cards to configure rollup semantics (sum, weighted mean, distinct count, ratio, delta %), weighting metrics, entity dimensions, Wilson/Poisson confidence intervals, number formatting, decimals, and ethical polarity (`higher_is_better` vs `lower_is_better`), featuring two-way synchronization with raw JSON mode and 1-click auto-suggestions.
+- **Time Comparison & Database Datetime Manager (`PeriodComparisonEditor`)**: Interactive control in Explore Control Panel replacing confusing dropdowns with real-time requirements diagnostic. Automatically scans dataset for temporal/datetime columns (`date`, `data`, `time`, `timestamp`, `anno`, `mese`, `quarter`, `trimestre`, `__timestamp`), providing 1-click quick-set buttons to activate horizontal pivot mode, validation of period formats, selection of comparison baseline (`prev_period`, `prev_year_same_period`, `budget_target`), reference periods (`previous`, `ytd`), time grains (DoD, WoW, MoM, QoQ, YoY), in-grid pivot column deltas (`pivotTimeDeltaMode`), and live preview of generated columns.
+- **Extended Database Datetime Parser (`parsePeriodKey`)**: Enhanced temporal parsing in `src/utils/timeComparison.ts` supporting quarter keys (`Q1` to `Q4`), slash dates (`YYYY/MM`, `MM/YYYY`, `YYYY/MM/DD`, `DD/MM/YYYY`), Italian and English month names (`Gennaio..Dicembre`, `Jan..Dec`), single-digit months (`2026-1` to `2026-9`), and Unix epoch timestamps in seconds and milliseconds.
+
+## [0.8.0] - 2026-10-15
+### Added
+- **Diverging Heatmap with 3-Stop Continuous Gradient (`diverging_heatmap`)**: New visual rendering engine in `src/utils/advancedCellVisuals.ts` supporting continuous three-stop color scales (Min, Neutral Midpoint, Max) with automatic WCAG AA text contrast selection (`#ffffff` or `#212529`) based on calculated background relative luminance.
+- **Polarity-Aware Color Mapping**: Heatmap colors and data bars strictly respect metric polarity (`higher_is_better` vs `lower_is_better`). For metrics where lower values represent positive outcomes (for example hospital waiting times or post-op complications), negative variances receive the positive palette color and positive variances receive the alert color.
+- **Bipolar Zero-Centered In-Cell Data Bars (`bipolar_data_bars`)**: Bi-directional in-cell data bars anchored to a vertical zero axis line, extending positive values to the right in green and negative values to the left in red.
+- **Explore Formatting Controls**: `minMaxDisplayMode` now includes `diverging_heatmap` and `bipolar_data_bars`, accompanied by `heatmapPalette` (`red_white_green`, `red_yellow_green`, `blue_white_red` for colorblind accessibility, and custom theme colors) and `divergingMidpoint`.
+
+## [0.7.0] - 2026-10-15
+### Added
+- **Dimension Limits per Hierarchy Level (Top N and Bottom N with Synthetic Others Aggregation)**: New dimension limiting engine in `src/utils/dimensionLimits.ts` inspired by Qlik Sense dimension boundaries. Allows analysts to limit deep, high-cardinality trees (for example hospital diagnosis codes, clinical procedures, cost centers) to the most significant Top N or Bottom N contributors per level while aggregating remaining branches into an exact synthetic row.
+- **Mathematical Additive Invariant Preservation**: The synthetic "Others" node (`isOthers: true`, `othersCount: K`) computes the exact metric sum of all excluded siblings, ensuring parent subtotals and the overall Grand Total remain mathematically identical to the full dataset down to the penny.
+- **Configurable Labels and Placeholders**: Dimension limit rules support custom templated labels via `{k}` or `{count}` placeholders (defaulting to `Altri ({k})`).
+- **Context Menu Protection on Synthetic Rows**: Right-clicking on an "Others" row in the tree automatically excludes the synthetic label from the leaf dimension filter, filtering instead by valid ancestor dimensions to prevent empty SQL drill queries.
+- **Explore Control (`Dimension Limits & Top N (optional)`)**: JSON configuration control in `Performance & Limits` supporting level-specific or dimension-specific boundaries.
+
+## [0.6.0] - 2026-10-15
+### Added
+- **Measure Modifiers and Table Calculations (`tableCalculations`)**: New analytical engine in `src/utils/tableCalculations.ts` providing standard business intelligence table calculations and dynamic measure modifiers.
+- **Percent of Total (`pct_of_total`)**: Computes each node metric share relative to the overall Grand Total or scoped hierarchy total.
+- **Percent of Parent (`pct_of_parent`)**: Evaluates the percentage contribution of each branch relative to its parent row subtotals, guaranteeing exact additive balance across sibling groups.
+- **Running Total (`running_total`)**: Cumulative metric summation along ordered chronological pivot periods (`scope: "periods"`) or across hierarchical siblings (`scope: "siblings"`).
+- **Difference from Previous (`diff_from_previous` and `diff_from_previous_pct`)**: Period-over-period absolute and percentage variances calculated across chronological pivot intervals without altering raw query metrics.
+- **Sibling Ranking (`rank`)**: Computes competition (standard 1224) or dense (1223) rank order among sibling rows, sorted either descending or ascending.
+- **Companion Column and Replace Display Modes**: Table calculations can be appended as companion columns with customized titles and dedicated formatters, or directly replace the underlying metric cells.
+- **Explore Control (`Table Calculations (optional)`)**: Dedicated JSON control in `Comparison & Analysis` allowing analyst-driven configuration of calculations.
+
+## [0.5.0] - 2026-10-15
+### Added
+- **Native Apache Superset Context Menu (`Behavior.DrillBy` and `Behavior.DrillToDetail`)**: Support for Superset native right-click context menu on tree cells and rows. Generates binary filter clauses (`buildContextMenuFilters` in `src/plugin/contextMenu.ts`) for drill to detail, drill by, and cross-filtering.
+- **Hierarchical Path Preservation with `TreeNode.rawPath`**: Tree nodes record original database values along the dimension path (`TreeNode.rawPath`) to ensure accurate drill-down filters even when dimension values undergo string formatting or label transformations.
+- **Pivot Dimension Context Filtering**: Right-clicking on pivoted metric cells adds exact filter clauses for single or composite pivot dimensions (for example `mese` and `canale`), while excluding `ROW_TOTAL` and `SUBTOTAL` columns.
+- **Privacy-Preserving Drill Omission**: Cells suppressed by small-number privacy rules (`node.suppressed`) automatically omit drill to detail and drill by filters to prevent identification leaks.
+- **Grand Total Context Menu**: Right-clicking on grand total cells retains applicable pivot filters while correctly omitting hierarchy dimension constraints.
+- **Explore Control (`enableContextMenu`)**: Checkbox control in `Comparison & Analysis` allowing users to toggle contextual right-click menu actions dynamically.
 
 ## [0.4.1] - 2026-10-15
 ### Fixed

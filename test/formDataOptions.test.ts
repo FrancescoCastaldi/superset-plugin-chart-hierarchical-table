@@ -98,6 +98,9 @@ describe('formDataOptions', () => {
     expect(resolveTransformOptions({ emitFilter: false, emit_filter: true }).isCrossFilterActive).toBe(false);
     expect(resolveTransformOptions({ enable_cross_filtering: false }).isCrossFilterActive).toBe(false);
     expect(resolveTransformOptions({ enable_sorting: false }).enableHierarchicalSort).toBe(false);
+    expect(resolveTransformOptions({ enableContextMenu: false, enable_context_menu: true }).enableContextMenu).toBe(false);
+    expect(resolveTransformOptions({ enable_context_menu: false }).enableContextMenu).toBe(false);
+    expect(resolveTransformOptions({}).enableContextMenu).toBe(true);
   });
 
   it('lets camelCase destructuring defaults shadow the snake_case aliases', () => {

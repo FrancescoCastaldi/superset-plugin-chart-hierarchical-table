@@ -657,6 +657,19 @@
 
 .data-bar-value {
   position: relative;
+  z-index: 2;
+}
+
+.data-bar-fill.bipolar {
+  opacity: 0.38;
+}
+
+.data-bar-zero-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: #94a3b8;
   z-index: 1;
 }
 
