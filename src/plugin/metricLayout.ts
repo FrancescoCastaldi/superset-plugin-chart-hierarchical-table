@@ -95,12 +95,19 @@ export function buildMetricLayout(
   const pivotKeys = collectDistinctPivotKeys(records, pivotDimensions);
   const chronologicalPivotValues = chronologicalOrder(pivotKeys);
 
-  if (pivotTimeDeltaMode !== 'none') {
+  const effectivePivotDeltaMode =
+    pivotTimeDeltaMode !== 'none'
+      ? pivotTimeDeltaMode
+      : options.showVarianceDelta
+      ? 'percentage'
+      : 'none';
+
+  if (effectivePivotDeltaMode !== 'none') {
     computePivotTimeDelta(
       treeData,
       metrics,
       chronologicalPivotValues,
-      pivotTimeDeltaMode,
+      effectivePivotDeltaMode,
       options.pivotTimeDeltaLag,
     );
   }

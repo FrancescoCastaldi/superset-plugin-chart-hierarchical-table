@@ -21,6 +21,7 @@ export interface GrandTotalParams {
   timeDeltaStrategy?: TimeDeltaStrategyConfig | null;
   weightColumn?: string;
   aggregationMode?: AggregationFunction;
+  showVarianceDelta?: boolean;
 }
 
 /**
@@ -40,6 +41,7 @@ export function buildGrandTotalNode({
   timeDeltaStrategy,
   weightColumn = '',
   aggregationMode = 'sum',
+  showVarianceDelta = false,
 }: GrandTotalParams): TreeNode | undefined {
   if (!showGrandTotal || treeData.length === 0) {
     return undefined;
@@ -54,12 +56,19 @@ export function buildGrandTotalNode({
   const periodKeys = (): string[] =>
     chronologicalOrder(collectDistinctPivotKeys(records, pivotDimensions));
 
-  if (isPivotMode && pivotTimeDeltaMode !== 'none') {
+  const effectivePivotDeltaMode =
+    pivotTimeDeltaMode && pivotTimeDeltaMode !== 'none'
+      ? pivotTimeDeltaMode
+      : showVarianceDelta
+      ? 'percentage'
+      : 'none';
+
+  if (isPivotMode && effectivePivotDeltaMode !== 'none') {
     computePivotTimeDelta(
       [grandTotalNode],
       metrics,
       periodKeys(),
-      pivotTimeDeltaMode,
+      effectivePivotDeltaMode,
       pivotTimeDeltaLag,
     );
   }

@@ -292,11 +292,19 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     ),
     goals: normalizeGoals(mergedFormData.goals),
     metricDefinitions: normalizeMetricDefinitions(
-      mergedFormData.metricDefinitions ?? mergedFormData.metric_definitions,
+      mergedFormData.metricDefinitions ??
+        mergedFormData.metric_definitions ??
+        mergedFormData.metricDefinitionsJson ??
+        mergedFormData.metric_definitions_json,
     ),
     tableCalculations: normalizeTableCalculations(
       mergedFormData.tableCalculations ?? mergedFormData.table_calculations,
-      normalizeMetricDefinitions(mergedFormData.metricDefinitions ?? mergedFormData.metric_definitions),
+      normalizeMetricDefinitions(
+        mergedFormData.metricDefinitions ??
+          mergedFormData.metric_definitions ??
+          mergedFormData.metricDefinitionsJson ??
+          mergedFormData.metric_definitions_json,
+      ),
     ),
     dimensionLimits: normalizeDimensionLimits(
       mergedFormData.dimensionLimits ?? mergedFormData.dimension_limits,

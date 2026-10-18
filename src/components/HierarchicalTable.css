@@ -479,6 +479,39 @@
   color: #6b7280;
 }
 
+/* Inline variance percentage pill badge (showVarianceDelta) */
+.delta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: 4px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.delta-badge.delta-positive {
+  color: #15803d;
+  background-color: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+.delta-badge.delta-negative {
+  color: #b91c1c;
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+}
+
+.delta-badge.delta-neutral {
+  color: #4b5563;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
 /* Goal benchmark badge: deviation from the metric target, coloured by attainment status */
 .goal-badge {
   display: inline-block;

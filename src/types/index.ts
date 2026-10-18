@@ -400,6 +400,7 @@ export interface HierarchicalTableTransformedProps {
   stripedRows: boolean;
   emitFilter: boolean;
   enableContextMenu?: boolean;
+  showVarianceDelta?: boolean;
   goals?: MetricGoal[];
   conditionalFormatting?: ConditionalFormattingRule[];
   theme?: ResolvedTheme;

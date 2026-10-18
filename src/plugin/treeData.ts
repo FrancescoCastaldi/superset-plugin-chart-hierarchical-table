@@ -70,7 +70,12 @@ export function buildTreeData(
     treeData = applyDimensionLimits(treeData, options.dimensionLimits, metrics[0]);
   }
 
-  if (options.showVarianceDelta && hierarchyType === 'multi_dimension' && dimensions.length > 0) {
+  if (
+    options.showVarianceDelta &&
+    hierarchyType === 'multi_dimension' &&
+    dimensions.length > 0 &&
+    (!pivotDimensions || pivotDimensions.length === 0)
+  ) {
     metrics = applyVarianceDelta(treeData, metrics);
   }
 

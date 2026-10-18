@@ -122,6 +122,7 @@ interface HierarchicalTableRowProps {
   divergingMidpoint?: number;
   dataBarZeroAxis?: boolean;
   theme: ResolvedTheme;
+  showVarianceDelta?: boolean;
   onToggleExpand: (key: string) => void;
   onNodeClick: (node: TreeNode) => void;
   onContextMenu?: (e: React.MouseEvent, node: TreeNode, col?: TableColumn) => void;
@@ -142,6 +143,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
   divergingMidpoint,
   dataBarZeroAxis,
   theme,
+  showVarianceDelta,
   onToggleExpand,
   onNodeClick,
   onContextMenu,
@@ -294,17 +296,71 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
           String(val ?? '-')
         );
 
+        // Variance Delta Badge (showVarianceDelta)
+        let cellVarianceDelta: number | null = null;
+        if (showVarianceDelta && !isDelta && isNumeric) {
+          // 1. Pivot column: e.g. ${m}___${pVal} -> ${m}___delta_pct___${pVal}
+          const pivotDeltaPctKey = col.key.includes('___')
+            ? col.key.replace(/^(.+?)___(.+)$/, '$1___delta_pct___$2')
+            : null;
+          if (pivotDeltaPctKey) {
+            const rawDelta = node.metrics?.[pivotDeltaPctKey] ?? node.subtotals?.[pivotDeltaPctKey];
+            if (typeof rawDelta === 'number' && Number.isFinite(rawDelta)) {
+              cellVarianceDelta = rawDelta;
+            }
+          }
+
+          // 2. Reference period comparison delta: ${m}___period_delta_pct
+          if (cellVarianceDelta === null) {
+            const baseMetric = col.baseMetric ?? col.key.split('___')[0];
+            const refDeltaPctKey = `${baseMetric}___period_delta_pct`;
+            const rawRefDelta = node.metrics?.[refDeltaPctKey] ?? node.subtotals?.[refDeltaPctKey];
+            if (typeof rawRefDelta === 'number' && Number.isFinite(rawRefDelta)) {
+              cellVarianceDelta = rawRefDelta;
+            }
+          }
+
+          // 3. Tree comparison delta or companion metric delta_${m}_pct
+          if (cellVarianceDelta === null) {
+            const baseMetric = col.baseMetric ?? col.key.split('___')[0];
+            const companionKeys = [
+              `${baseMetric}___delta`,
+              `delta_${baseMetric}_pct`,
+              `${baseMetric}_delta_pct`,
+              `delta_${baseMetric}`,
+            ];
+            for (const cKey of companionKeys) {
+              const raw = node.metrics?.[cKey] ?? node.subtotals?.[cKey];
+              if (typeof raw === 'number' && Number.isFinite(raw)) {
+                cellVarianceDelta = raw;
+                break;
+              }
+            }
+          }
+        }
+
+        const varianceBadge =
+          cellVarianceDelta !== null ? (
+            <span
+              className={classNames('delta-badge', deltaClassName(cellVarianceDelta, col?.polarity))}
+              title={`Variazione: ${cellVarianceDelta > 0 ? '+' : ''}${cellVarianceDelta.toFixed(1)}%`}
+            >
+              {cellVarianceDelta > 0 ? '▲ +' : cellVarianceDelta < 0 ? '▼ ' : ''}
+              {Math.abs(cellVarianceDelta).toFixed(1)}%
+            </span>
+          ) : null;
+
         const interval = node.intervals?.[col.key];
         const suppressedLabel = node.suppressed?.[col.key];
-        const withGoal =
-          meta?.goal && isNumeric ? (
-            <>
-              {baseContent}
+        const withGoal = (
+          <>
+            {baseContent}
+            {varianceBadge}
+            {meta?.goal && isNumeric && (
               <GoalBadge value={numericVal} goal={meta.goal} formatter={meta.formatter} />
-            </>
-          ) : (
-            baseContent
-          );
+            )}
+          </>
+        );
         const cellContent =
           suppressedLabel !== undefined ? (
             <span className="suppressed-cell" title="Value hidden for privacy (small number)">
@@ -452,6 +508,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     stripedRows = true,
     emitFilter = true,
     enableContextMenu = true,
+    showVarianceDelta = false,
     goals = NO_GOALS,
     conditionalFormatting = NO_RULES,
     theme = DEFAULT_THEME,
@@ -833,6 +890,40 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         const isDelta = columnMetaMap.get(col.key)?.isDelta ?? false;
         const isNuovo = val === 'Nuovo';
 
+        let gtVarianceDelta: number | null = null;
+        if (showVarianceDelta && !isDelta && typeof val === 'number') {
+          const pivotDeltaPctKey = col.key.includes('___')
+            ? col.key.replace(/^(.+?)___(.+)$/, '$1___delta_pct___$2')
+            : null;
+          if (pivotDeltaPctKey) {
+            const rawDelta =
+              grandTotalNode.metrics?.[pivotDeltaPctKey] ?? grandTotalNode.subtotals?.[pivotDeltaPctKey];
+            if (typeof rawDelta === 'number' && Number.isFinite(rawDelta)) {
+              gtVarianceDelta = rawDelta;
+            }
+          }
+          if (gtVarianceDelta === null) {
+            const baseMetric = col.baseMetric ?? col.key.split('___')[0];
+            const refDeltaPctKey = `${baseMetric}___period_delta_pct`;
+            const rawRefDelta =
+              grandTotalNode.metrics?.[refDeltaPctKey] ?? grandTotalNode.subtotals?.[refDeltaPctKey];
+            if (typeof rawRefDelta === 'number' && Number.isFinite(rawRefDelta)) {
+              gtVarianceDelta = rawRefDelta;
+            }
+          }
+        }
+
+        const gtVarianceBadge =
+          gtVarianceDelta !== null ? (
+            <span
+              className={classNames('delta-badge', deltaClassName(gtVarianceDelta, col?.polarity))}
+              title={`Variazione Totale: ${gtVarianceDelta > 0 ? '+' : ''}${gtVarianceDelta.toFixed(1)}%`}
+            >
+              {gtVarianceDelta > 0 ? '▲ +' : gtVarianceDelta < 0 ? '▼ ' : ''}
+              {Math.abs(gtVarianceDelta).toFixed(1)}%
+            </span>
+          ) : null;
+
         return (
           <td
             key={col.key}
@@ -849,10 +940,11 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               >
                 {col?.formatter ? col.formatter(val) : String(val ?? '-')}
               </span>
-            ) : col?.formatter ? (
-              col.formatter(val)
             ) : (
-              String(val ?? '-')
+              <>
+                {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+                {gtVarianceBadge}
+              </>
             )}
           </td>
         );
@@ -1182,6 +1274,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   divergingMidpoint={divergingMidpoint}
                   dataBarZeroAxis={dataBarZeroAxis}
                   theme={theme}
+                  showVarianceDelta={Boolean(showVarianceDelta)}
                   onToggleExpand={toggleExpand}
                   onNodeClick={handleNodeClick}
                   onContextMenu={handleContextMenu}

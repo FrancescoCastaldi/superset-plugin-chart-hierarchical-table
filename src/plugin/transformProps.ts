@@ -25,7 +25,11 @@ import { applyTableCalculations } from '../utils/tableCalculations';
  */
 function applyColumnDefinition(column: TableColumn, options: TransformOptions): TableColumn {
   if (!column.isMetric || options.metricDefinitions.length === 0) return column;
-  const def = findMetricDefinition(column.baseMetric ?? column.key, options.metricDefinitions);
+  const rawKey = column.baseMetric ?? column.key;
+  const baseName = rawKey.split('___')[0].replace(/ (Delta|Δ%|Δ period|Δ% period)$/, '');
+  const def =
+    findMetricDefinition(rawKey, options.metricDefinitions) ||
+    findMetricDefinition(baseName, options.metricDefinitions);
   if (!def) return column;
   const isDeltaColumn = /delta/i.test(column.key) || /delta/i.test(column.baseMetric ?? '');
   const baseFormatter = column.formatter;
@@ -74,6 +78,7 @@ export default function transformProps(
     timeDeltaStrategy: resolveTimeDeltaStrategy(options),
     weightColumn: options.weightColumn,
     aggregationMode: options.aggregationMode,
+    showVarianceDelta: options.showVarianceDelta,
   });
   // Again with the grand total and the row totals, which only exist after the layout.
   applyMetricDefinitions(treeData, grandTotalNode, options.metricDefinitions, options.dimensions);
@@ -129,6 +134,7 @@ export default function transformProps(
     emitFilter: options.isCrossFilterActive,
     enableContextMenu: options.enableContextMenu,
     onContextMenu,
+    ...(options.showVarianceDelta ? { showVarianceDelta: true } : {}),
     // Omitted when unset so charts without goals keep their previous props shape.
     ...(options.goals.length > 0 ? { goals: options.goals } : {}),
     ...(options.conditionalFormatting.length > 0

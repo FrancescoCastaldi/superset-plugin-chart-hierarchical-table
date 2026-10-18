@@ -11947,6 +11947,7 @@ exports[`transformProps characterization (pre-refactor snapshot) variance delta 
     "showGrandTotal": true,
     "showPivotColumnSubtotals": true,
     "showSubtotals": true,
+    "showVarianceDelta": true,
     "stickyHeader": true,
     "stripedRows": true,
     "valueDisplayMode": "all",
