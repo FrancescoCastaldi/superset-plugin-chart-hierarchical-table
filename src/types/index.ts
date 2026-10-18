@@ -418,6 +418,7 @@ export interface HierarchicalTableTransformedProps {
     allSelectedFilters?: SelectedFilterItem[],
   ) => void;
   onClearFilter?: () => void;
+  onReorderMetrics?: (metrics: string[]) => void;
 }
 
 export interface SelectedFilterItem {
@@ -435,5 +436,6 @@ export type HierarchicalTableChartProps = ChartProps & {
     setDataMask?: (dataMask: any) => void;
     onAddFilter?: (filter: any) => void;
     onContextMenu?: (clientX: number, clientY: number, filters?: ContextMenuFilters) => void;
+    onReorderMetrics?: (metrics: string[]) => void;
   };
 };
