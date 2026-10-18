@@ -120,7 +120,13 @@ Multi-dimensional pivot matrix by Quarter and Sales Channel. Demonstrates intera
 
 Windowed rendering benchmark demonstrating smooth 60fps scrolling and sub-second calculation pipeline across 5,000 deep hierarchical tree rows with live memory tracking.
 
-#### 4. Superset REST API Automation Modal (`POST /api/v1/chart/`)
+#### 4. Interactive What-If Simulation & Scenario Manager
+
+![What-If Simulation Showcase](docs/images/dev_studio_whatif_simulation.png)
+
+Real-time calculation engine applying multiplicative percentage variations strictly to leaf records while maintaining mathematical rollup integrity across parent subtotals, weighted averages, and ratio metrics. Directional delta badges with polarity sensitivity highlight simulated gains and losses directly in-cell, accompanied by preset saving and enriched CSV export.
+
+#### 5. Superset REST API Automation Modal (`POST /api/v1/chart/`)
 
 ![Superset REST API Modal](docs/images/dev_studio_api_export_modal.png)
 

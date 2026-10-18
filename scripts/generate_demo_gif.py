@@ -4,9 +4,9 @@ and compile an optimized, high-fidelity animated GIF demo for README.md.
 """
 
 import os
-import subprocess
 import time
 from PIL import Image
+from playwright.sync_api import sync_playwright
 
 CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "docs", "images")
@@ -29,6 +29,12 @@ FRAMES = [
         "description": "Virtualization Stress Test: 5,000 Rows, 60fps Scrolling",
     },
     {
+        "name": "dev_studio_whatif_simulation.png",
+        "url": "http://localhost:5173/?scenario=healthcare&whatif=1",
+        "description": "What-If Simulation Engine: Range Sliders (-50% to +50%), In-Cell Polarity Badges, Scenarios",
+        "action": "whatif",
+    },
+    {
         "name": "dev_studio_api_export_modal.png",
         "url": "http://localhost:5173/?scenario=healthcare&apiModal=1",
         "description": "Superset REST API Modal (POST /api/v1/chart/), Schema & cURL/Python",
@@ -36,26 +42,45 @@ FRAMES = [
 ]
 
 def capture_frames():
-    print(f"Capturing {len(FRAMES)} screenshots with Chrome headless...")
+    print(f"Capturing {len(FRAMES)} screenshots with Playwright...")
     captured_paths = []
-    for frame in FRAMES:
-        out_path = os.path.abspath(os.path.join(OUTPUT_DIR, frame["name"]))
-        cmd = [
-            CHROME_PATH,
-            "--headless=new",
-            "--window-size=1600,1000",
-            f"--screenshot={out_path}",
-            frame["url"],
-        ]
-        print(f"Capturing: {frame['url']} -> {frame['name']}")
-        res = subprocess.run(cmd, capture_output=True, text=True)
-        if res.returncode != 0:
-            print(f"Error capturing {frame['name']}: {res.stderr}")
-        else:
+    
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            executable_path=CHROME_PATH,
+            headless=True,
+        )
+        page = browser.new_page(viewport={"width": 1600, "height": 1000})
+        
+        for frame in FRAMES:
+            out_path = os.path.abspath(os.path.join(OUTPUT_DIR, frame["name"]))
+            print(f"Navigating: {frame['url']} -> {frame['name']}")
+            page.goto(frame["url"])
+            page.wait_for_timeout(2000)
+            
+            if frame.get("action") == "whatif":
+                try:
+                    title_btn = page.locator(".whatif-title-btn")
+                    if title_btn.count() > 0:
+                        title_btn.first.click()
+                        page.wait_for_timeout(400)
+                    sliders = page.locator(".whatif-slider-input")
+                    if sliders.count() > 0:
+                        sliders.first.fill("15")
+                        sliders.first.dispatch_event("input")
+                        sliders.first.dispatch_event("change")
+                        page.wait_for_timeout(800)
+                except Exception as e:
+                    print(f"Warning during whatif interaction: {e}")
+            
+            page.screenshot(path=out_path)
             size_kb = os.path.getsize(out_path) / 1024
             print(f"Captured {frame['name']} ({size_kb:.1f} KB)")
             captured_paths.append(out_path)
-        time.sleep(0.5)
+            time.sleep(0.5)
+            
+        browser.close()
+        
     return captured_paths
 
 def generate_gif(image_paths):

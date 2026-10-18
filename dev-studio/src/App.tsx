@@ -17,7 +17,15 @@ export default function App() {
   });
   const scenario = useMemo(() => getScenarioById(currentScenarioId), [currentScenarioId]);
 
-  const [formData, setFormData] = useState<Record<string, any>>(() => ({ ...scenario.formData }));
+  const [formData, setFormData] = useState<Record<string, any>>(() => {
+    const p = new URLSearchParams(window.location.search);
+    const initial: Record<string, any> = { ...scenario.formData };
+    if (p.has('whatif')) {
+      initial.enableWhatIf = true;
+      initial.enable_what_if = true;
+    }
+    return initial;
+  });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isApiModalOpen, setIsApiModalOpen] = useState(() => {
     const p = new URLSearchParams(window.location.search);
