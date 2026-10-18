@@ -63,7 +63,7 @@ export type PivotSortOrder = 'desc' | 'asc' | 'none';
 
 export type PivotRowTotalsPosition = 'left' | 'right' | 'none';
 
-export type ComparisonTimeGrain = 'day' | 'week' | 'month' | 'quarter' | 'year';
+export type ComparisonTimeGrain = 'auto' | 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 export type ComparisonReferencePeriod = 'current' | 'previous' | 'ytd';
 

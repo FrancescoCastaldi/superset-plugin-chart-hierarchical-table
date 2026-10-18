@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] - 2026-10-18
+### Added
+- **Natural Time Grain Auto-Detection (`detectNaturalGrain`)**: Pure deterministic utility in `src/utils/timeComparison.ts` that automatically infers the natural temporal granularity (`year`, `quarter`, `month`, `week`, `day`) from active pivot period keys.
+- **Auto Grain Mode in Control Panel and Dev Studio (`auto`)**: Added `auto` choice (`✨ Auto (Rileva automaticamente dai dati)`) across `ComparisonTimeGrain`, `TIME_GRAINS`, Superset `controlPanel.tsx`, and `PeriodComparisonEditor.tsx`.
+- **Superset `time_grain_sqla` Mapping**: Transparently mapped native SQLA time grain codes (`P1D`, `P1W`, `P1M`, `P3M`, `P1Y`) to typed comparison grains in `formDataOptions.ts`.
+- **Dynamic Informative Column Titles**: `periodComparisonTitle` generates explicit headers reflecting the selected grain (`Δ vs previous year (YoY)`, `Δ vs previous month (MoM)`, `Δ vs previous quarter (QoQ)`, `Δ vs previous day (DoD)`, `Δ vs previous week (WoW)`).
+- **Proactive In-Editor Diagnostics Banner**: `PeriodComparisonEditor` validates whether the selected granularity and baseline strategy have preceding periods in the active dataset, displaying friendly alerts when baseline data is missing and confirming valid comparisons.
+- **Multi-Year Mock Scenarios**: Enriched `healthcareScenario` with 2025 baseline data so that YoY, QoQ, MoM, and same-period last year comparisons compute real deltas out of the box.
+
+### Fixed
+- **Robust Period Key Parsing**: Hardened `parsePeriodKey` against non-string input, safely parsing numeric year keys (such as `2023`, `2024`) or timestamps without throwing runtime TypeError exceptions.
+- **Safe Comparison Fallbacks**: Prevented empty dashes in period comparison tables by resolving `auto` grains against real pivot period keys.
+
 ## [0.8.2] - 2026-10-18
 ### Added
 - **Drag and Drop Metrics Reordering (`onReorderMetrics`)**: Native HTML5 drag and drop metrics reordering supporting both interactive chips in the Explore Control Panel and direct column header reordering on the table grid.

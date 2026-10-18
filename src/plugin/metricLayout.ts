@@ -5,6 +5,7 @@ import {
   TimeDeltaStrategyConfig,
   computePivotTimeDelta,
   computeTreeTimeDeltaByStrategy,
+  detectNaturalGrain,
 } from '../utils/timeComparison';
 import {
   ColumnLayout,
@@ -137,7 +138,16 @@ export function buildMetricLayout(
     timeDeltaStrategy &&
     computeTreeTimeDeltaByStrategy(treeData, metrics, chronologicalPivotValues, timeDeltaStrategy)
   ) {
-    appendPeriodComparisonColumns(layout, metrics, timeDeltaStrategy, format);
+    const effectiveTimeGrain =
+      timeDeltaStrategy.timeGrain === 'auto'
+        ? detectNaturalGrain(chronologicalPivotValues)
+        : timeDeltaStrategy.timeGrain;
+    appendPeriodComparisonColumns(
+      layout,
+      metrics,
+      { ...timeDeltaStrategy, timeGrain: effectiveTimeGrain },
+      format,
+    );
   }
 
   if (options.showSparklines) {

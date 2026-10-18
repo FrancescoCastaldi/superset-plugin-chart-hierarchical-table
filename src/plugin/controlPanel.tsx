@@ -700,6 +700,7 @@ const config: ControlPanelConfig = {
               default: 'year',
               renderTrigger: true,
               choices: [
+                ['auto', t('✨ Auto (Detect from data)')],
                 ['day', t('📅 Day (DoD - Day-over-Day)')],
                 ['week', t('📆 Week (WoW - Week-over-Week)')],
                 ['month', t('🗓️ Month (MoM - Month-over-Month)')],

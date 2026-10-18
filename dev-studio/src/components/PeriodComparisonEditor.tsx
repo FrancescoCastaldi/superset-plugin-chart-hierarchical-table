@@ -1,5 +1,10 @@
 import React, { useMemo } from 'react';
-import { parsePeriodKey } from '../../../src/utils/timeComparison';
+import {
+  parsePeriodKey,
+  detectNaturalGrain,
+  buildPeriodIndex,
+} from '../../../src/utils/timeComparison';
+import { ComparisonTimeGrain } from '../../../src/types';
 
 interface PeriodComparisonEditorProps {
   formData: any;
@@ -24,7 +29,7 @@ export const PeriodComparisonEditor: React.FC<PeriodComparisonEditorProps> = ({
 
   const strategy = formData.comparisonStrategy || formData.comparisonType || 'prev_period';
   const referencePeriod = formData.comparisonReferencePeriod || formData.referencePeriod || 'current';
-  const timeGrain = formData.comparisonTimeGrain || formData.timeGrain || 'month';
+  const timeGrain: ComparisonTimeGrain = formData.comparisonTimeGrain || formData.timeGrain || 'auto';
   const showVarianceDelta = Boolean(formData.showVarianceDelta ?? formData.show_variance_delta);
   const pivotTimeDeltaMode = formData.pivotTimeDeltaMode || formData.pivot_time_delta_mode || 'none';
   const pivotTimeDeltaLag = Number(formData.pivotTimeDeltaLag || formData.pivot_time_delta_lag || 1);
@@ -35,6 +40,101 @@ export const PeriodComparisonEditor: React.FC<PeriodComparisonEditorProps> = ({
     ((strategy === 'prev_period' && referencePeriod !== 'current') ||
       strategy === 'prev_year_same_period' ||
       strategy === 'budget_target');
+
+  // Distinct values in the active pivot column
+  const distinctPivotKeys = useMemo(() => {
+    if (pivotColumns.length !== 1) return [];
+    const col = pivotColumns[0];
+    const set = new Set<string>();
+    for (const rec of records) {
+      if (rec[col] !== undefined && rec[col] !== null) {
+        set.add(String(rec[col]));
+      }
+    }
+    return Array.from(set);
+  }, [pivotColumns, records]);
+
+  // Naturally detected grain from data values
+  const naturalGrain = useMemo(() => {
+    return detectNaturalGrain(distinctPivotKeys);
+  }, [distinctPivotKeys]);
+
+  const effectiveGrain = timeGrain === 'auto' ? naturalGrain : timeGrain;
+
+  const grainLabels: Record<string, string> = {
+    auto: 'Auto',
+    day: 'Giorno (DoD)',
+    week: 'Settimana (WoW)',
+    month: 'Mese (MoM)',
+    quarter: 'Trimestre (QoQ)',
+    year: 'Anno (YoY)',
+  };
+
+  // Live diagnostics for the active comparison configuration
+  const comparisonDiagnostics = useMemo(() => {
+    if (pivotColumns.length !== 1 || !isPeriodComparisonActive) return null;
+    const index = buildPeriodIndex(distinctPivotKeys, effectiveGrain);
+    if (!index) {
+      return {
+        status: 'error',
+        message: 'Nessun valore data valido riconosciuto nella colonna pivot selezionata.',
+      };
+    }
+
+    if (strategy === 'budget_target') {
+      const goals = Array.isArray(formData.goals) ? formData.goals : [];
+      if (goals.length === 0) {
+        return {
+          status: 'warning',
+          message: 'Nessun target configurato: definisci i valori target in Metric Goals per calcolare lo scostamento da budget.',
+        };
+      }
+      return {
+        status: 'success',
+        message: `Scostamento calcolato rispetto ai target definiti in Metric Goals (${goals.length} target attivi).`,
+      };
+    }
+
+    if (strategy === 'prev_year_same_period') {
+      const hasYearAgo = index.keysByPeriod.has(index.yearAgo);
+      if (!hasYearAgo) {
+        return {
+          status: 'warning',
+          message: `Dati anno precedente non trovati: la strategia 'Stesso Periodo Anno Scorso' richiede dati di 12 mesi prima rispetto all'ultimo periodo. Verrà mostrato '-' per i delta.`,
+        };
+      }
+      return {
+        status: 'success',
+        message: `Confronto attivo: ultimo periodo confrontato con lo stesso periodo dell'anno precedente.`,
+      };
+    }
+
+    if (referencePeriod === 'previous') {
+      const hasPrevious = index.keysByPeriod.has(index.latest - 1);
+      if (!hasPrevious) {
+        return {
+          status: 'warning',
+          message: `Periodo precedente non trovato per granularità '${grainLabels[effectiveGrain] || effectiveGrain}'. Suggerimento: seleziona '✨ Auto' o '${grainLabels[naturalGrain]}' per allineare la granularità ai dati disponibili.`,
+        };
+      }
+      return {
+        status: 'success',
+        message: `Confronto attivo: calcolo scostamento rispetto al periodo immediatamente precedente (${grainLabels[effectiveGrain]}).`,
+      };
+    }
+
+    if (referencePeriod === 'ytd') {
+      return {
+        status: 'success',
+        message: `Confronto attivo: calcolo scostamento rispetto alla media progressiva Year-to-Date (${index.ytd.length} periodi inclusi).`,
+      };
+    }
+
+    return {
+      status: 'info',
+      message: 'Periodo corrente vs se stesso (delta zero).',
+    };
+  }, [pivotColumns, isPeriodComparisonActive, distinctPivotKeys, effectiveGrain, naturalGrain, strategy, referencePeriod, formData.goals]);
 
   // Detect candidate temporal / datetime columns from the database / dataset
   const temporalCandidates = useMemo(() => {
@@ -409,7 +509,24 @@ export const PeriodComparisonEditor: React.FC<PeriodComparisonEditorProps> = ({
 
             {/* Time Grain */}
             <div>
-              <label className="control-label">Granularità Temporale (Time Grain)</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <label className="control-label" style={{ margin: 0 }}>Granularità Temporale (Time Grain)</label>
+                {timeGrain === 'auto' && (
+                  <span
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      color: '#34d399',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Rilevato: {grainLabels[naturalGrain]}
+                  </span>
+                )}
+              </div>
               <select
                 className="control-select"
                 value={timeGrain}
@@ -418,13 +535,57 @@ export const PeriodComparisonEditor: React.FC<PeriodComparisonEditorProps> = ({
                   onChange('timeGrain', e.target.value);
                 }}
               >
-                <option value="day">📅 Giorno (DoD - Day-over-Day)</option>
-                <option value="week">📆 Settimana (WoW - Week-over-Week)</option>
-                <option value="month">🗓️ Mese (MoM - Month-over-Month)</option>
-                <option value="quarter">📊 Trimestre (QoQ - Quarter-over-Quarter)</option>
-                <option value="year">📈 Anno (YoY - Year-over-Year)</option>
+                <option value="auto">✨ Auto (Rileva automaticamente dai dati: {grainLabels[naturalGrain]})</option>
+                <option value="day">📅 Giorno (DoD: Day-over-Day)</option>
+                <option value="week">📆 Settimana (WoW: Week-over-Week)</option>
+                <option value="month">🗓️ Mese (MoM: Month-over-Month)</option>
+                <option value="quarter">📊 Trimestre (QoQ: Quarter-over-Quarter)</option>
+                <option value="year">📈 Anno (YoY: Year-over-Year)</option>
               </select>
             </div>
+
+            {/* Diagnostic Alert Banner */}
+            {comparisonDiagnostics && (
+              <div
+                style={{
+                  background:
+                    comparisonDiagnostics.status === 'success'
+                      ? 'rgba(16, 185, 129, 0.1)'
+                      : comparisonDiagnostics.status === 'warning'
+                      ? 'rgba(245, 158, 11, 0.1)'
+                      : 'rgba(239, 68, 68, 0.1)',
+                  border: `1px solid ${
+                    comparisonDiagnostics.status === 'success'
+                      ? 'rgba(16, 185, 129, 0.3)'
+                      : comparisonDiagnostics.status === 'warning'
+                      ? 'rgba(245, 158, 11, 0.4)'
+                      : 'rgba(239, 68, 68, 0.3)'
+                  }`,
+                  borderRadius: '5px',
+                  padding: '8px 10px',
+                  fontSize: '11px',
+                  lineHeight: '1.4',
+                  color:
+                    comparisonDiagnostics.status === 'success'
+                      ? '#34d399'
+                      : comparisonDiagnostics.status === 'warning'
+                      ? '#fbbf24'
+                      : '#f87171',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '6px',
+                }}
+              >
+                <span style={{ fontSize: '13px', lineHeight: '1' }}>
+                  {comparisonDiagnostics.status === 'success'
+                    ? '✅'
+                    : comparisonDiagnostics.status === 'warning'
+                    ? '⚠️'
+                    : 'ℹ️'}
+                </span>
+                <span>{comparisonDiagnostics.message}</span>
+              </div>
+            )}
           </div>
         )}
       </div>

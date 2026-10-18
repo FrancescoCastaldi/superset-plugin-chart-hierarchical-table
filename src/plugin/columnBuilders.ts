@@ -514,10 +514,24 @@ function buildSeparatedPivotColumns(
   }
 }
 
-function periodComparisonTitle({ strategy, referencePeriod }: TimeDeltaStrategyConfig): string {
+function periodComparisonTitle({ strategy, referencePeriod, timeGrain }: TimeDeltaStrategyConfig): string {
   if (strategy === 'budget_target') return 'Δ vs budget target';
   if (strategy === 'prev_year_same_period') return 'Δ vs same period last year';
-  return referencePeriod === 'ytd' ? 'Δ vs YTD average' : 'Δ vs previous period';
+  if (referencePeriod === 'ytd') return 'Δ vs YTD average';
+  switch (timeGrain) {
+    case 'year':
+      return 'Δ vs previous year (YoY)';
+    case 'month':
+      return 'Δ vs previous month (MoM)';
+    case 'quarter':
+      return 'Δ vs previous quarter (QoQ)';
+    case 'day':
+      return 'Δ vs previous day (DoD)';
+    case 'week':
+      return 'Δ vs previous week (WoW)';
+    default:
+      return 'Δ vs previous period';
+  }
 }
 
 /**

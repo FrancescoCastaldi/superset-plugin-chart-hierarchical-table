@@ -53,8 +53,10 @@ const MONTH_NAMES_MAP: Record<string, number> = {
  * `YYYY-MM-DD` (any time part is dropped), slashes, Italian/English month names,
  * quarter only (Q1-Q4), or epoch timestamps. Other keys are not periods.
  */
-export function parsePeriodKey(key: string): Date | null {
-  const k = key.trim();
+export function parsePeriodKey(key: unknown): Date | null {
+  if (key === null || key === undefined) return null;
+  const k = String(key).trim();
+  if (!k) return null;
   let m: RegExpExecArray | null = null;
 
   // 1. Year only (YYYY)
@@ -117,6 +119,87 @@ export function parsePeriodKey(key: string): Date | null {
   return null;
 }
 
+/**
+ * Automatically detects the natural time grain from a list of pivot period keys.
+ * Handles YYYY (year), Q1..Q4 / YYYY-Qn (quarter), YYYY-MM / month names (month),
+ * YYYY-MM-DD / DD-MM-YYYY (day or week), and epoch timestamps.
+ */
+export function detectNaturalGrain(
+  periodKeys: (string | number | unknown)[],
+): Exclude<ComparisonTimeGrain, 'auto'> {
+  if (!periodKeys || periodKeys.length === 0) return 'month';
+
+  const strings = periodKeys
+    .map(k => (k === null || k === undefined ? '' : String(k).trim()))
+    .filter(Boolean);
+
+  if (strings.length === 0) return 'month';
+
+  // 1. Year pattern: 4 digits (e.g. 2023, 2024, 2025)
+  if (strings.every(s => /^\d{4}$/.test(s))) {
+    return 'year';
+  }
+
+  // 2. Quarter pattern: Q1..Q4 or YYYY-Qn / YYYY Qn
+  if (strings.every(s => /^(\d{4}[-\s]?)?Q[1-4]$/i.test(s))) {
+    return 'quarter';
+  }
+
+  // 3. Month pattern: YYYY-MM, MM-YYYY, YYYY/MM, MM/YYYY, or Month name
+  const isMonthLike = (s: string) =>
+    /^\d{4}[-/]\d{1,2}$/.test(s) ||
+    /^\d{1,2}[-/]\d{4}$/.test(s) ||
+    /^[a-zA-Z]+[\s\-_/]+\d{4}$/.test(s) ||
+    /^\d{4}[\s\-_/]+[a-zA-Z]+$/.test(s) ||
+    /^[a-zA-Z]+$/.test(s);
+
+  if (strings.every(isMonthLike)) {
+    return 'month';
+  }
+
+  // 4. Day / Week pattern: YYYY-MM-DD or DD/MM/YYYY
+  const isDayLike = (s: string) =>
+    /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(s) ||
+    /^\d{1,2}[-/]\d{1,2}[-/]\d{4}/.test(s);
+
+  if (strings.every(isDayLike)) {
+    const dates = strings
+      .map(parsePeriodKey)
+      .filter((d): d is Date => d !== null)
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    if (dates.length >= 2) {
+      let isWeekly = true;
+      for (let i = 1; i < dates.length; i++) {
+        const diffDays = Math.round((dates[i].getTime() - dates[i - 1].getTime()) / DAY_MS);
+        if (diffDays % 7 !== 0 || diffDays === 0) {
+          isWeekly = false;
+          break;
+        }
+      }
+      if (isWeekly) return 'week';
+    }
+    return 'day';
+  }
+
+  // Fallback: analyze parsed dates intervals
+  const dates = strings
+    .map(parsePeriodKey)
+    .filter((d): d is Date => d !== null);
+
+  if (dates.length >= 2) {
+    dates.sort((a, b) => a.getTime() - b.getTime());
+    const minDiffDays = Math.round((dates[1].getTime() - dates[0].getTime()) / DAY_MS);
+    if (minDiffDays >= 350) return 'year';
+    if (minDiffDays >= 80 && minDiffDays <= 100) return 'quarter';
+    if (minDiffDays >= 25 && minDiffDays <= 32) return 'month';
+    if (minDiffDays === 7) return 'week';
+    if (minDiffDays === 1) return 'day';
+  }
+
+  return 'month';
+}
+
 /** Ordinal of the period containing `date`, so that the preceding period is `ordinal - 1`. */
 function periodOrdinal(date: Date, grain: ComparisonTimeGrain): number {
   const year = date.getUTCFullYear();
@@ -137,18 +220,20 @@ function periodOrdinal(date: Date, grain: ComparisonTimeGrain): number {
   }
 }
 
-interface PeriodIndex {
+export interface PeriodIndex {
   keysByPeriod: Map<number, string[]>;
   latest: number;
   yearAgo: number;
   ytd: number[];
+  effectiveGrain: Exclude<ComparisonTimeGrain, 'auto'>;
 }
 
 /**
  * Groups the pivot keys into periods of the grain. The latest key anchors the current period;
  * the same period of the previous year is the anchor shifted by 12 months.
  */
-function buildPeriodIndex(periodKeys: string[], grain: ComparisonTimeGrain): PeriodIndex | null {
+export function buildPeriodIndex(periodKeys: string[], grain: ComparisonTimeGrain): PeriodIndex | null {
+  const effectiveGrain = grain === 'auto' ? detectNaturalGrain(periodKeys) : grain;
   const dated: { key: string; date: Date }[] = [];
   for (const key of periodKeys) {
     const date = parsePeriodKey(key);
@@ -167,7 +252,7 @@ function buildPeriodIndex(periodKeys: string[], grain: ComparisonTimeGrain): Per
   const keysByPeriod = new Map<number, string[]>();
   const ytd = new Set<number>();
   for (const { key, date } of dated) {
-    const ordinal = periodOrdinal(date, grain);
+    const ordinal = periodOrdinal(date, effectiveGrain);
     const keys = keysByPeriod.get(ordinal);
     if (keys) keys.push(key);
     else keysByPeriod.set(ordinal, [key]);
@@ -176,9 +261,10 @@ function buildPeriodIndex(periodKeys: string[], grain: ComparisonTimeGrain): Per
 
   return {
     keysByPeriod,
-    latest: periodOrdinal(anchor, grain),
-    yearAgo: periodOrdinal(yearAgoDate, grain),
+    latest: periodOrdinal(anchor, effectiveGrain),
+    yearAgo: periodOrdinal(yearAgoDate, effectiveGrain),
     ytd: Array.from(ytd),
+    effectiveGrain,
   };
 }
 

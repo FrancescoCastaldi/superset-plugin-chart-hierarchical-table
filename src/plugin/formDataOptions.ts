@@ -86,7 +86,7 @@ export interface TransformOptions {
   theme: ResolvedTheme;
 }
 
-const TIME_GRAINS: readonly ComparisonTimeGrain[] = ['day', 'week', 'month', 'quarter', 'year'];
+const TIME_GRAINS: readonly ComparisonTimeGrain[] = ['auto', 'day', 'week', 'month', 'quarter', 'year'];
 const REFERENCE_PERIODS: readonly ComparisonReferencePeriod[] = ['current', 'previous', 'ytd'];
 const AGGREGATION_MODES: readonly AggregationFunction[] = ['sum', 'avg', 'min', 'max', 'count', 'weighted_avg'];
 const COMPARISON_STRATEGIES: readonly ComparisonStrategy[] = [
@@ -94,6 +94,27 @@ const COMPARISON_STRATEGIES: readonly ComparisonStrategy[] = [
   'prev_year_same_period',
   'budget_target',
 ];
+
+function mapSupersetTimeGrain(sqlaGrain: unknown): ComparisonTimeGrain | undefined {
+  if (typeof sqlaGrain !== 'string') return undefined;
+  const upper = sqlaGrain.toUpperCase().trim();
+  switch (upper) {
+    case 'P1D':
+      return 'day';
+    case 'P1W':
+      return 'week';
+    case 'P1M':
+      return 'month';
+    case 'P3M':
+    case 'QUARTER':
+      return 'quarter';
+    case 'P1Y':
+    case 'YEAR':
+      return 'year';
+    default:
+      return undefined;
+  }
+}
 
 /** First candidate that is one of the allowed choices, otherwise the fallback. */
 function pickChoice<T extends string>(allowed: readonly T[], fallback: T, ...candidates: unknown[]): T {
@@ -277,6 +298,8 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
       'year',
       mergedFormData.comparisonTimeGrain,
       mergedFormData.timeGrain,
+      mergedFormData.time_grain,
+      mapSupersetTimeGrain(mergedFormData.time_grain_sqla),
     ),
     comparisonReferencePeriod: pickChoice(
       REFERENCE_PERIODS,

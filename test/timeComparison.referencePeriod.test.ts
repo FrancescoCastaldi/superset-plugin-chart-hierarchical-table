@@ -12,6 +12,7 @@ import {
   applyReferencePeriodDelta,
   computeTreeTimeDeltaByStrategy,
   parsePeriodKey,
+  detectNaturalGrain,
 } from '../src/utils/timeComparison';
 
 const node = (name: string, metrics: Record<string, number>, children?: TreeNode[]): TreeNode => ({
@@ -280,5 +281,76 @@ describe('time comparison pipeline wiring', () => {
     const milano = out.data.find(n => n.name === 'Milano')!;
     expect(milano.metrics.revenue___period_delta).toBe(-60);
     expect(milano.metrics.revenue___period_delta_pct).toBe(-60);
+  });
+});
+
+describe('natural grain detection and numeric key parsing', () => {
+  it('detectNaturalGrain accurately identifies year, quarter, month, day and week', () => {
+    expect(detectNaturalGrain(['2024', '2025', '2026'])).toBe('year');
+    expect(detectNaturalGrain([2024, 2025, 2026])).toBe('year');
+    expect(detectNaturalGrain(['Q1', 'Q2', 'Q3', 'Q4'])).toBe('quarter');
+    expect(detectNaturalGrain(['2026-Q1', '2026-Q2'])).toBe('quarter');
+    expect(detectNaturalGrain(['2026-01', '2026-02'])).toBe('month');
+    expect(detectNaturalGrain(['01/2026', '02/2026'])).toBe('month');
+    expect(detectNaturalGrain(['Gennaio 2026', 'Febbraio 2026'])).toBe('month');
+    expect(detectNaturalGrain(['2026-01-01', '2026-01-02', '2026-01-03'])).toBe('day');
+    expect(detectNaturalGrain(['2026-01-05', '2026-01-12', '2026-01-19'])).toBe('week');
+    expect(detectNaturalGrain([])).toBe('month');
+  });
+
+  it('safely parses numeric and edge case period keys without throwing', () => {
+    expect(parsePeriodKey(2023)?.toISOString()).toBe('2023-01-01T00:00:00.000Z');
+    expect(parsePeriodKey(null)).toBeNull();
+    expect(parsePeriodKey(undefined)).toBeNull();
+    expect(parsePeriodKey('')).toBeNull();
+    expect(parsePeriodKey('   ')).toBeNull();
+  });
+
+  it('resolves auto time grain and labels comparison header accordingly', () => {
+    const records = [
+      { presidio: 'Roma', mese: '2026-01', revenue: 100 },
+      { presidio: 'Roma', mese: '2026-02', revenue: 160 },
+    ];
+    const out = transformProps({
+      width: 800,
+      height: 600,
+      formData: {
+        hierarchyType: 'multi_dimension',
+        groupby: ['presidio'],
+        columns: ['mese'],
+        metrics: ['revenue'],
+        timeGrain: 'auto',
+        referencePeriod: 'previous',
+        comparisonType: 'prev_period',
+      },
+      queriesData: [{ data: records }],
+    } as any);
+
+    const roma = out.data.find(n => n.name === 'Roma')!;
+    expect(roma.metrics.revenue___period_delta).toBe(60);
+    expect(roma.metrics.revenue___period_delta_pct).toBe(60);
+    const headerGroup = out.pivotHeaderGroups?.find(g => g.key === '__period_comparison__');
+    expect(headerGroup?.title).toBe('Δ vs previous month (MoM)');
+  });
+
+  it('maps Superset time_grain_sqla to comparisonTimeGrain', () => {
+    expect(resolveTransformOptions({ time_grain_sqla: 'P1D' })).toMatchObject({
+      comparisonTimeGrain: 'day',
+    });
+    expect(resolveTransformOptions({ time_grain_sqla: 'P1W' })).toMatchObject({
+      comparisonTimeGrain: 'week',
+    });
+    expect(resolveTransformOptions({ time_grain_sqla: 'P1M' })).toMatchObject({
+      comparisonTimeGrain: 'month',
+    });
+    expect(resolveTransformOptions({ time_grain_sqla: 'P3M' })).toMatchObject({
+      comparisonTimeGrain: 'quarter',
+    });
+    expect(resolveTransformOptions({ time_grain_sqla: 'P1Y' })).toMatchObject({
+      comparisonTimeGrain: 'year',
+    });
+    expect(resolveTransformOptions({ timeGrain: 'auto' })).toMatchObject({
+      comparisonTimeGrain: 'auto',
+    });
   });
 });
