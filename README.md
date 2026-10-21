@@ -6,7 +6,25 @@ Frontend visualization plugin for **Apache Superset 6.1.0+** providing a rich, i
 
 *Live Dev Studio: Interactive workbench featuring real-time Explore control panel synchronization, dual-mode hierarchy tree, multi-pivot matrix, and sub-50ms Hot Module Reloading.*
 
-## Features
+---
+
+## 📸 Visual Preview
+
+### 🖥️ Live Production Dashboard Showcase
+
+![StratumTree Live Production Dashboard](docs/images/live_dashboard_showcase.png)
+
+*Figure 1: StratumTree (Hierarchical Table) v0.4.0 live production rendering on Apache Superset with hospital activity roll-ups, expandable presidio and regime nodes, dynamic subtotals, grand total, quick level views (All, Leaves, Parents), and instant CSV export.*
+
+### 🌳 Tree Hierarchy & Advanced Matrix View
+
+![Hierarchical Table Preview](docs/images/hierarchical_table_preview.jpg)
+
+*Figure 2: StratumTree multi-level tree hierarchy with interactive What-If simulation, in-cell variance badges, and conditional formatting.*
+
+---
+
+## 🌟 Key Features
 
 - **Four Macro-Sections Control Panel**: Organized canonically into `Data`, `Customize`, `Comparison & Analysis`, and `Performance & Limits`.
 - **Dual-Mode Hierarchy**: Multi-Dimension Level Grouping (e.g. Region, Country, City, Store) and Parent-Child Adjacency (ID / Parent ID / Label).
