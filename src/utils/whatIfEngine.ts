@@ -91,7 +91,7 @@ export function snapshotBaseline(
 
 /**
  * Checks whether a metric can be multiplied directly at the leaf level.
- * Metrics with type 'ratio', 'delta_pct', or 'none' cannot be multiplied directly;
+ * Metrics with type 'ratio', 'delta_pct', 'diff', or 'none' cannot be multiplied directly;
  * they must be recomputed from their base operands.
  */
 export function isSimulatableMetric(
@@ -102,7 +102,7 @@ export function isSimulatableMetric(
   if (metricDefs && metricDefs.length > 0) {
     const def = metricDefs.find(d => d.metric === metricName);
     if (def) {
-      if (def.type === 'none' || def.type === 'ratio' || def.type === 'delta_pct') {
+      if (def.type === 'none' || def.type === 'ratio' || def.type === 'delta_pct' || def.type === 'diff') {
         return false;
       }
     }

@@ -787,7 +787,8 @@ const config: ControlPanelConfig = {
               description: t(
                 'JSON list that states what each metric means, overriding the name-based guesses. Types: sum, mean (optional weight), ' +
                   'distinct_count (entityDimension), ratio (numerator, denominator, scale: parents and totals are a ratio of sums), ' +
-                  'delta_pct (current, baseline) and none (empty on parent rows). Optional format (integer, decimal, percent, duration in seconds, ' +
+                  'delta_pct (current, baseline), diff (current, baseline: exact node-level difference, also on parents and totals) ' +
+                  'and none (empty on parent rows). Optional format (integer, decimal, percent, duration in seconds, ' +
                   'days, currency), decimals and polarity (higher_is_better or lower_is_better, used for the colour of deltas). ' +
                   'Example: [{"metric": "pct_in_soglia", "type": "ratio", "numerator": "entro_soglia", "denominator": "prenotazioni", "scale": 100, "format": "percent"}]',
               ),

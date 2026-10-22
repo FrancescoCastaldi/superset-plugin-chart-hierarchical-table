@@ -38,7 +38,7 @@ Frontend visualization plugin for **Apache Superset 6.1.0+** providing a rich, i
 - **Multi-Selection Cross-Filtering**: Native Superset 6.1.0 `setDataMask` integration with grouped `IN` filters, checkboxes and multi-row highlighting.
 - **Automatic Rollups & Grand Total**: Post-order tree aggregation for subtotals (SUM, AVG, MIN, MAX, COUNT, WEIGHTED_AVG), level-aware hybrid MAX/SUM roll-ups for distinct physical unit counters (`Sportelli Attivi`, `Sedi Attive`), automatic averaging for duration/rate metrics (`Tempo Gestione Sportello`), and a Grand Total row.
 - **Two-Way Pivot Matrix Grid**: Horizontal row totals and column subtotals (the pivot time delta columns work with a single pivot dimension).
-- **Metric Definitions**: Declare per metric `sum`, `mean`, `distinct_count`, `ratio` (parents and totals are a ratio of sums), `delta_pct` or `none`, plus format and polarity, instead of relying on name heuristics.
+- **Metric Definitions**: Declare per metric `sum`, `mean`, `distinct_count`, `ratio` (parents and totals are a ratio of sums), `delta_pct`, `diff` (exact node-level difference current minus baseline, also on parent rows and the grand total) or `none`, plus format and polarity, instead of relying on name heuristics.
 - **Confidence Intervals and Significance Signal**: Wilson and Poisson intervals on ratios, with a marker only when the whole interval lies above or below the parent, the total or the goal.
 - **Small-Number Suppression**: Hides counts below a threshold with complementary suppression, so published tables do not disclose small cells (hidden values never reach sorting, colours or the CSV export).
 - **Trend Sparklines and Indicators**: A Trend column per metric over the periods, and icons on conditional formatting rules.

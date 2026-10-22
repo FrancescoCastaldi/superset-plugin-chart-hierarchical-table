@@ -94,15 +94,17 @@ describe('whatIfEngine', () => {
       expect(isSimulatableMetric('% margine')).toBe(false);
     });
 
-    it('rejects metrics defined as ratio, delta_pct or none in metricDefinitions', () => {
+    it('rejects metrics defined as ratio, delta_pct, diff or none in metricDefinitions', () => {
       const defs: MetricDefinition[] = [
         { metric: 'occupancy_rate', type: 'ratio' },
         { metric: 'growth_pct', type: 'delta_pct' },
+        { metric: 'delta_pp', type: 'diff' },
         { metric: 'static_code', type: 'none' },
         { metric: 'active_beds', type: 'sum' },
       ];
       expect(isSimulatableMetric('occupancy_rate', defs)).toBe(false);
       expect(isSimulatableMetric('growth_pct', defs)).toBe(false);
+      expect(isSimulatableMetric('delta_pp', defs)).toBe(false);
       expect(isSimulatableMetric('static_code', defs)).toBe(false);
       expect(isSimulatableMetric('active_beds', defs)).toBe(true);
     });

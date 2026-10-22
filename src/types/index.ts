@@ -101,7 +101,7 @@ export interface ConditionalFormattingRule {
   icon?: ConditionalIcon;
 }
 
-export type MetricType = 'sum' | 'mean' | 'distinct_count' | 'ratio' | 'delta_pct' | 'none';
+export type MetricType = 'sum' | 'mean' | 'distinct_count' | 'ratio' | 'delta_pct' | 'diff' | 'none';
 
 export type MetricFormat = 'integer' | 'decimal' | 'percent' | 'duration' | 'days' | 'currency';
 
@@ -126,7 +126,7 @@ export interface MetricDefinition {
   numerator?: string;
   denominator?: string;
   scale?: number;
-  /** 'delta_pct': (current - baseline) / baseline * 100. */
+  /** 'delta_pct': (current - baseline) / baseline * 100. 'diff': current - baseline on every node, including parents and the grand total (node-level difference, never a sum or average of child diffs). */
   current?: string;
   baseline?: string;
   format?: MetricFormat;

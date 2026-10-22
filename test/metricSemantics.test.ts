@@ -219,6 +219,87 @@ describe('applyMetricDefinitions', () => {
     expect(b.metrics.delta).toBeNull();
   });
 
+
+  it('accepts a diff definition with its operands and keeps the polarity', () => {
+    const defs = normalizeMetricDefinitions([
+      { metric: 'delta_pp', type: 'diff', current: 'acc_corr', baseline: 'acc_conf', polarity: 'lower_is_better', decimals: 1 },
+      { metric: 'noCurrent', type: 'diff', baseline: 'acc_conf' },
+      { metric: 'noBaseline', type: 'diff', current: 'acc_corr' },
+    ]);
+    expect(defs).toEqual([
+      { metric: 'delta_pp', type: 'diff', current: 'acc_corr', baseline: 'acc_conf', decimals: 1, polarity: 'lower_is_better' },
+    ]);
+  });
+
+  it('computes a node-level difference of the two operands, never a sum or average of child diffs', () => {
+    // leafA: corr 40/100 = 40%, conf 10/50 = 20% -> diff 20 p.p.
+    // leafB: corr 60/200 = 30%, conf 45/200 = 22,5% -> diff 7,5 p.p.
+    // parent: corr 100/300 = 33,3%, conf 55/250 = 22,0% -> diff 11,3 p.p.
+    // A sum of child diffs would give 27,5 and an average 13,75: both wrong.
+    const leafA = node('A', 1, { n1: 40, d1: 100, acc_corr: 0, n2: 10, d2: 50, acc_conf: 0, delta_pp: 0 });
+    const leafB = node('B', 1, { n1: 60, d1: 200, acc_corr: 0, n2: 45, d2: 200, acc_conf: 0, delta_pp: 0 });
+    const root = node('R', 0, {}, [leafA, leafB]);
+    const total = node('__grand_total__', 0, {});
+    const defs = normalizeMetricDefinitions([
+      { metric: 'n1', type: 'sum' },
+      { metric: 'd1', type: 'sum' },
+      { metric: 'n2', type: 'sum' },
+      { metric: 'd2', type: 'sum' },
+      { metric: 'acc_corr', type: 'ratio', numerator: 'n1', denominator: 'd1', scale: 100 },
+      { metric: 'acc_conf', type: 'ratio', numerator: 'n2', denominator: 'd2', scale: 100 },
+      { metric: 'delta_pp', type: 'diff', current: 'acc_corr', baseline: 'acc_conf' },
+    ]);
+    applyMetricDefinitions([root], total, defs);
+    expect(leafA.metrics.delta_pp).toBe(20);
+    expect(leafB.metrics.delta_pp).toBe(7.5);
+    expect(root.metrics.delta_pp).toBe(11.3);
+    expect(root.subtotals?.delta_pp).toBe(11.3);
+    expect(total.metrics.delta_pp).toBe(11.3);
+  });
+
+  it('computes the diff even when declared before its ratio operands', () => {
+    const leafA = node('A', 1, { n1: 40, d1: 100, acc_corr: 0, n2: 10, d2: 50, acc_conf: 0, delta_pp: 0 });
+    const root = node('R', 0, {}, [leafA]);
+    const defs = normalizeMetricDefinitions([
+      { metric: 'delta_pp', type: 'diff', current: 'acc_corr', baseline: 'acc_conf' },
+      { metric: 'n1', type: 'sum' },
+      { metric: 'd1', type: 'sum' },
+      { metric: 'n2', type: 'sum' },
+      { metric: 'd2', type: 'sum' },
+      { metric: 'acc_corr', type: 'ratio', numerator: 'n1', denominator: 'd1', scale: 100 },
+      { metric: 'acc_conf', type: 'ratio', numerator: 'n2', denominator: 'd2', scale: 100 },
+    ]);
+    applyMetricDefinitions([root], undefined, defs);
+    expect(root.metrics.delta_pp).toBe(20);
+  });
+
+  it('applies the pivot suffix of the diff key to its operands', () => {
+    const leaf = node('L', 0, { 'cur___2024': 12.5, 'base___2024': 10, 'delta___2024': 0 });
+    applyMetricDefinitions(
+      [leaf],
+      undefined,
+      normalizeMetricDefinitions([{ metric: 'delta', type: 'diff', current: 'cur', baseline: 'base' }]),
+    );
+    expect(leaf.metrics['delta___2024']).toBe(2.5);
+  });
+
+  it('leaves the diff untouched when an operand is missing and accepts negative results', () => {
+    const leaf = node('L', 0, { cur: 8, base: 10, delta: 0 });
+    applyMetricDefinitions(
+      [leaf],
+      undefined,
+      normalizeMetricDefinitions([{ metric: 'delta', type: 'diff', current: 'cur', baseline: 'base' }]),
+    );
+    expect(leaf.metrics.delta).toBe(-2);
+    const lonely = node('M', 0, { delta: 7 });
+    applyMetricDefinitions(
+      [lonely],
+      undefined,
+      normalizeMetricDefinitions([{ metric: 'delta', type: 'diff', current: 'cur', baseline: 'base' }]),
+    );
+    expect(lonely.metrics.delta).toBe(7);
+  });
+
   it('is a no-op without definitions', () => {
     const { tree, total, sede1 } = build();
     applyMetricDefinitions(tree, total, []);

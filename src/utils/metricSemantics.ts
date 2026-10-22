@@ -9,7 +9,7 @@ import {
 } from '../types';
 import { weightedMean } from './aggregations';
 
-const METRIC_TYPES: readonly MetricType[] = ['sum', 'mean', 'distinct_count', 'ratio', 'delta_pct', 'none'];
+const METRIC_TYPES: readonly MetricType[] = ['sum', 'mean', 'distinct_count', 'ratio', 'delta_pct', 'diff', 'none'];
 const METRIC_FORMATS: readonly MetricFormat[] = ['integer', 'decimal', 'percent', 'duration', 'days', 'currency'];
 const POLARITIES: readonly MetricPolarity[] = ['higher_is_better', 'lower_is_better'];
 const CI_METHODS: readonly ConfidenceMethod[] = ['none', 'wilson', 'poisson'];
@@ -59,7 +59,7 @@ export function normalizeMetricDefinitions(raw: unknown): MetricDefinition[] {
       def.denominator = text(e.denominator);
       if (!def.numerator || !def.denominator) continue;
       def.scale = finite(e.scale) ?? 1;
-    } else if (type === 'delta_pct') {
+    } else if (type === 'delta_pct' || type === 'diff') {
       def.current = text(e.current);
       def.baseline = text(e.baseline);
       if (!def.current || !def.baseline) continue;
@@ -230,8 +230,10 @@ const ROLLUP_TYPES: readonly MetricType[] = ['sum', 'mean', 'distinct_count', 'n
 /**
  * Applies explicit metric definitions on top of the heuristic roll-up: parent rows and the grand
  * total of 'sum', 'mean', 'distinct_count' and 'none' metrics are rebuilt from their children,
- * and every row (leaves included) of a 'ratio' or 'delta_pct' metric is recomputed from its
- * operands, so a ratio of totals is never an average of ratios. Mutates the tree.
+ * and every row (leaves included) of a 'ratio', 'delta_pct' or 'diff' metric is recomputed from its
+ * operands, so a ratio of totals is never an average of ratios and a diff of ratios is the exact
+ * node-level difference, never a sum or average of child diffs. Ratios and delta percentages are
+ * computed before diffs, so a diff may safely reference them as operands in any order. Mutates the tree.
  */
 export function applyMetricDefinitions(
   tree: TreeNode[],
@@ -242,7 +244,11 @@ export function applyMetricDefinitions(
   if (definitions.length === 0 || tree.length === 0) return;
   const keys = collectKeys(tree, grandTotal, new Set(definitions.map(d => d.metric)));
   const rollupDefs = definitions.filter(d => ROLLUP_TYPES.includes(d.type));
-  const computedDefs = definitions.filter(d => d.type === 'ratio' || d.type === 'delta_pct');
+  // Ratios and delta percentages first: a diff may use them as operands regardless of declaration order.
+  const computedDefs = [
+    ...definitions.filter(d => d.type === 'ratio' || d.type === 'delta_pct'),
+    ...definitions.filter(d => d.type === 'diff'),
+  ];
 
   const rollup = (node: TreeNode) => {
     if (!node.children || node.children.length === 0) return;
@@ -274,6 +280,12 @@ export function applyMetricDefinitions(
           const den = node.metrics[def.denominator! + suffix];
           if (isNumber(num) && isNumber(den)) {
             setValue(node, key, den > 0 ? (num / den) * (def.scale ?? 1) : null);
+          }
+        } else if (def.type === 'diff') {
+          const cur = node.metrics[def.current! + suffix];
+          const base = node.metrics[def.baseline! + suffix];
+          if (isNumber(cur) && isNumber(base)) {
+            setValue(node, key, Math.round((cur - base) * 10) / 10);
           }
         } else {
           const cur = node.metrics[def.current! + suffix];

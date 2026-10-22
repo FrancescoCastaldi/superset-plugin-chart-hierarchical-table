@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-10-22
+### Added
+- **New `diff` metric definition type** (`src/utils/metricSemantics.ts`, `src/types/index.ts`): computes `current - baseline` on every node (leaves, parent subtotal rows and the grand total) from the node-level aggregated values of the two operand metrics, never as a sum or average of child differences. Designed for difference columns between node-level ratios (e.g. acceptance % current vs comparison period in percentage points) and for additive delta columns (e.g. waiting time in days) that need exact parent values.
+- **Operand ordering guarantee**: `ratio` and `delta_pct` definitions are always computed before `diff` definitions, so a diff may reference ratio metrics as operands regardless of the declaration order in `metricDefinitions`.
+- **Polarity support on diff columns**: a diff definition accepts `polarity: "lower_is_better"` so the delta colour scale inverts (negative delta rendered green), e.g. for waiting-time deltas where a decrease is an improvement.
+- **What-If engine awareness** (`src/utils/whatIfEngine.ts`): metrics declared as `diff` are excluded from direct leaf multiplication and are always recomputed from their operands, like `ratio` and `delta_pct`.
+
 ## [0.9.0] - 2026-10-18
 ### Added
 - **Interactive What-If Simulation Engine (`whatIfEngine.ts`)**: Pure deterministic calculation engine applying percentage multipliers strictly to leaf nodes and recalculating parent rollups, weighted averages, and grand totals with mathematical rigor. Ratio metrics (like length of stay) recalculate from simulated operands rather than averaging averages.
@@ -255,7 +262,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release for the Hierarchical Table plugin.
 
-[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.9.0...v0.10.0
 [0.4.1]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/FrancescoCastaldi/superset-plugin-chart-hierarchical-table/compare/v0.3.2...v0.3.3
