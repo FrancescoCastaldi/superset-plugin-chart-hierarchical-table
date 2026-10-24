@@ -53,10 +53,10 @@ export function formatMetricValue(
 
   const mName = nameInfo.lower;
 
-  // 1. Delta Acceptance in percentage points (p.p.)
+  // 1. Delta Acceptance / Percentage Points in p.p.
   if (
-    (mName.includes('delta') || mName.includes('variazione') || hasDiffToken(mName)) &&
-    (mName.includes('accettazione') || mName.includes('p.p.') || /\bacc\b/.test(mName) || mName.includes('acc_')) &&
+    (mName.includes('delta') || mName.includes('variazione') || hasDiffToken(mName) || mName.includes('punti %') || mName.includes('p.p.')) &&
+    (mName.includes('accettazione') || mName.includes('p.p.') || mName.includes('punti') || /\bacc\b/.test(mName) || mName.includes('acc_')) &&
     !mName.includes('accesso')
   ) {
     const sign = value > 0 ? '+' : '';

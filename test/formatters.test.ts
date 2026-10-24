@@ -66,6 +66,12 @@ describe('formatMetricValue', () => {
       expect(formatMetricValue(15.8, 'SMART_NUMBER', '', '% Self vs Operatore')).toBe('15.8%');
       expect(formatMetricValue(1.9, 'SMART_NUMBER', '', '%Self fallite vs Operatore')).toBe('1.9%');
     });
+
+    it('formats Delta (punti %) and percentage points difference with p.p. suffix and sign', () => {
+      expect(formatMetricValue(4.5, 'SMART_NUMBER', '', 'Delta (punti %)')).toBe('+4.5 p.p.');
+      expect(formatMetricValue(-2.3, 'SMART_NUMBER', '', 'Delta (punti %)')).toBe('-2.3 p.p.');
+      expect(formatMetricValue(0.0, 'SMART_NUMBER', '', 'Delta p.p.')).toBe('0.0 p.p.');
+    });
   });
 
   describe('edge cases', () => {

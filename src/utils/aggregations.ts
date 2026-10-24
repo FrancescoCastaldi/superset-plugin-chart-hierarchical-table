@@ -58,6 +58,9 @@ export const isDerivedMetric = memoizeByName(function isDerivedMetric(metricName
     m.includes('pct') ||
     m.includes('percent') ||
     m.includes('tasso') ||
+    m.includes('punti %') ||
+    m.includes('punti percentuali') ||
+    m.includes('p.p.') ||
     base.trim().startsWith('%')
   );
 });
@@ -264,6 +267,71 @@ function derivedFallbackWeightKey(metric: string, metricNames: string[], explici
 }
 
 /**
+ * Detects whether a metric represents a difference in percentage points (p.p. / punti percentuali),
+ * which requires arithmetic subtraction (corr - conf) rather than relative percentage change ((corr - conf) / conf * 100).
+ */
+export function isPercentagePointsDiff(metricName: string): boolean {
+  const m = metricName.toLowerCase();
+  return (
+    m.includes('punti') ||
+    m.includes('p.p') ||
+    m.endsWith('_pp') ||
+    m.endsWith(' pp') ||
+    (
+      (m.includes('delta') || m.includes('variazione') || hasDiffToken(m)) &&
+      (m.includes('acc') || m.includes('accettazione')) &&
+      !m.includes('pct') &&
+      !m.includes('percent') &&
+      !m.includes('% su') &&
+      !m.includes('/conf')
+    )
+  );
+}
+
+/**
+ * Positional heuristic: finds the nearest preceding pair of (corr, conf) metrics
+ * before currentIndex in allMetricKeys that share the same suffix and are not delta/diff metrics.
+ */
+function findPrecedingMetricPair(
+  allMetricKeys: string[],
+  currentIndex: number,
+  suffix: string,
+): { corrKey?: string; confKey?: string } {
+  let foundCorr: string | undefined;
+  let foundConf: string | undefined;
+
+  for (let i = currentIndex - 1; i >= 0; i--) {
+    const candidate = allMetricKeys[i];
+    if (!candidate.endsWith(suffix)) continue;
+    const cLower = splitMetricKey(candidate).base.toLowerCase();
+    const isExcluded =
+      cLower.includes('delta') ||
+      cLower.includes('variazione') ||
+      hasDiffToken(cLower) ||
+      cLower.includes('punti') ||
+      cLower.includes('p.p') ||
+      cLower.endsWith('_pp');
+
+    if (isExcluded) {
+      if (foundCorr || foundConf) break;
+      continue;
+    }
+
+    if (!foundCorr && (cLower.includes('corr') || cLower.includes('corrente') || cLower.includes('1ª') || cLower.includes('1a'))) {
+      foundCorr = candidate;
+    } else if (!foundConf && (cLower.includes('conf') || cLower.includes('confronto') || cLower.includes('prec'))) {
+      foundConf = candidate;
+    }
+
+    if (foundCorr && foundConf) {
+      return { corrKey: foundCorr, confKey: foundConf };
+    }
+  }
+
+  return { corrKey: foundCorr, confKey: foundConf };
+}
+
+/**
  * Helper to find matching current and comparison metric keys for a given topic/domain.
  */
 function findMetricPair(
@@ -345,7 +413,8 @@ export function recomputeDerivedMetrics(
   metrics: Record<string, number | string | null>,
   allMetricKeys: string[],
 ): void {
-  for (const key of allMetricKeys) {
+  for (let keyIdx = 0; keyIdx < allMetricKeys.length; keyIdx++) {
+    const key = allMetricKeys[keyIdx];
     const { base, suffix } = splitMetricKey(key);
     const mLower = base.toLowerCase();
 
@@ -452,32 +521,48 @@ export function recomputeDerivedMetrics(
       }
     }
 
-    // 3. Delta Acceptance (delta_acc = acc_corr - acc_conf) in p.p.
+    // 3. Delta Acceptance / Percentage Points difference (delta_acc = acc_corr - acc_conf) in p.p.
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
-      (mLower.includes('acc') || mLower.includes('accettazione'))
+      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower) || mLower.includes('punti %') || mLower.includes('p.p.')) &&
+      (
+        mLower.includes('acc') ||
+        mLower.includes('accettazione') ||
+        mLower.includes('punti') ||
+        mLower.includes('p.p') ||
+        mLower.endsWith('_pp') ||
+        mLower.endsWith(' pp')
+      ) &&
+      !mLower.includes('richieste') &&
+      !mLower.includes('volume')
     ) {
+      const preceding = findPrecedingMetricPair(allMetricKeys, keyIdx, suffix);
       const accCorrKey =
+        (preceding.corrKey && preceding.confKey ? preceding.corrKey : undefined) ||
         allMetricKeys.find(
           k =>
             k.endsWith(suffix) &&
-            (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione')) &&
-            (k.toLowerCase().includes('corr') || k.toLowerCase().includes('1ª') || k.toLowerCase().includes('1a')) &&
+            (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione') || k.toLowerCase().includes('tasso') || k.toLowerCase().includes('quota')) &&
+            (k.toLowerCase().includes('corr') || k.toLowerCase().includes('1ª') || k.toLowerCase().includes('1a') || k.toLowerCase().includes('corrente')) &&
             !k.toLowerCase().includes('delta') &&
             !k.toLowerCase().includes('diff') &&
             !k.toLowerCase().includes('conf'),
-        ) || `acc_corr${suffix}`;
+        ) ||
+        preceding.corrKey ||
+        `acc_corr${suffix}`;
 
       const accConfKey =
+        (preceding.corrKey && preceding.confKey ? preceding.confKey : undefined) ||
         allMetricKeys.find(
           k =>
             k.endsWith(suffix) &&
-            (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione')) &&
+            (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione') || k.toLowerCase().includes('tasso') || k.toLowerCase().includes('quota')) &&
             (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
             !k.toLowerCase().includes('delta') &&
             !k.toLowerCase().includes('diff') &&
             !k.toLowerCase().includes('corr'),
-        ) || `acc_conf${suffix}`;
+        ) ||
+        preceding.confKey ||
+        `acc_conf${suffix}`;
 
       const rawAccCorr = metrics[accCorrKey];
       const rawAccConf = metrics[accConfKey];
@@ -532,7 +617,9 @@ export function recomputeDerivedMetrics(
       (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
       (mLower.includes('%') || mLower.includes('pct') || mLower.includes('percent'))
     ) {
+      const preceding = findPrecedingMetricPair(allMetricKeys, keyIdx, suffix);
       const corrKey =
+        (preceding.corrKey && preceding.confKey ? preceding.corrKey : undefined) ||
         allMetricKeys.find(
           k =>
             k.endsWith(suffix) &&
@@ -540,8 +627,10 @@ export function recomputeDerivedMetrics(
             !k.toLowerCase().includes('delta') &&
             !k.toLowerCase().includes('variazione') &&
             !k.toLowerCase().includes('diff'),
-        );
+        ) ||
+        preceding.corrKey;
       const confKey =
+        (preceding.corrKey && preceding.confKey ? preceding.confKey : undefined) ||
         allMetricKeys.find(
           k =>
             k.endsWith(suffix) &&
@@ -549,7 +638,8 @@ export function recomputeDerivedMetrics(
             !k.toLowerCase().includes('delta') &&
             !k.toLowerCase().includes('variazione') &&
             !k.toLowerCase().includes('diff'),
-        );
+        ) ||
+        preceding.confKey;
       if (corrKey && confKey) {
         computePercentageVariation(metrics, key, corrKey, confKey);
       }

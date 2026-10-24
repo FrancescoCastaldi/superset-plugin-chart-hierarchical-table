@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.2] - 2026-10-25
+### Added
+- **Ricalcolo Robusto dei Delta in Punti Percentuali (Delta (punti %), Delta p.p.)**: Estesa la logica di recomputeDerivedMetrics in src/utils/aggregations.ts per calcolare la differenza aritmetica esatta (corr - conf) anziche la variazione percentuale relativa per tutte le metriche espresse in punti percentuali (punti %, p.p., punti percentuali, _pp).
+- **Heuristic di Prossimita Posizionale per Tabelle Multi-Blocco**: Introdotto findPrecedingMetricPair che individua le colonne operando (corr e conf) immediatamente precedenti a ciascuna colonna delta nella lista delle metriche, garantendo che tabelle con molteplici KPI affiancati colleghino ciascun delta al proprio blocco di appartenenza.
+- **Formattazione e Riconoscimento Colonne Delta**: Aggiornati isDeltaColumn in src/utils/tableColumns.ts e formatMetricValue in src/utils/formatters.ts per riconoscere e formattare automaticamente le metriche in punti percentuali con suffisso esplicito p.p. e segno (es. +4.5 p.p., -2.3 p.p.).
+
 ## [0.10.1] - 2026-10-24
 ### Added
 - **Native Dashboard `PeriodCompare` filter support**: extracted and forwarded `extra_form_data.time_compare` to `query.time_offsets` in `buildQuery.ts`, enabling native dual-query execution without cartesian product views or SQL row duplication.

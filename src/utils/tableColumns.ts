@@ -31,11 +31,14 @@ export function isDeltaColumn(col: Pick<TableColumn, 'key' | 'title'>): boolean 
     k.includes('variazione') ||
     hasDiffToken(k) ||
     k.includes('p.p.') ||
+    k.includes('punti') ||
     t.includes('delta') ||
     t.includes('variazione') ||
     hasDiffToken(t) ||
     t.includes('δ') ||
-    (col.title || '').includes('Δ')
+    (col.title || '').includes('Δ') ||
+    t.includes('punti') ||
+    t.includes('p.p.')
   );
 }
 

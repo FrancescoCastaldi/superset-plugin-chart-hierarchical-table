@@ -246,6 +246,46 @@ describe('aggregations.recomputeDerivedMetrics (AGENTS.md §5.3 naming conventio
       const m = recompute({ fatturato: 200, 'variazione % fatturato': 4.2 });
       expect(m['variazione % fatturato']).toBe(4.2);
     });
+
+    it('Delta (punti %) computes arithmetic difference corr - conf in percentage points', () => {
+      const m = recompute({
+        acc_corr: 88.4,
+        acc_conf: 82.1,
+        'Delta (punti %)': null,
+      });
+      expect(m['Delta (punti %)']).toBe(6.3);
+    });
+
+    it('Delta p.p. computes arithmetic difference and handles negative deltas', () => {
+      const m = recompute({
+        acc_corr: 75.0,
+        acc_conf: 80.5,
+        'Delta p.p.': null,
+      });
+      expect(m['Delta p.p.']).toBe(-5.5);
+    });
+
+    it('pairs multi-block metrics by proximity in allMetricKeys', () => {
+      const keys = [
+        'richieste_corr',
+        'richieste_conf',
+        'delta_richieste_pct',
+        'acc_corr',
+        'acc_conf',
+        'Delta (punti %)',
+      ];
+      const m: Metrics = {
+        richieste_corr: 200,
+        richieste_conf: 100,
+        delta_richieste_pct: null,
+        acc_corr: 85.0,
+        acc_conf: 75.0,
+        'Delta (punti %)': null,
+      };
+      recomputeDerivedMetrics(m, keys);
+      expect(m.delta_richieste_pct).toBe(100);
+      expect(m['Delta (punti %)']).toBe(10);
+    });
   });
 });
 
