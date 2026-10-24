@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-10-24
+### Added
+- **Native Dashboard `PeriodCompare` filter support**: extracted and forwarded `extra_form_data.time_compare` to `query.time_offsets` in `buildQuery.ts`, enabling native dual-query execution without cartesian product views or SQL row duplication.
+
 ## [0.10.0] - 2026-10-22
 ### Added
 - **New `diff` metric definition type** (`src/utils/metricSemantics.ts`, `src/types/index.ts`): computes `current - baseline` on every node (leaves, parent subtotal rows and the grand total) from the node-level aggregated values of the two operand metrics, never as a sum or average of child differences. Designed for difference columns between node-level ratios (e.g. acceptance % current vs comparison period in percentage points) and for additive delta columns (e.g. waiting time in days) that need exact parent values.

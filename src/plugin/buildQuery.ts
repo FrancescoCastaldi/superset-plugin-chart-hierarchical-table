@@ -28,12 +28,21 @@ export default function buildQuery(formData: HierarchicalTableFormData): QueryCo
       columns = Array.from(new Set(cols));
     }
 
-    return [
-      {
-        ...baseQueryObject,
-        columns,
-        metrics,
-      },
-    ];
+    const dashboardTimeCompare = ensureIsArray(
+      fd.extra_form_data?.time_compare ||
+      baseQueryObject.extra_form_data?.time_compare,
+    ).filter(Boolean);
+
+    const query: any = {
+      ...baseQueryObject,
+      columns,
+      metrics,
+    };
+
+    if (dashboardTimeCompare.length > 0) {
+      query.time_offsets = dashboardTimeCompare;
+    }
+
+    return [query];
   });
 }
