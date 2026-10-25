@@ -97,11 +97,11 @@ describe('transformProps pipeline modules', () => {
       expect(gt.metrics['richieste_corr___delta___2026-08']).toBeNull();
     });
 
-    it('uses the flat layout outside pivot mode', () => {
+    it('uses the flat layout outside pivot mode with unhidden comparison columns', () => {
       const options = resolveTransformOptions({ groupby: ['presidio'], metrics });
       const { treeData, metrics: m } = buildTreeData(records, options);
       const layout = buildMetricLayout(treeData, records, options, m);
-      expect(layout.columns.map(c => c.key)).toEqual(['richieste_corr', 'delta_richieste_pct']);
+      expect(layout.columns.map(c => c.key)).toEqual(['richieste_corr', 'richieste_conf', 'delta_richieste_pct']);
       expect(layout.metricKeys).toEqual(metrics);
     });
 

@@ -41,14 +41,14 @@ describe('columnBuilders', () => {
       isMetric: false,
       isHierarchyDimension: true,
       align: 'left',
-      width: 320,
+      width: 280,
     });
     expect(buildHierarchyColumn('multi_dimension', []).title).toBe('Hierarchy');
     expect(buildHierarchyColumn('parent_child', ['x']).title).toBe('Hierarchy Tree');
   });
 
   describe('buildFlatColumns', () => {
-    it('renders one column per metric, hides comparison operands but still aggregates them', () => {
+    it('renders one column per metric, unhides comparison operands to support side-by-side comparison', () => {
       const layout = buildFlatColumns(
         ['richieste_corr', 'richieste_conf', 'delta_richieste_pct', 'richieste_corr___delta'],
         format,
@@ -61,11 +61,12 @@ describe('columnBuilders', () => {
       ]);
       expect(layout.columns.map(c => [c.key, c.title])).toEqual([
         ['richieste_corr', 'richieste_corr'],
+        ['richieste_conf', 'richieste_conf'],
         ['delta_richieste_pct', 'delta_richieste_pct'],
         ['richieste_corr___delta', 'Δ% richieste_corr'],
       ]);
       expect(layout.pivotHeaderGroups).toEqual([]);
-      expect(layout.columns[0]).toMatchObject({ isMetric: true, align: 'right', width: 160 });
+      expect(layout.columns[0]).toMatchObject({ isMetric: true, align: 'right', width: 135 });
     });
   });
 

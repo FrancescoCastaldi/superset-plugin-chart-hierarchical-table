@@ -58,11 +58,15 @@ const customHexControl = (name: string, label: string) => ({
   },
 });
 
-// The time comparison reads its periods from the values of a single pivot column.
+// The time comparison reads its periods from the values of a single pivot column or general variance delta.
 const isSinglePivot = ({ controls }: { controls: any }) =>
   controls?.hierarchyType?.value === 'multi_dimension' &&
   Array.isArray(controls?.columns?.value) &&
   controls.columns.value.length === 1;
+
+const isComparisonVisible = ({ controls }: { controls: any }) =>
+  Boolean(controls?.showVarianceDelta?.value) ||
+  isSinglePivot({ controls });
 
 export const CUSTOM_D3_FORMAT_OPTIONS: [string, string][] = [
   ['SMART_NUMBER', 'Adaptive formatting (Smart Number)'],
@@ -710,7 +714,7 @@ const config: ControlPanelConfig = {
               description: t(
                 'Period length for the deltas. Periods come from the pivot column values (YYYY, YYYY-Qn, YYYY-MM, YYYY-MM-DD, timestamps).',
               ),
-              visibility: isSinglePivot,
+              visibility: isComparisonVisible,
             },
           },
         ],
@@ -731,7 +735,7 @@ const config: ControlPanelConfig = {
                 'Baseline of the latest period: itself (no delta), the previous period, or the year-to-date average.',
               ),
               visibility: (state: { controls: any }) =>
-                isSinglePivot(state) &&
+                isComparisonVisible(state) &&
                 (state.controls?.comparisonType?.value ?? 'prev_period') === 'prev_period',
             },
           },
@@ -750,7 +754,7 @@ const config: ControlPanelConfig = {
               description: t(
                 'Baseline for the latest period delta. Budget / Target uses the matching Metric Goals target.',
               ),
-              visibility: isSinglePivot,
+              visibility: isComparisonVisible,
             },
           },
         ],

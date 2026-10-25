@@ -63,7 +63,7 @@ export function buildMetricLayout(
   const { pivotDimensions, pivotRowTotalsPosition, pivotTimeDeltaMode } = options;
 
   if (!options.isPivotMode) {
-    const flatLayout = buildFlatColumns(metrics, format);
+    const flatLayout = buildFlatColumns(metrics, format, records, treeData);
     appendTableCalculationColumns(flatLayout, options.tableCalculations, format, false);
     return flatLayout;
   }

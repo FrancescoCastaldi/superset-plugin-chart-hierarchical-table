@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.3] - 2026-10-26
+### Added
+- **Calibrazione larghezza colonne per viste comparative**: Calibrato il layout a 9 colonne (1260px su standard desktop 1440px) per prevenire overflow e barre di scorrimento orizzontali.
+- **Motore di aggregazione gerarchica robusto**: Gestione accurata dei punti percentuali (Delta p.p.) nel calcolo dei subtotali di nodo e del grand total, con preservazione della gerarchia ad albero.
+
 ## [0.10.2] - 2026-10-25
 ### Added
 - **Ricalcolo Robusto dei Delta in Punti Percentuali (Delta (punti %), Delta p.p.)**: Estesa la logica di recomputeDerivedMetrics in src/utils/aggregations.ts per calcolare la differenza aritmetica esatta (corr - conf) anziche la variazione percentuale relativa per tutte le metriche espresse in punti percentuali (punti %, p.p., punti percentuali, _pp).

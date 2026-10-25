@@ -495,11 +495,15 @@ export function recomputeDerivedMetrics(
       computePercentageVariation(metrics, key, corrKey, confKey);
     }
 
-    // 1e. Generic fallback: delta_X_pct — derive operand keys from metric name
+    // 1e. Generic fallback: delta_X_pct: derive operand keys from metric name
     else if (mLower.startsWith('delta_') && mLower.endsWith('_pct')) {
       const baseName = mLower.slice(6, -4);
-      const corrKey = `${baseName}${suffix}`;
-      const confKey = `${baseName}_conf${suffix}`;
+      const corrKey =
+        allMetricKeys.find(k => k === `${baseName}_corr${suffix}` || k === `${baseName}_attuale${suffix}`) ||
+        `${baseName}${suffix}`;
+      const confKey =
+        allMetricKeys.find(k => k === `${baseName}_conf${suffix}` || k === `${baseName}_confronto${suffix}`) ||
+        `${baseName}_conf${suffix}`;
       computePercentageVariation(metrics, key, corrKey, confKey);
     }
 

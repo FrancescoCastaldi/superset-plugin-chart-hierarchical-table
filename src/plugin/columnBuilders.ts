@@ -108,7 +108,7 @@ export function buildHierarchyColumn(hierarchyType: string, dimensions: string[]
     isMetric: false,
     isHierarchyDimension: true,
     align: 'left',
-    width: 320,
+    width: 280,
   };
 }
 
@@ -129,26 +129,122 @@ function rowTotalsHeaderGroup(
 /**
  * Non-pivot layout: one column per metric. Comparison operands are still aggregated.
  */
-export function buildFlatColumns(metrics: string[], format: ValueFormat): ColumnLayout {
+export function buildFlatColumns(metrics: string[], format: ValueFormat, records?: any[], treeData?: any[]): ColumnLayout {
   const columns: TableColumn[] = [];
   const metricKeys: string[] = [];
+  const hasComp = Boolean(records && records.length > 0 && Object.keys(records[0]).some(k => k.includes('__')));
+  const compMap: Record<string, string> = {};
+
+  if (hasComp && records) {
+    for (const m of metrics) {
+      const k = Object.keys(records[0]).find(key => key.startsWith(m + '__'));
+      if (k) compMap[m] = k;
+    }
+    if (treeData && treeData.length > 0) {
+      function rollupNode(node: any) {
+        if (!node.children || node.children.length === 0) {
+          node.metrics = node.metrics || {};
+          for (const m of metrics) {
+            if (compMap[m]) {
+              const compVal = (node.rawData && node.rawData[compMap[m]] !== undefined) ? Number(node.rawData[compMap[m]]) : 0;
+              node.metrics[m + '___comp'] = compVal;
+              const curVal = Number(node.metrics[m] || 0);
+              const diff = curVal - compVal;
+              const delta = compVal !== 0 ? (diff / compVal) * 100 : 0;
+              node.metrics[m + '___diff'] = diff;
+              node.metrics[m + '___delta'] = delta;
+            }
+          }
+          node.subtotals = Object.assign({}, node.metrics);
+        } else {
+          for (const c of node.children) {
+            rollupNode(c);
+          }
+          node.metrics = node.metrics || {};
+          for (const m of metrics) {
+            if (compMap[m]) {
+              let curSum = 0, compSum = 0;
+              for (const c of node.children) {
+                curSum += Number((c.metrics && c.metrics[m]) || 0);
+                compSum += Number((c.metrics && c.metrics[m + '___comp']) || 0);
+              }
+              node.metrics[m] = curSum;
+              node.metrics[m + '___comp'] = compSum;
+              const diff = curSum - compSum;
+              const delta = compSum !== 0 ? (diff / compSum) * 100 : 0;
+              node.metrics[m + '___diff'] = diff;
+              node.metrics[m + '___delta'] = delta;
+            }
+          }
+          node.subtotals = Object.assign({}, node.metrics);
+        }
+      }
+      for (const root of treeData) {
+        rollupNode(root);
+      }
+    }
+  }
 
   for (const m of metrics) {
-    metricKeys.push(m);
-
-    if (isComparisonOperandMetric(m)) {
+    if (hasComp && isComparisonOperandMetric(m)) {
+      metricKeys.push(m);
       continue;
     }
 
-    columns.push({
-      key: m,
-      title: m.endsWith('___delta') ? `Δ% ${m.replace('___delta', '')}` : m,
-      dataIndex: m,
-      isMetric: true,
-      align: 'right',
-      width: 160,
-      formatter: createMetricFormatter(format, m),
-    });
+    if (hasComp && compMap[m]) {
+      metricKeys.push(m, `${m}___comp`, `${m}___diff`, `${m}___delta`);
+      columns.push({
+        key: m,
+        title: `${m} (Attuale)`,
+        dataIndex: m,
+        isMetric: true,
+        align: 'right',
+        width: 135,
+        formatter: createMetricFormatter(format, m),
+      });
+      columns.push({
+        key: `${m}___comp`,
+        title: `${m} (Confronto)`,
+        dataIndex: `${m}___comp`,
+        isMetric: true,
+        align: 'right',
+        width: 135,
+        formatter: createMetricFormatter(format, m),
+      });
+      columns.push({
+        key: `${m}___diff`,
+        title: `Δ ${m}`,
+        dataIndex: `${m}___diff`,
+        isMetric: true,
+        align: 'right',
+        width: 115,
+        formatter: createMetricFormatter(format, m),
+      });
+      columns.push({
+        key: `${m}___delta`,
+        title: `Δ% ${m}`,
+        dataIndex: `${m}___delta`,
+        isMetric: true,
+        align: 'right',
+        width: 105,
+        formatter: createMetricFormatter(format, `${m}___delta`),
+      });
+    } else {
+      metricKeys.push(m);
+      const isDelta = m.includes('delta') || m.includes('diff') || m.endsWith('___delta');
+      const isPct = m.includes('pct') || m.includes('%');
+      const colWidth = isDelta && isPct ? 105 : isDelta ? 115 : 135;
+
+      columns.push({
+        key: m,
+        title: m.endsWith('___delta') ? `Δ% ${m.replace('___delta', '')}` : m,
+        dataIndex: m,
+        isMetric: true,
+        align: 'right',
+        width: colWidth,
+        formatter: createMetricFormatter(format, m),
+      });
+    }
   }
 
   return { columns, pivotHeaderGroups: [], metricKeys };

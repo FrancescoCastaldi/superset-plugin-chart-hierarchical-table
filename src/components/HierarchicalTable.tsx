@@ -294,11 +294,21 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
         const baseContent = isNuovo ? (
           <span className="badge-delta-nuovo">Nuovo</span>
         ) : isDelta && typeof val === 'number' ? (
-          <span
-            className={deltaClassName(val, col?.polarity)}
-          >
-            {col?.formatter ? col.formatter(val) : String(val ?? '-')}
-          </span>
+          col?.key?.endsWith('___delta') ? (
+            <span
+              className={classNames('delta-badge', deltaClassName(val, col?.polarity))}
+              title={`Delta %: ${val > 0 ? '+' : ''}${val.toFixed(1)}%`}
+            >
+              {val > 0 ? '▲ +' : val < 0 ? '▼ ' : ''}
+              {Math.abs(val).toFixed(1)}%
+            </span>
+          ) : (
+            <span
+              className={deltaClassName(val, col?.polarity)}
+            >
+              {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+            </span>
+          )
         ) : col?.formatter ? (
           col.formatter(val)
         ) : (
@@ -307,7 +317,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
 
         // Variance Delta Badge (showVarianceDelta)
         let cellVarianceDelta: number | null = null;
-        if (showVarianceDelta && !isDelta && isNumeric) {
+        if (showVarianceDelta && !isDelta && isNumeric && !col?.key?.endsWith('___comp')) {
           // 1. Pivot column: e.g. ${m}___${pVal} -> ${m}___delta_pct___${pVal}
           const pivotDeltaPctKey = col.key.includes('___')
             ? col.key.replace(/^(.+?)___(.+)$/, '$1___delta_pct___$2')
@@ -1112,7 +1122,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         const isNuovo = val === 'Nuovo';
 
         let gtVarianceDelta: number | null = null;
-        if (showVarianceDelta && !isDelta && typeof val === 'number') {
+        if (showVarianceDelta && !isDelta && typeof val === 'number' && !col?.key?.endsWith('___comp')) {
           const pivotDeltaPctKey = col.key.includes('___')
             ? col.key.replace(/^(.+?)___(.+)$/, '$1___delta_pct___$2')
             : null;
@@ -1130,6 +1140,15 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               effectiveGrandTotalNode.metrics?.[refDeltaPctKey] ?? effectiveGrandTotalNode.subtotals?.[refDeltaPctKey];
             if (typeof rawRefDelta === 'number' && Number.isFinite(rawRefDelta)) {
               gtVarianceDelta = rawRefDelta;
+            }
+          }
+          if (gtVarianceDelta === null) {
+            const baseMetric = col.baseMetric ?? col.key.split('___')[0];
+            const companionDeltaKey = `${baseMetric}___delta`;
+            const rawDelta =
+              effectiveGrandTotalNode.metrics?.[companionDeltaKey] ?? effectiveGrandTotalNode.subtotals?.[companionDeltaKey];
+            if (typeof rawDelta === 'number' && Number.isFinite(rawDelta)) {
+              gtVarianceDelta = rawDelta;
             }
           }
         }
@@ -1186,11 +1205,21 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             {isNuovo ? (
               <span className="badge-delta-nuovo">Nuovo</span>
             ) : isDelta && typeof val === 'number' ? (
-              <span
-                className={deltaClassName(val, col?.polarity)}
-              >
-                {col?.formatter ? col.formatter(val) : String(val ?? '-')}
-              </span>
+              col?.key?.endsWith('___delta') ? (
+                <span
+                  className={classNames('delta-badge', deltaClassName(val, col?.polarity))}
+                  title={`Delta % Totale: ${val > 0 ? '+' : ''}${val.toFixed(1)}%`}
+                >
+                  {val > 0 ? '▲ +' : val < 0 ? '▼ ' : ''}
+                  {Math.abs(val).toFixed(1)}%
+                </span>
+              ) : (
+                <span
+                  className={deltaClassName(val, col?.polarity)}
+                >
+                  {col?.formatter ? col.formatter(val) : String(val ?? '-')}
+                </span>
+              )
             ) : (
               <>
                 {col?.formatter ? col.formatter(val) : String(val ?? '-')}
