@@ -110,6 +110,8 @@ const config: ControlPanelConfig = {
               ...sharedControls.groupby,
               label: t('Hierarchy Dimensions / Rows (in order)'),
               description: t('Select dimensions from highest to lowest level of hierarchy for rows (e.g. FARE LIV1 > FARE LIV2 > Prestazione).'),
+              clearable: true,
+              validators: [],
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension',
             },
@@ -122,6 +124,8 @@ const config: ControlPanelConfig = {
               ...sharedControls.groupby,
               label: t('Pivot Columns (Horizontal Matrix)'),
               description: t('Optional: group metrics horizontally by one or more dimensions (e.g. RegimeErogazione).'),
+              clearable: true,
+              validators: [],
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension',
             },
@@ -323,6 +327,8 @@ const config: ControlPanelConfig = {
               ...sharedControls.metrics,
               label: t('Metrics'),
               description: t('Metrics to calculate and display for each hierarchy level.'),
+              clearable: true,
+              validators: [],
             },
           },
         ],

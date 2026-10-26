@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.4] - 2026-10-26
+### Fixed
+- **Controlli non bloccanti in Explore**: Rimossa la validazione obbligatoria (`validators: []`) e aggiunto `clearable: true` per `groupby`, `columns` e `metrics` per prevenire errori di salvataggio o esecuzione per parametri mancanti quando si naviga la vista Explore di Superset.
+
 ## [0.10.3] - 2026-10-26
 ### Added
 - **Calibrazione larghezza colonne per viste comparative**: Calibrato il layout a 9 colonne (1260px su standard desktop 1440px) per prevenire overflow e barre di scorrimento orizzontali.
