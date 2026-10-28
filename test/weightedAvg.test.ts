@@ -212,10 +212,11 @@ describe('weightColumn control', () => {
       .flatMap(s => s.controlSetRows.flat())
       .find((item: any) => item && typeof item === 'object' && item.name === name);
 
-  it('is a text control visible only when aggregationMode is weighted_avg', () => {
+  it('is a metric picker visible only when aggregationMode is weighted_avg', () => {
     const control = findControl('weightColumn');
     expect(control).toBeDefined();
-    expect(control.config.type).toBe('TextControl');
+    expect(typeof control.config.type).toBe('function');
+    expect(control.config.type.name).toBe('MetricPicker');
     const visible = (value: unknown) =>
       control.config.visibility({ controls: { aggregationMode: { value } } });
     expect(visible('weighted_avg')).toBe(true);

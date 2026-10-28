@@ -177,7 +177,7 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "default": [],
     "name": "conditionalFormatting",
     "renderTrigger": true,
-    "type": "component:ArrayControl",
+    "type": "component:RuleList_conditionalFormatting",
   },
   {
     "default": "",
@@ -219,7 +219,7 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "default": "",
     "name": "dimensionLimits",
     "renderTrigger": true,
-    "type": "TextAreaControl",
+    "type": "component:RuleList_dimensionLimits",
   },
   {
     "default": "",
@@ -261,7 +261,7 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "default": "",
     "name": "goals",
     "renderTrigger": true,
-    "type": "TextAreaControl",
+    "type": "component:RuleList_goals",
   },
   {
     "default": [],
@@ -303,7 +303,7 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "default": "",
     "name": "metricDefinitions",
     "renderTrigger": true,
-    "type": "TextAreaControl",
+    "type": "component:RuleList_metricDefinitions",
   },
   {
     "default": [],
@@ -426,7 +426,7 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "default": "",
     "name": "sparklineMetrics",
     "renderTrigger": true,
-    "type": "TextControl",
+    "type": "component:MetricListPicker",
   },
   {
     "default": true,
@@ -450,7 +450,7 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "default": "",
     "name": "suppressionMetrics",
     "renderTrigger": true,
-    "type": "TextControl",
+    "type": "component:MetricListPicker",
   },
   {
     "default": 0,
@@ -462,7 +462,7 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "default": "",
     "name": "tableCalculations",
     "renderTrigger": true,
-    "type": "TextAreaControl",
+    "type": "component:RuleList_tableCalculations",
   },
   {
     "default": "standard",
@@ -492,7 +492,7 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "default": "",
     "name": "weightColumn",
     "renderTrigger": true,
-    "type": "TextControl",
+    "type": "component:MetricPicker",
   },
 ]
 `;

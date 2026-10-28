@@ -1,5 +1,7 @@
 import controlPanel, { CUSTOM_D3_FORMAT_OPTIONS } from '../src/plugin/controlPanel';
 import { HINT_PREFIX, HINT_TEXTS } from '../src/plugin/controls/hints';
+import { EDITOR_TEXTS, PARSE_ERRORS } from '../src/plugin/controls/ruleList';
+import { RULE_LIST_SPECS } from '../src/plugin/controls/ruleSpecs';
 
 type Choice = [unknown, string];
 type Config = {
@@ -41,6 +43,22 @@ const visibleTexts = (): { where: string; text: string }[] => {
   Object.entries(HINT_TEXTS).forEach(([key, text]) =>
     add(`hint.${key}`, typeof text === 'function' ? text(2) : text),
   );
+  Object.entries(EDITOR_TEXTS).forEach(([key, text]) =>
+    add(`editor.${key}`, typeof text === 'function' ? text(2 as never) : text),
+  );
+  Object.entries(PARSE_ERRORS).forEach(([key, text]) => add(`parse.${key}`, text));
+  Object.entries(RULE_LIST_SPECS).forEach(([name, spec]) => {
+    add(`${name}.addLabel`, spec.addLabel);
+    add(`${name}.emptyText`, spec.emptyText);
+    spec.fields.forEach(field => {
+      // A label can depend on the row: read it for the cases the editor shows.
+      [{}, { operator: 'regex' }].forEach(row =>
+        add(`${name}.${field.key}.label`, typeof field.label === 'function' ? field.label(row) : field.label),
+      );
+      add(`${name}.${field.key}.placeholder`, field.placeholder);
+      (field.options ?? []).forEach(([value, label]) => add(`${name}.${field.key}[${value}]`, label));
+    });
+  });
   return texts;
 };
 

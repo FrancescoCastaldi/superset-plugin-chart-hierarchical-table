@@ -135,7 +135,7 @@ describe('conditionalFormatting regex fallback', () => {
 });
 
 describe('conditionalFormatting control and options', () => {
-  it('exposes the conditionalFormatting ArrayControl in Evidenziazione dei valori', () => {
+  it('exposes the conditionalFormatting rule editor in Evidenziazione dei valori', () => {
     const highlighting = controlPanel.controlPanelSections.find(
       (s: { label: string }) => s.label === 'Evidenziazione dei valori',
     );
@@ -145,7 +145,7 @@ describe('conditionalFormatting control and options', () => {
 
     const { config } = items[index] as any;
     expect(typeof config.type).toBe('function');
-    expect(config.type.name).toBe('ArrayControl');
+    expect(config.type.name).toBe('RuleList_conditionalFormatting');
     expect(config.default).toEqual([]);
   });
 

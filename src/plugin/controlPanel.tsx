@@ -6,42 +6,34 @@ import {
 import { isValidHex } from '../utils/themes';
 import { SETTINGS_LEVEL, withSettingsLevel } from './controlVisibility';
 import { hintControl } from './controls/InlineHint';
+import { makeMetricPicker } from './controls/MetricPicker';
+import { editorOptionsFromState, makeRuleListControl } from './controls/RuleListEditor';
+import {
+  CONDITIONAL_FORMATTING_SPEC,
+  DIMENSION_LIMITS_SPEC,
+  GOALS_SPEC,
+  METRIC_DEFINITIONS_SPEC,
+  TABLE_CALCULATIONS_SPEC,
+} from './controls/ruleSpecs';
 import { sparklineHint, suppressionHint, weightHint } from './controls/hints';
 
 const t = (str: string) => str;
 
-// Explore also accepts a component as control type: the list is edited as JSON and stored in
-// the form data as a real array; text that does not parse to an array is not saved.
-function ArrayControl({
-  label,
-  description,
-  value,
-  onChange,
-}: {
-  label?: string;
-  description?: string;
-  value?: unknown[];
-  onChange?: (value: unknown[]) => void;
-}) {
-  return (
-    <label title={description}>
-      {label}
-      <textarea
-        rows={6}
-        style={{ width: '100%' }}
-        defaultValue={JSON.stringify(value ?? [], null, 2)}
-        onChange={e => {
-          try {
-            const parsed = JSON.parse(e.target.value);
-            if (Array.isArray(parsed)) onChange?.(parsed);
-          } catch {
-            // Incomplete JSON while typing: the last valid list stays saved.
-          }
-        }}
-      />
-    </label>
-  );
-}
+// Explore accepts a component as control type. Lists of rules are edited as rows (see
+// controls/RuleListEditor) and metric names are picked from the chart metrics (controls/MetricPicker).
+const GoalsEditor = makeRuleListControl(GOALS_SPEC);
+const ConditionalFormattingEditor = makeRuleListControl(CONDITIONAL_FORMATTING_SPEC);
+const MetricDefinitionsEditor = makeRuleListControl(METRIC_DEFINITIONS_SPEC);
+const TableCalculationsEditor = makeRuleListControl(TABLE_CALCULATIONS_SPEC);
+const DimensionLimitsEditor = makeRuleListControl(DIMENSION_LIMITS_SPEC);
+const MetricListPicker = makeMetricPicker(true);
+const MetricSinglePicker = makeMetricPicker(false);
+
+// The dropdowns of these controls follow the metrics and dimensions chosen in the chart.
+const followsChartColumns = {
+  mapStateToProps: editorOptionsFromState,
+  shouldMapStateToProps: () => true,
+};
 
 const customHexControl = (name: string, label: string) => ({
   name,
@@ -253,10 +245,11 @@ const config: ControlPanelConfig = {
           {
             name: 'weightColumn',
             config: {
-              type: 'TextControl',
+              type: MetricSinglePicker,
               label: t('Metrica peso'),
               default: '',
               renderTrigger: true,
+              ...followsChartColumns,
               description: t(
                 'Nome della metrica usata come peso: deve essere una delle metriche della query. Sostituisce i pesi automatici sul volume; con peso totale zero si usa la media semplice.',
               ),
@@ -392,13 +385,13 @@ const config: ControlPanelConfig = {
           {
             name: 'dimensionLimits',
             config: {
-              type: 'TextAreaControl',
-              language: 'json',
+              type: DimensionLimitsEditor,
               label: t('Limiti per dimensione e Top N (facoltativo)'),
               default: '',
               renderTrigger: true,
+              ...followsChartColumns,
               description: t(
-                'Elenco JSON di regole di limite per livello della gerarchia o per nome di dimensione. Mostra solo i primi N rami (o gli ultimi N) e raccoglie il resto in una riga sintetica "Altri" con la somma esatta delle metriche. Esempio: [{"level": 1, "limit": 5, "metric": "volume", "mode": "top", "othersLabel": "Altri ({k})"}]',
+                'Limita i rami visibili per livello della gerarchia o per dimensione: mostra solo i primi N (o gli ultimi N) e raccoglie il resto in una riga «Altri» con la somma esatta delle metriche.',
               ),
             },
           },
@@ -693,12 +686,13 @@ const config: ControlPanelConfig = {
           {
             name: 'conditionalFormatting',
             config: {
-              type: ArrayControl,
+              type: ConditionalFormattingEditor,
               label: t('Regole di formattazione condizionale'),
               default: [],
               renderTrigger: true,
+              ...followsChartColumns,
               description: t(
-                'Regole in formato JSON, per esempio [{"metric": "revenue", "operator": ">", "targetValue": 100, "priority": 1, "scope": "cell"}]. Operatori: < <= == >= > between (con targetValue2) regex. Ambito (scope): cell, row, column (valore pivot). Vince la priorità 1 (verde), poi 2 (ambra), poi 3 e oltre (rosso).',
+                'Colora i valori che soddisfano una condizione. Vince la regola con la priorità più bassa: la 1 è verde, la 2 ambra, dalla 3 in poi rossa. Le espressioni regolari troppo lunghe o complesse non vengono applicate.',
               ),
             },
           },
@@ -925,13 +919,13 @@ const config: ControlPanelConfig = {
           {
             name: 'goals',
             config: {
-              type: 'TextAreaControl',
-              language: 'json',
+              type: GoalsEditor,
               label: t('Obiettivi per metrica'),
               default: '',
               renderTrigger: true,
+              ...followsChartColumns,
               description: t(
-                'Elenco JSON degli obiettivi per metrica, per esempio [{"metricKey": "revenue", "target": 1000, "direction": "higher_is_better"}]. direction vale "higher_is_better" (predefinito, più alto è meglio) oppure "lower_is_better" (più basso è meglio). Ogni cella della metrica mostra lo scostamento dall\'obiettivo e uno stato: raggiunto (almeno 100%), in linea (almeno 90%), a rischio (almeno 75%) o mancato.',
+                'Un obiettivo per metrica. Ogni cella della metrica mostra lo scostamento dall\'obiettivo e uno stato: raggiunto (almeno 100%), in linea (almeno 90%), a rischio (almeno 75%) o mancato. Vale il primo obiettivo di ogni metrica.',
               ),
             },
           },
@@ -940,13 +934,13 @@ const config: ControlPanelConfig = {
           {
             name: 'metricDefinitions',
             config: {
-              type: 'TextAreaControl',
-              language: 'json',
+              type: MetricDefinitionsEditor,
               label: t('Definizioni delle metriche'),
               default: '',
               renderTrigger: true,
+              ...followsChartColumns,
               description: t(
-                'Elenco JSON che dichiara il significato di ogni metrica, al posto delle deduzioni dal nome. Tipi: sum, mean (con weight facoltativo), distinct_count (entityDimension), ratio (numerator, denominator, scale: padri e totali sono un rapporto di somme), delta_pct (current, baseline), diff (current, baseline: differenza esatta a livello di nodo, anche su padri e totali) e none (vuota sulle righe padre). Facoltativi: format (integer, decimal, percent, durata in secondi, giorni, valuta), decimals e polarity (higher_is_better o lower_is_better, usata per il colore dei delta). Esempio: [{"metric": "pct_in_soglia", "type": "ratio", "numerator": "entro_soglia", "denominator": "prenotazioni", "scale": 100, "format": "percent"}]',
+                'Dichiara cosa significa ogni metrica, al posto delle deduzioni dal nome: somma, media, conteggio distinto, rapporto, variazione percentuale, differenza o vuota sui nodi padre. Per i rapporti, padri e totali sono un rapporto di somme. Vale la prima definizione di ogni metrica.',
               ),
             },
           },
@@ -955,13 +949,13 @@ const config: ControlPanelConfig = {
           {
             name: 'tableCalculations',
             config: {
-              type: 'TextAreaControl',
-              language: 'json',
+              type: TableCalculationsEditor,
               label: t('Calcoli di tabella e modificatori di misura'),
               default: '',
               renderTrigger: true,
+              ...followsChartColumns,
               description: t(
-                'Elenco JSON di calcoli di tabella e modificatori di misura. Tipi supportati: pct_of_total, pct_of_parent, running_total, diff_from_previous, diff_from_previous_pct, rank. Esempio: [{"metric": "sales", "type": "pct_of_parent", "display": "companion_column"}]',
+                'Aggiunge percentuali, totali cumulati, differenze dal precedente o posizioni, in una colonna affiancata o al posto della metrica. Il modo di visualizzazione si sceglie per ogni calcolo.',
               ),
             },
           },
@@ -991,10 +985,11 @@ const config: ControlPanelConfig = {
           {
             name: 'suppressionMetrics',
             config: {
-              type: 'TextControl',
+              type: MetricListPicker,
               label: t('Metriche da proteggere'),
               default: '',
               renderTrigger: true,
+              ...followsChartColumns,
               description: t(
                 'Metriche di conteggio soggette alla soppressione, separate da virgola, per esempio casi, ricoveri.',
               ),
@@ -1053,10 +1048,11 @@ const config: ControlPanelConfig = {
           {
             name: 'sparklineMetrics',
             config: {
-              type: 'TextControl',
+              type: MetricListPicker,
               label: t('Metriche con sparkline'),
               default: '',
               renderTrigger: true,
+              ...followsChartColumns,
               description: t(
                 'Metriche, separate da virgola, che ricevono la colonna di tendenza; se vuoto, tutte le metriche.',
               ),
