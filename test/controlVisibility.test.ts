@@ -144,8 +144,17 @@ describe('settings level in the control panel', () => {
     );
   });
 
-  it('keeps the basic list at fifteen controls', () => {
-    expect(BASIC_CONTROL_NAMES).toHaveLength(15);
+  it('keeps the basic list at sixteen controls', () => {
+    expect(BASIC_CONTROL_NAMES).toHaveLength(16);
+  });
+
+  it('shows the privacy threshold in basic mode, so health data publishers find it', () => {
+    expect(BASIC_CONTROL_NAMES).toContain('suppressionThreshold');
+    const names = visibleNames(freshControls());
+    expect(names).toContain('suppressionThreshold');
+    ['suppressionMetrics', 'complementarySuppression', 'suppressionLabel'].forEach(n => {
+      expect(names).not.toContain(n);
+    });
   });
 
   it('hides the sections made only of advanced controls in basic mode', () => {
@@ -157,6 +166,7 @@ describe('settings level in the control panel', () => {
       'Evidenziazione dei valori',
       'Formato e tema',
       'Confronto nel tempo',
+      'Privacy sui piccoli numeri',
     ]);
   });
 

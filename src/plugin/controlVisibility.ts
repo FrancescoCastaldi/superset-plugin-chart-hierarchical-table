@@ -20,6 +20,8 @@ export const BASIC_CONTROL_NAMES = [
   'numberFormat',
   'minMaxDisplayMode',
   'showVarianceDelta',
+  // Kept in basic mode on purpose: anyone publishing health data has to find the small-number rule.
+  'suppressionThreshold',
 ];
 
 // A setting that only matters once another one is on stays visible in basic mode while that other
