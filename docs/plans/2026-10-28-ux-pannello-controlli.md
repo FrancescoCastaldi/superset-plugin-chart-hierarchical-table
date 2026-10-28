@@ -1,7 +1,7 @@
 # Piano: UX del pannello impostazioni della Hierarchical Table (StratumTree)
 
-Data: 2026-10-28. Stato: DECISIONI D1, D2, D3, D6 prese il 2026-10-28; D4 e D5 su default consigliato (da confermare). In attesa del via per partire dalla Fase 0.
-Repository: `03_Sviluppo_Software/Repositories/superset-plugins/superset-plugin-chart-hierarchical-table` (versione di partenza 0.10.4, branch `main`, allineato a GitHub).
+Data: 2026-10-28. Stato: Fase 0 completata (sezione 10). Decisioni D1, D2, D3, D6 prese; D4 e D5 su default consigliato (da confermare); D7 aperta. Prossimo passo: Fase 1.
+Repository: `03_Sviluppo_Software/Repositories/superset-plugins/superset-plugin-chart-hierarchical-table` (versione di partenza 0.10.4, lavoro sul branch `feat/ux-control-panel`, creato da `main` allineato a GitHub).
 
 ## 1. Obiettivo
 
@@ -33,7 +33,7 @@ Problemi trasversali:
 5. **Collocazione incoerente**: `emit_filter` ed `enableContextMenu` sono sotto "Advanced Rollup Calculations"; `aggregationMode` sta in "Comparison"; `defaultSortColumn` e `conditionalFormatting` condividono la stessa intestazione.
 6. **Opzioni che non fanno nulla senza avvisare**: ad esempio le sparkline richiedono esattamente una colonna pivot, e la regola vive solo nel testo di `description`. Il controllo e attivabile anche quando non puo funzionare.
 7. **Etichette miste**: "Pivot Row Totals (Totali Orizzontali di Riga)", emoji nelle scelte di `timeGrain`, descrizioni a meta italiano e inglese. La funzione `t` e un segnaposto che restituisce la stringa invariata.
-8. **Ipotesi da verificare in Task 0.3**: `aggregationMode` e `hierarchyType` hanno `renderTrigger: false`. Superset assegna di solito alla scheda Data le sezioni che contengono controlli che richiedono una nuova query. Se e cosi, "Comparison & Analysis" compare nella scheda Data e il resto in Customize, senza che l'utente lo capisca. Da confermare nell'istanza reale prima di progettare.
+8. **Schede Data e Customize (CONFERMATO dal codice di Superset 6.1.0, Task 0.3)**: la regola di `ControlPanelsContainer.tsx` manda una sezione nella scheda Data se ha `tabOverride: 'data'` oppure anche un solo controllo oggetto con `renderTrigger` falso o assente. Tutte le altre vanno in Customize. Esiste solo `tabOverride: 'data'` (e `'matrixify'`), non `'customize'`. I controlli dichiarati come stringa (`'row_limit'`, `'adhoc_filters'`) non contano nella regola. Effetto oggi: "Comparison & Analysis" compare nella scheda **Data** perche contiene `aggregationMode` (`renderTrigger: false`), mentre "Performance & Limits", con `row_limit`, compare in **Customize**. Il limite righe della query sta quindi nella scheda sbagliata.
 
 Vincoli da rispettare (dal codice esistente):
 - `test/controlPanelLayout.test.ts` elenca i nomi dei controlli di riferimento (`BASELINE_CONTROL_NAMES`): nessun controllo puo sparire o cambiare nome.
@@ -153,7 +153,7 @@ Convenzione: percorsi relativi alla radice del plugin. Comando test singolo: `np
 
 **Task 1.2: Spostare le 13 sezioni della tabella 3.1.** Riordinare in `controlPanel.tsx`. Test fallente: nuovo test in `controlPanelLayout.test.ts` che verifica i titoli delle 13 sezioni e che ogni nome di `BASELINE_CONTROL_NAMES` compaia una sola volta. Verifica: passa dopo lo spostamento; lo snapshot dell'ordine cambia e viene aggiornato consapevolmente. Commit: `refactor(control-panel): regroup controls into 13 topic sections`.
 
-**Task 1.3: Indicare la scheda di destinazione.** Aggiungere `tabOverride: 'data'` o `'customize'` alle sezioni, per non dipendere dall'euristica di Superset (esito del Task 0.3). Test: ogni sezione ha `tabOverride` coerente con la tabella 3.1. Commit: `fix(control-panel): pin sections to Data or Customize tab`.
+**Task 1.3: Fissare la scheda di destinazione.** In Superset 6.1.0 si forza solo la scheda Data. Quindi: `tabOverride: 'data'` sulle sezioni 1, 2, 3 e 4 (la 4 contiene solo `adhoc_filters` e `row_limit` come stringhe e `dimensionLimits`, che da sola andrebbe in Customize); le sezioni 5-13 restano in Customize a condizione che ogni loro controllo oggetto abbia `renderTrigger: true`. Test fallente: funzione di test `sectionTab(section)` che replica la regola di Superset (stesso criterio del Task 0.3) e verifica la tabella 3.1: sezioni 1-4 in Data, sezioni 5-13 in Customize. Il test fa da guardia: un `renderTrigger: false` aggiunto per errore in una sezione Customize fa fallire la suite. Commit: `fix(control-panel): pin query sections to Data tab, keep display sections in Customize`.
 
 **Task 1.4: Uniformare etichette e descrizioni.** Applicare la decisione D2 (una lingua, niente emoji, descrizioni a una riga). Test: nessuna etichetta contiene `(` seguita da testo in altra lingua; nessuna contiene emoji (espressione regolare). Commit: `chore(control-panel): unify labels language and remove emoji`.
 
@@ -229,10 +229,15 @@ Convenzione: percorsi relativi alla radice del plugin. Comando test singolo: `np
 | D3 | Ambito del rilascio 0.11.0 | DECISA: tutto, fasi 1-5 compresa la tabella "Impostazioni per metrica". Resta da approvare l'elenco dei controlli visibili in modalita Base (vedi Task 2.3). |
 | D4 | Delta: badge e colonne pivot restano separati o si unificano? | DEFAULT, da confermare: separati con avviso su quale usare. Unificazione solo dopo verifica dei chart in uso. |
 | D5 | Aggiungere `jsdom` e `@testing-library/react` come `devDependencies`? | DEFAULT, da confermare: si, solo dipendenze di sviluppo. |
+| D7 | Esporre nel pannello la funzione What-If (`enableWhatIf`), oggi attivabile solo da `form_data` e senza controllo? | DA DECIDERE: aggiungerla in "Trend e interazioni" come casella, oppure lasciarla nascosta. |
 | D6 | Dove pubblicare | DECISA: GitHub (`origin`, `main`) e aggiornamento del mirror in `superset-extensions` (che va anche su Bitbucket). Nessun repo Bitbucket dedicato. |
 
 ## 10. Registro dei risultati (da compilare durante l'esecuzione)
 
-- Task 0.2 (ambiente di test componenti): da fare.
-- Task 0.3 (scheda di destinazione delle sezioni in Superset): da fare.
+- Fase 0 completata il 2026-10-28 sul branch `feat/ux-control-panel`. Suite: 44 suite, 484 test, 18 snapshot, tutti verdi (base di partenza: 43 suite, 479 test).
+- Task 0.1 (fatto, commit `92854a4`): snapshot dell'ordine dei controlli e del contratto per controllo (61 controlli: tipo, default, `renderTrigger`, presenza di `visibility`). Lo snapshot dell'ordine cambiera di proposito nel Task 1.2; quello del contratto non deve mai cambiare.
+- Task 0.2 (fatto): `jest.config.js` usa `testEnvironment: 'node'`; `jsdom` e `@testing-library/react` non sono installati. Si puo comunque verificare il rendering statico con `renderToStaticMarkup` da `react-dom/server` (gia usato in `test/metricReordering.test.ts`). Per testare click e digitazione serve `jsdom` come dipendenza di sviluppo (decisione D5), da aggiungere all'inizio della Fase 3.
+- Task 0.3 (fatto, per lettura del codice): vedi punto 8 della sezione 2. Non c'e un'istanza Superset accesa su questa macchina (porte 8088, 8089, 8080, 9000 senza risposta, Docker non avviato) e i sorgenti `C:\Users\admmaps\superset_6_1_0\superset` citati da `install-plugin.ps1` non esistono qui. La prova visiva nell'istanza reale resta nel Task 5.1.
+- Task 0.4 (fatto, commit `a219456`): fixture `test/fixtures/formdata-reference.json` con un valore non predefinito per tutti i 61 controlli, e test `test/formDataReference.test.ts` che fissa il risultato di `resolveTransformOptions`. Le funzioni di normalizzazione accettano sia testo JSON sia array, ma i controlli attuali salvano `goals`, `metricDefinitions`, `tableCalculations`, `dimensionLimits` come TESTO e `conditionalFormatting` come ARRAY: gli editor devono mantenere esattamente questi tipi.
+- Vincoli per gli editor emersi dai normalizzatori: `tableCalculations` legge la chiave `display` e la rinomina `displayMode`; `weightColumn` ha effetto solo con `aggregationMode` uguale a `weighted_avg`; `sparklineMetrics` e `suppressionMetrics` sono stringhe separate da virgola. Esiste anche una chiave `enableWhatIf` letta da `resolveTransformOptions` ma senza controllo nel pannello: da decidere se esporla (domanda aperta D7).
 - Task 5.1 (prova finale): da fare.
