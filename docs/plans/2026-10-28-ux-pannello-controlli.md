@@ -159,15 +159,15 @@ Convenzione: percorsi relativi alla radice del plugin. Comando test singolo: `np
 
 ### Fase 2: Modalita Base/Avanzata e guida contestuale
 
-**Task 2.1: Controllo `settingsLevel`.** Nuovo controllo di tipo `RadioButtonControl` o `SelectControl`, `renderTrigger: true`, default `basic`, definito in cima alla scheda Data. Test fallente: il controllo esiste, e il default e `basic`. Commit: `feat(control-panel): add basic/advanced settings level toggle`.
+**Task 2.1: Controllo `settingsLevel`.** Nuovo controllo `SelectControl` (`RadioButtonControl` non esiste nel registro dei controlli di Superset 6.1.0), `renderTrigger: true`, default `basic`, primo controllo della scheda Data. Test fallente: il controllo esiste, e il default e `basic`. Commit: `feat(control-panel): add basic/advanced settings level toggle`.
 
 **Task 2.2: Funzione pura `isAdvancedVisible`.** In `src/plugin/controlVisibility.ts`: restituisce vero se il livello e `advanced` oppure se il controllo ha un valore diverso dal default. Test: quattro casi (basic senza valore, basic con valore, advanced, controllo sconosciuto). Commit: `feat(control-panel): add advanced-visibility rule`.
 
 **Task 2.3: Applicare la regola ai controlli avanzati.** Elenco dei controlli base e avanzati da approvare (decisione D3). Test: in modalita basic il numero di controlli visibili e minore o uguale a 15 con un `form_data` vuoto. Commit: `feat(control-panel): hide advanced controls in basic mode`.
 
-**Task 2.4: Riga di avviso riusabile.** `src/plugin/controls/InlineHint.tsx`, con tono `info` o `warning`. Test sulla funzione pura che decide il testo (ad esempio `sparklineHint(columns)`). Commit: `feat(control-panel): add contextual inline hints`.
+**Task 2.4: Avviso contestuale riusabile (FATTO).** Una riga React statica non puo leggere lo stato di Explore, quindi l'avviso e un controllo vero (`hintControl` in `src/plugin/controls/InlineHint.tsx`, nome con prefisso `hint_`) con `mapStateToProps` e `visibility`: compare solo quando c'e un messaggio. Ha `renderTrigger: true` (altrimenti sposterebbe la sua sezione nella scheda Data) e `shouldMapStateToProps: () => true` (Explore ricalcola `mapStateToProps` a ogni render solo se richiesto). Il valore e sempre `null`.
 
-**Task 2.5: Avvisi di prerequisito.** Sparkline (serve una sola colonna pivot), soppressione (soglia a 0 significa disattivata), peso (serve `aggregationMode` uguale a `weighted_avg`), confronto temporale (serve colonna pivot o badge). Test: una funzione pura per ciascun avviso. Commit: `feat(control-panel): warn when an option has no effect`.
+**Task 2.5: Avvisi di prerequisito (FATTO, ridotti a tre).** Sparkline (serve esattamente una colonna pivot, avviso quando sono 0 o 2 o piu), soppressione (soglia maggiore di 0 senza metriche: il codice non nasconde nulla), peso (media ponderata senza metrica peso: usa i pesi automatici sul volume, avviso informativo). Scartato l'avviso sul confronto temporale: i badge delta si alimentano anche da metriche companion e dal confronto tra periodi, quindi "servono colonne pivot" sarebbe falso. Ogni regola e verificata sul codice del plugin.
 
 ### Fase 3: Editor interattivi
 
@@ -230,6 +230,7 @@ Convenzione: percorsi relativi alla radice del plugin. Comando test singolo: `np
 | D4 | Delta: badge e colonne pivot restano separati o si unificano? | DEFAULT, da confermare: separati con avviso su quale usare. Unificazione solo dopo verifica dei chart in uso. |
 | D5 | Aggiungere `jsdom` e `@testing-library/react` come `devDependencies`? | DEFAULT, da confermare: si, solo dipendenze di sviluppo. |
 | D7 | Esporre nel pannello la funzione What-If (`enableWhatIf`), oggi attivabile solo da `form_data` e senza controllo? | DA DECIDERE: aggiungerla in "Trend e interazioni" come casella, oppure lasciarla nascosta. |
+| D8 | La sezione "Privacy sui piccoli numeri" deve restare nascosta in modalita Base? Per i dati sanitari la soppressione dei piccoli numeri e una protezione, e oggi si scopre solo passando ad Avanzato. | DA DECIDERE. Consiglio: mostrarla anche in Base con la soglia a 0 (cioe spenta), cosi chi pubblica dati sanitari la trova. Costo: +1 controllo visibile in Base. |
 | D6 | Dove pubblicare | DECISA: GitHub (`origin`, `main`) e aggiornamento del mirror in `superset-extensions` (che va anche su Bitbucket). Nessun repo Bitbucket dedicato. |
 
 ## 10. Registro dei risultati (da compilare durante l'esecuzione)
@@ -252,3 +253,16 @@ Suite finale: 45 suite, 492 test, 18 snapshot, tutti verdi. `tsc --noEmit` pulit
 - Task 1.4 (`e2bd3f7`): tutte le etichette, descrizioni e voci di scelta in italiano, senza emoji ne doppie lingue; aggiunte le descrizioni mancanti a `nullHandling`, `pageSize` e `virtualizationThreshold`. Verificato che le chiavi delle 70 scelte e i 8 formati D3 siano identici a prima, quindi i chart salvati non cambiano. Nuovo test `test/controlPanelLanguage.test.ts` (etichetta e descrizione su ogni controllo, etichette di al massimo 60 caratteri, niente emoji, niente trattini lunghi o doppi, niente parole inglesi comuni).
 - Un errore di procedura corretto: il commit del Task 1.2 e partito con un test rosso (`conditionalFormatting`), perche avevo concatenato il commit ai test senza condizionarlo all'esito. Il commit non era stato pushato ed e stato corretto con un amend. Da allora ogni commit e condizionato all'esito della suite.
 - Non fatto: la prova visiva in un'istanza Superset reale (resta al Task 5.1).
+
+### Fase 2 completata il 2026-10-28 (branch `feat/ux-control-panel`, commit `bd93fcd`)
+
+Suite finale: 47 suite, 524 test, 18 snapshot, tutti verdi. `tsc --noEmit` pulito, `npm run build` riuscito (bundle da 169 a 173 kB). ESLint non installato.
+
+- Livello impostazioni: nuovo controllo `settingsLevel` (Base o Avanzato, default Base), primo della scheda Data. Regola pura in `src/plugin/controlVisibility.ts`: un controllo avanzato e visibile in Base solo se ha un valore diverso dal default, oppure se il controllo da cui dipende (mappa `FOLLOWS`, 15 voci) ha un valore diverso dal default. Quindi accendere una funzione ne mostra le opzioni, e una opzione avanzata gia usata da un chart salvato non sparisce. Le regole di visibilita preesistenti restano valide sopra quella di livello.
+- Lista Base approvata (15 controlli): `hierarchyType`, `groupby`, `columns`, `metrics`, `adhoc_filters`, `row_limit`, `initialExpandDepth`, `valueDisplayMode`, `showSubtotals`, `showGrandTotal`, `enableSearch`, `enableExport`, `numberFormat`, `minMaxDisplayMode`, `showVarianceDelta`. Su un chart nuovo si vedono 16 controlli, cioe i 15 piu il selettore del livello. Nota: il criterio iniziale diceva "15 o meno"; il conteggio onesto e 16 con il selettore.
+- Sezioni vuote: una sezione senza controlli visibili sparisce per intero. In Base restano 7 sezioni su 13 (Struttura, Metriche, Filtri e limiti, Albero e navigazione, Evidenziazione dei valori, Formato e tema, Confronto nel tempo); spariscono Opzioni delle colonne pivot, Ordinamento, Obiettivi/definizioni/calcoli, Privacy sui piccoli numeri, Trend e interazioni, Prestazioni.
+- Il livello e solo una scelta di visualizzazione: non e usato da `resolveTransformOptions` e non cambia il rendering. Il valore finisce comunque in `form_data` come `settingsLevel`.
+- Limite noto: il selettore sta nella scheda Data; chi e nella scheda Customize deve tornare li per passare ad Avanzato.
+- Snapshot: il contratto dei controlli preesistenti (tipo, default, `renderTrigger`) e identico a prima; ho tolto `hasVisibility` dallo snapshot perche la Fase 2 lo cambia di proposito, ed e coperto da test di comportamento. Nell'ordine compare solo `settingsLevel`.
+- Verificato sul codice di Superset 6.1.0: la `visibility` di un controllo riceve `(props, controlData)` con `props.controls`; quella di sezione riceve `(props, controls)`; `mapStateToProps` riceve lo stato di Explore (che ha `controls`).
+- Non fatto: prova visiva in un Superset reale (Task 5.1). Cosa in particolare guardare li: aspetto degli avvisi in tema scuro, e che il passaggio Base/Avanzato non richieda un nuovo "Aggiorna grafico".
