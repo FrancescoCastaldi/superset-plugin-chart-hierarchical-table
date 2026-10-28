@@ -7,21 +7,38 @@ exports[`controlPanel characterization before the UX refactor keeps the current 
       "hierarchyType",
       "groupby",
       "columns",
+      "idColumn",
+      "parentIdColumn",
+      "labelColumn",
+    ],
+    "section": "Struttura della gerarchia",
+  },
+  {
+    "controls": [
+      "metrics",
+      "aggregationMode",
+      "weightColumn",
+    ],
+    "section": "Metriche",
+  },
+  {
+    "controls": [
       "combineMetric",
       "pivotSortOrder",
       "pivotRowTotalsPosition",
       "pivotRowTotalsLabel",
       "showPivotColumnSubtotals",
       "pivotColumnSubtotalLabel",
-      "pivotTimeDeltaMode",
-      "pivotTimeDeltaLag",
-      "idColumn",
-      "parentIdColumn",
-      "labelColumn",
-      "metrics",
-      "adhoc_filters",
     ],
-    "section": "Data",
+    "section": "Opzioni delle colonne pivot",
+  },
+  {
+    "controls": [
+      "adhoc_filters",
+      "row_limit",
+      "dimensionLimits",
+    ],
+    "section": "Filtri e limiti",
   },
   {
     "controls": [
@@ -31,26 +48,41 @@ exports[`controlPanel characterization before the UX refactor keeps the current 
       "showGrandTotal",
       "stickyHeader",
       "enableSearch",
-      "compactMode",
       "enableHierarchicalSort",
       "enableExport",
+    ],
+    "section": "Albero e navigazione",
+  },
+  {
+    "controls": [
       "defaultSortColumn",
       "defaultSortOrder",
       "nullHandling",
+    ],
+    "section": "Ordinamento",
+  },
+  {
+    "controls": [
       "minMaxDisplayMode",
       "minMaxScope",
       "heatmapPalette",
       "divergingMidpoint",
       "conditionalFormatting",
+    ],
+    "section": "Evidenziazione dei valori",
+  },
+  {
+    "controls": [
       "numberFormat",
       "currencySymbol",
       "stripedRows",
+      "compactMode",
       "themeProfile",
       "customPositiveHex",
       "customNegativeHex",
       "customNeutralHex",
     ],
-    "section": "Customize",
+    "section": "Formato e tema",
   },
   {
     "controls": [
@@ -58,30 +90,43 @@ exports[`controlPanel characterization before the UX refactor keeps the current 
       "timeGrain",
       "referencePeriod",
       "comparisonType",
+      "pivotTimeDeltaMode",
+      "pivotTimeDeltaLag",
+    ],
+    "section": "Confronto nel tempo",
+  },
+  {
+    "controls": [
       "goals",
       "metricDefinitions",
       "tableCalculations",
+    ],
+    "section": "Obiettivi, definizioni e calcoli",
+  },
+  {
+    "controls": [
       "suppressionThreshold",
       "suppressionMetrics",
       "complementarySuppression",
       "suppressionLabel",
-      "showSparklines",
-      "sparklineMetrics",
-      "aggregationMode",
-      "weightColumn",
-      "emit_filter",
-      "enableContextMenu",
     ],
-    "section": "Comparison & Analysis",
+    "section": "Privacy sui piccoli numeri",
   },
   {
     "controls": [
-      "row_limit",
+      "showSparklines",
+      "sparklineMetrics",
+      "emit_filter",
+      "enableContextMenu",
+    ],
+    "section": "Trend e interazioni",
+  },
+  {
+    "controls": [
       "pageSize",
       "virtualizationThreshold",
-      "dimensionLimits",
     ],
-    "section": "Performance & Limits",
+    "section": "Prestazioni",
   },
 ]
 `;

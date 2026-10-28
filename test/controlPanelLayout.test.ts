@@ -1,4 +1,4 @@
-import { isValidElement, ReactElement } from 'react';
+import { isValidElement } from 'react';
 import controlPanel from '../src/plugin/controlPanel';
 
 type Row = unknown[];
@@ -49,6 +49,118 @@ const BASELINE_CONTROL_NAMES = [
   'stripedRows',
 ];
 
+// The control panel is grouped by topic: one section per subject, in the order the user meets them.
+const EXPECTED_LAYOUT: { label: string; expanded: boolean; controls: string[] }[] = [
+  {
+    label: 'Struttura della gerarchia',
+    expanded: true,
+    controls: ['hierarchyType', 'groupby', 'columns', 'idColumn', 'parentIdColumn', 'labelColumn'],
+  },
+  {
+    label: 'Metriche',
+    expanded: true,
+    controls: ['metrics', 'aggregationMode', 'weightColumn'],
+  },
+  {
+    label: 'Opzioni delle colonne pivot',
+    expanded: false,
+    controls: [
+      'combineMetric',
+      'pivotSortOrder',
+      'pivotRowTotalsPosition',
+      'pivotRowTotalsLabel',
+      'showPivotColumnSubtotals',
+      'pivotColumnSubtotalLabel',
+    ],
+  },
+  {
+    label: 'Filtri e limiti',
+    expanded: false,
+    controls: ['adhoc_filters', 'row_limit', 'dimensionLimits'],
+  },
+  {
+    label: 'Albero e navigazione',
+    expanded: true,
+    controls: [
+      'initialExpandDepth',
+      'valueDisplayMode',
+      'showSubtotals',
+      'showGrandTotal',
+      'stickyHeader',
+      'enableSearch',
+      'enableHierarchicalSort',
+      'enableExport',
+    ],
+  },
+  {
+    label: 'Ordinamento',
+    expanded: false,
+    controls: ['defaultSortColumn', 'defaultSortOrder', 'nullHandling'],
+  },
+  {
+    label: 'Evidenziazione dei valori',
+    expanded: false,
+    controls: [
+      'minMaxDisplayMode',
+      'minMaxScope',
+      'heatmapPalette',
+      'divergingMidpoint',
+      'conditionalFormatting',
+    ],
+  },
+  {
+    label: 'Formato e tema',
+    expanded: false,
+    controls: [
+      'numberFormat',
+      'currencySymbol',
+      'stripedRows',
+      'compactMode',
+      'themeProfile',
+      'customPositiveHex',
+      'customNegativeHex',
+      'customNeutralHex',
+    ],
+  },
+  {
+    label: 'Confronto nel tempo',
+    expanded: false,
+    controls: [
+      'showVarianceDelta',
+      'timeGrain',
+      'referencePeriod',
+      'comparisonType',
+      'pivotTimeDeltaMode',
+      'pivotTimeDeltaLag',
+    ],
+  },
+  {
+    label: 'Obiettivi, definizioni e calcoli',
+    expanded: false,
+    controls: ['goals', 'metricDefinitions', 'tableCalculations'],
+  },
+  {
+    label: 'Privacy sui piccoli numeri',
+    expanded: false,
+    controls: [
+      'suppressionThreshold',
+      'suppressionMetrics',
+      'complementarySuppression',
+      'suppressionLabel',
+    ],
+  },
+  {
+    label: 'Trend e interazioni',
+    expanded: false,
+    controls: ['showSparklines', 'sparklineMetrics', 'emit_filter', 'enableContextMenu'],
+  },
+  {
+    label: 'Prestazioni',
+    expanded: false,
+    controls: ['pageSize', 'virtualizationThreshold'],
+  },
+];
+
 const controlName = (item: unknown): string | null => {
   if (typeof item === 'string') return item;
   if (item && typeof item === 'object' && !isValidElement(item) && 'name' in item) {
@@ -62,32 +174,17 @@ const namesIn = (section: Section): string[] =>
 
 const allNames = (): string[] => sections.flatMap(namesIn);
 
-const elementText = (el: ReactElement): string => {
-  const { children } = el.props as { children?: unknown };
-  return Array.isArray(children) ? children.join('') : String(children ?? '');
-};
-
-// Sub-group headings are plain React elements placed as single-item rows.
-const subsectionHeadings = (section: Section): string[] =>
-  section.controlSetRows
-    .flat()
-    .filter((item): item is ReactElement => isValidElement(item) && item.type !== 'hr')
-    .map(elementText);
-
-const sectionByLabel = (label: string): Section => {
-  const found = sections.find(s => s.label === label);
-  if (!found) throw new Error(`Missing section ${label}`);
-  return found;
-};
-
 describe('controlPanel layout', () => {
-  it('exposes exactly the four macro-sections in canonical order', () => {
-    expect(sections.map(s => s.label)).toEqual([
-      'Data',
-      'Customize',
-      'Comparison & Analysis',
-      'Performance & Limits',
-    ]);
+  it('exposes the thirteen topic sections in canonical order', () => {
+    expect(sections.map(s => s.label)).toEqual(EXPECTED_LAYOUT.map(s => s.label));
+  });
+
+  it('places every control in its topic section, in order', () => {
+    expect(sections.map(namesIn)).toEqual(EXPECTED_LAYOUT.map(s => s.controls));
+  });
+
+  it('opens only the essential sections by default', () => {
+    expect(sections.map(s => Boolean(s.expanded))).toEqual(EXPECTED_LAYOUT.map(s => s.expanded));
   });
 
   it('keeps sections as a flat array without nested section data', () => {
@@ -102,73 +199,10 @@ describe('controlPanel layout', () => {
     });
   });
 
-  it('groups the former Customize sections under sub-section headings in order', () => {
-    expect(subsectionHeadings(sectionByLabel('Customize'))).toEqual([
-      'Hierarchy & Tree Display Options',
-      'Sorting & Conditional Formatting',
-      'Formatting & Aesthetics',
-      'Theme & Palette',
-    ]);
-  });
-
-  it('nests the palette controls in Theme & Palette at the end of Formatting & Aesthetics', () => {
-    const customize = namesIn(sectionByLabel('Customize'));
-    expect(customize.slice(-4)).toEqual([
-      'themeProfile',
-      'customPositiveHex',
-      'customNegativeHex',
-      'customNeutralHex',
-    ]);
-  });
-
-  it('groups time comparison and rollup controls under Comparison & Analysis', () => {
-    expect(subsectionHeadings(sectionByLabel('Comparison & Analysis'))).toEqual([
-      'Time Comparison & Period-over-Period Variance',
-      'Goals (optional)',
-      'Metric Semantics (optional)',
-      'Table Calculations (optional)',
-      'Privacy (small numbers)',
-      'Trend (Sparklines)',
-      'Advanced Rollup Calculations',
-    ]);
-  });
-
-  it('places each former section control set in its new macro-section', () => {
-    const data = namesIn(sectionByLabel('Data'));
-    expect(data).toEqual(
-      expect.arrayContaining(['hierarchyType', 'groupby', 'columns', 'metrics', 'adhoc_filters']),
-    );
-    expect(data).not.toContain('row_limit');
-
-    const customize = namesIn(sectionByLabel('Customize'));
-    expect(customize).toEqual(
-      expect.arrayContaining([
-        'initialExpandDepth',
-        'enableExport',
-        'defaultSortColumn',
-        'minMaxScope',
-        'numberFormat',
-        'stripedRows',
-      ]),
-    );
-
-    const comparison = namesIn(sectionByLabel('Comparison & Analysis'));
-    expect(comparison).toEqual(
-      expect.arrayContaining([
-        'showVarianceDelta',
-        'timeGrain',
-        'referencePeriod',
-        'comparisonType',
-        'goals',
-        'metricDefinitions',
-        'tableCalculations',
-        'aggregationMode',
-        'emit_filter',
-        'enableContextMenu',
-      ]),
-    );
-
-    expect(namesIn(sectionByLabel('Performance & Limits'))).toContain('row_limit');
+  it('uses section titles instead of sub-section headings inside a section', () => {
+    sections.forEach(section => {
+      expect(section.controlSetRows.flat().filter(item => isValidElement(item))).toEqual([]);
+    });
   });
 
   it('preserves every baseline control name exactly once', () => {

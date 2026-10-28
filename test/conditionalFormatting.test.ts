@@ -4,7 +4,6 @@ jest.mock('@superset-ui/core', () => ({
     val === null || val === undefined ? [] : Array.isArray(val) ? val : [val],
 }));
 
-import { isValidElement } from 'react';
 import controlPanel from '../src/plugin/controlPanel';
 import { buildColumnConditionalFormat, buildSinglePivotColumns } from '../src/plugin/columnBuilders';
 import { resolveTransformOptions } from '../src/plugin/formDataOptions';
@@ -136,18 +135,13 @@ describe('conditionalFormatting regex fallback', () => {
 });
 
 describe('conditionalFormatting control and options', () => {
-  it('exposes the conditionalFormatting ArrayControl in Sorting & Conditional Formatting', () => {
-    const customize = controlPanel.controlPanelSections.find(
-      (s: { label: string }) => s.label === 'Customize',
+  it('exposes the conditionalFormatting ArrayControl in Evidenziazione dei valori', () => {
+    const highlighting = controlPanel.controlPanelSections.find(
+      (s: { label: string }) => s.label === 'Evidenziazione dei valori',
     );
-    const items: unknown[] = customize.controlSetRows.flat();
-    const heading = items.findIndex(
-      i => isValidElement(i) && (i.props as any).children === 'Sorting & Conditional Formatting',
-    );
+    const items: unknown[] = highlighting.controlSetRows.flat();
     const index = items.findIndex(i => (i as any)?.name === 'conditionalFormatting');
-    const nextHeading = items.findIndex((i, n) => n > heading && isValidElement(i) && i.type === 'h4');
-    expect(index).toBeGreaterThan(heading);
-    expect(index).toBeLessThan(nextHeading);
+    expect(index).toBeGreaterThanOrEqual(0);
 
     const { config } = items[index] as any;
     expect(typeof config.type).toBe('function');

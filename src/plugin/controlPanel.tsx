@@ -7,11 +7,6 @@ import { isValidHex } from '../utils/themes';
 
 const t = (str: string) => str;
 
-// Explore renders a React element placed in a control row as-is: this gives macro-sections
-// visual sub-groups while controlPanelSections stays a flat list of sections.
-const subsectionHeader = (label: string) => <h4 className="section-header">{label}</h4>;
-const subsectionDivider = () => <hr />;
-
 // Explore also accepts a component as control type: the list is edited as JSON and stored in
 // the form data as a real array; text that does not parse to an array is not saved.
 function ArrayControl({
@@ -82,7 +77,7 @@ export const CUSTOM_D3_FORMAT_OPTIONS: [string, string][] = [
 const config: ControlPanelConfig = {
   controlPanelSections: [
     {
-      label: t('Data'),
+      label: t('Struttura della gerarchia'),
       expanded: true,
       controlSetRows: [
         [
@@ -131,6 +126,106 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [
+          {
+            name: 'idColumn',
+            config: {
+              ...sharedControls.entity,
+              label: t('Node ID Column'),
+              description: t('Column containing the unique identifier of the node.'),
+              validators: [],
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'parent_child',
+            },
+          },
+        ],
+        [
+          {
+            name: 'parentIdColumn',
+            config: {
+              ...sharedControls.entity,
+              label: t('Parent ID Column'),
+              description: t('Column containing the identifier of the parent node.'),
+              validators: [],
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'parent_child',
+            },
+          },
+        ],
+        [
+          {
+            name: 'labelColumn',
+            config: {
+              ...sharedControls.entity,
+              label: t('Node Label Column (Optional)'),
+              description: t('Column containing the display name for the node.'),
+              validators: [],
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'parent_child',
+            },
+          },
+        ],
+      ],
+    },
+    {
+      label: t('Metriche'),
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: 'metrics',
+            config: {
+              ...sharedControls.metrics,
+              label: t('Metrics'),
+              description: t('Metrics to calculate and display for each hierarchy level.'),
+              clearable: true,
+              validators: [],
+            },
+          },
+        ],
+        [
+          {
+            name: 'aggregationMode',
+            config: {
+              type: 'SelectControl',
+              label: t('Rollup Aggregation Function'),
+              default: 'sum',
+              renderTrigger: false,
+              choices: [
+                ['sum', t('SUM (Add Subtotals)')],
+                ['avg', t('AVG (Mean of Children)')],
+                ['min', t('MIN (Minimum Value)')],
+                ['max', t('MAX (Maximum Value)')],
+                ['weighted_avg', t('Weighted Average / Ratio')],
+              ],
+              description: t('Default aggregation algorithm for calculating intermediate parent node subtotals.'),
+            },
+          },
+        ],
+        [
+          {
+            name: 'weightColumn',
+            config: {
+              type: 'TextControl',
+              label: t('Weight Metric'),
+              default: '',
+              renderTrigger: true,
+              description: t(
+                'Metric label used as weight (it must be one of the query metrics). Overrides the automatic volume weights; zero total weight falls back to the plain average.',
+              ),
+              visibility: ({ controls }: { controls: any }) => {
+                const aggregationMode = controls?.aggregationMode?.value;
+                return aggregationMode === 'weighted_avg';
+              },
+            },
+          },
+        ],
+      ],
+    },
+    {
+      label: t('Opzioni delle colonne pivot'),
+      expanded: false,
+      controlSetRows: [
         [
           {
             name: 'combineMetric',
@@ -238,108 +333,37 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [
-          {
-            name: 'pivotTimeDeltaMode',
-            config: {
-              type: 'SelectControl',
-              label: t('Automatic Pivot Delta Mode (Calcolo Delta Nativato Colonne Pivot)'),
-              default: 'none',
-              renderTrigger: true,
-              choices: [
-                ['none', t('None (Nessun delta automatico)')],
-                ['absolute', t('Delta Assoluto (Δ = Valore - Periodo Prec.)')],
-                ['percentage', t('Delta Percentuale (Δ% = (Valore - Periodo Prec.) / Periodo Prec.)')],
-                ['both', t('Entrambi (Δ Assoluto + Δ% Percentuale)')],
-              ],
-              description: t(
-                'Calcola automaticamente il delta temporale rispetto al periodo precedente lungo le colonne pivot senza window functions SQL.',
-              ),
-              visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
-            },
-          },
-          {
-            name: 'pivotTimeDeltaLag',
-            config: {
-              type: 'SelectControl',
-              label: t('Delta Comparison Lag / Offset (Passo Temporale di Confronto)'),
-              default: 1,
-              renderTrigger: true,
-              choices: [
-                [1, t('1 Periodo (Es. Mese precedente / MoM, Anno precedente / YoY)')],
-                [2, t('2 Periodi')],
-                [3, t('3 Periodi (Es. Trimestre precedente / QoQ)')],
-                [12, t('12 Periodi (Es. Stesso mese anno precedente / MoM-YoY)')],
-              ],
-              description: t('Numero di periodi indietro da usare come confronto per il delta.'),
-              visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
-                controls?.pivotTimeDeltaMode?.value !== 'none',
-            },
-          },
-        ],
-        [
-          {
-            name: 'idColumn',
-            config: {
-              ...sharedControls.entity,
-              label: t('Node ID Column'),
-              description: t('Column containing the unique identifier of the node.'),
-              validators: [],
-              visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'parent_child',
-            },
-          },
-        ],
-        [
-          {
-            name: 'parentIdColumn',
-            config: {
-              ...sharedControls.entity,
-              label: t('Parent ID Column'),
-              description: t('Column containing the identifier of the parent node.'),
-              validators: [],
-              visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'parent_child',
-            },
-          },
-        ],
-        [
-          {
-            name: 'labelColumn',
-            config: {
-              ...sharedControls.entity,
-              label: t('Node Label Column (Optional)'),
-              description: t('Column containing the display name for the node.'),
-              validators: [],
-              visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'parent_child',
-            },
-          },
-        ],
-        [
-          {
-            name: 'metrics',
-            config: {
-              ...sharedControls.metrics,
-              label: t('Metrics'),
-              description: t('Metrics to calculate and display for each hierarchy level.'),
-              clearable: true,
-              validators: [],
-            },
-          },
-        ],
-        ['adhoc_filters'],
       ],
     },
     {
-      label: t('Customize'),
+      label: t('Filtri e limiti'),
+      expanded: false,
+      controlSetRows: [
+        ['adhoc_filters'],
+        ['row_limit'],
+        [
+          {
+            name: 'dimensionLimits',
+            config: {
+              type: 'TextAreaControl',
+              language: 'json',
+              label: t('Dimension Limits & Top N (optional)'),
+              default: '',
+              renderTrigger: true,
+              description: t(
+                'JSON array of dimension limit rules per hierarchy level or dimension name. ' +
+                  'Limits the visible branches to the Top N (or Bottom N) and collapses the rest into a synthetic "Others" row with exact metric sum. ' +
+                  'Example: [{"level": 1, "limit": 5, "metric": "volume", "mode": "top", "othersLabel": "Altri ({k})"}]',
+              ),
+            },
+          },
+        ],
+      ],
+    },
+    {
+      label: t('Albero e navigazione'),
       expanded: true,
       controlSetRows: [
-        [subsectionHeader(t('Hierarchy & Tree Display Options'))],
         [
           {
             name: 'initialExpandDepth',
@@ -424,16 +448,6 @@ const config: ControlPanelConfig = {
               description: t('Show search bar to filter hierarchy nodes dynamically.'),
             },
           },
-          {
-            name: 'compactMode',
-            config: {
-              type: 'CheckboxControl',
-              label: t('Compact Row Padding'),
-              renderTrigger: true,
-              default: false,
-              description: t('Use denser row height for high data density.'),
-            },
-          },
         ],
         [
           {
@@ -461,8 +475,12 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [subsectionDivider()],
-        [subsectionHeader(t('Sorting & Conditional Formatting'))],
+      ],
+    },
+    {
+      label: t('Ordinamento'),
+      expanded: false,
+      controlSetRows: [
         [
           {
             name: 'defaultSortColumn',
@@ -530,6 +548,12 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+      ],
+    },
+    {
+      label: t('Evidenziazione dei valori'),
+      expanded: false,
+      controlSetRows: [
         [
           {
             name: 'minMaxDisplayMode',
@@ -619,8 +643,12 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [subsectionDivider()],
-        [subsectionHeader(t('Formatting & Aesthetics'))],
+      ],
+    },
+    {
+      label: t('Formato e tema'),
+      expanded: false,
+      controlSetRows: [
         [
           {
             name: 'numberFormat',
@@ -659,7 +687,18 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [subsectionHeader(t('Theme & Palette'))],
+        [
+          {
+            name: 'compactMode',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Compact Row Padding'),
+              renderTrigger: true,
+              default: false,
+              description: t('Use denser row height for high data density.'),
+            },
+          },
+        ],
         [
           {
             name: 'themeProfile',
@@ -685,10 +724,9 @@ const config: ControlPanelConfig = {
       ],
     },
     {
-      label: t('Comparison & Analysis'),
+      label: t('Confronto nel tempo'),
       expanded: false,
       controlSetRows: [
-        [subsectionHeader(t('Time Comparison & Period-over-Period Variance'))],
         [
           {
             name: 'showVarianceDelta',
@@ -764,8 +802,55 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [subsectionDivider()],
-        [subsectionHeader(t('Goals (optional)'))],
+        [
+          {
+            name: 'pivotTimeDeltaMode',
+            config: {
+              type: 'SelectControl',
+              label: t('Automatic Pivot Delta Mode (Calcolo Delta Nativato Colonne Pivot)'),
+              default: 'none',
+              renderTrigger: true,
+              choices: [
+                ['none', t('None (Nessun delta automatico)')],
+                ['absolute', t('Delta Assoluto (Δ = Valore - Periodo Prec.)')],
+                ['percentage', t('Delta Percentuale (Δ% = (Valore - Periodo Prec.) / Periodo Prec.)')],
+                ['both', t('Entrambi (Δ Assoluto + Δ% Percentuale)')],
+              ],
+              description: t(
+                'Calcola automaticamente il delta temporale rispetto al periodo precedente lungo le colonne pivot senza window functions SQL.',
+              ),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+            },
+          },
+          {
+            name: 'pivotTimeDeltaLag',
+            config: {
+              type: 'SelectControl',
+              label: t('Delta Comparison Lag / Offset (Passo Temporale di Confronto)'),
+              default: 1,
+              renderTrigger: true,
+              choices: [
+                [1, t('1 Periodo (Es. Mese precedente / MoM, Anno precedente / YoY)')],
+                [2, t('2 Periodi')],
+                [3, t('3 Periodi (Es. Trimestre precedente / QoQ)')],
+                [12, t('12 Periodi (Es. Stesso mese anno precedente / MoM-YoY)')],
+              ],
+              description: t('Numero di periodi indietro da usare come confronto per il delta.'),
+              visibility: ({ controls }: { controls: any }) =>
+                controls?.hierarchyType?.value === 'multi_dimension' &&
+                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
+                controls?.pivotTimeDeltaMode?.value !== 'none',
+            },
+          },
+        ],
+      ],
+    },
+    {
+      label: t('Obiettivi, definizioni e calcoli'),
+      expanded: false,
+      controlSetRows: [
         [
           {
             name: 'goals',
@@ -783,8 +868,6 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [subsectionDivider()],
-        [subsectionHeader(t('Metric Semantics (optional)'))],
         [
           {
             name: 'metricDefinitions',
@@ -805,8 +888,6 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [subsectionDivider()],
-        [subsectionHeader(t('Table Calculations (optional)'))],
         [
           {
             name: 'tableCalculations',
@@ -823,8 +904,12 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [subsectionDivider()],
-        [subsectionHeader(t('Privacy (small numbers)'))],
+      ],
+    },
+    {
+      label: t('Privacy sui piccoli numeri'),
+      expanded: false,
+      controlSetRows: [
         [
           {
             name: 'suppressionThreshold',
@@ -880,8 +965,12 @@ const config: ControlPanelConfig = {
             },
           },
         ],
-        [subsectionDivider()],
-        [subsectionHeader(t('Trend (Sparklines)'))],
+      ],
+    },
+    {
+      label: t('Trend e interazioni'),
+      expanded: false,
+      controlSetRows: [
         [
           {
             name: 'showSparklines',
@@ -904,45 +993,6 @@ const config: ControlPanelConfig = {
               renderTrigger: true,
               description: t('Comma separated metrics that get a trend column; empty means every metric.'),
               visibility: ({ controls }: { controls: any }) => Boolean(controls?.showSparklines?.value),
-            },
-          },
-        ],
-        [subsectionDivider()],
-        [subsectionHeader(t('Advanced Rollup Calculations'))],
-        [
-          {
-            name: 'aggregationMode',
-            config: {
-              type: 'SelectControl',
-              label: t('Rollup Aggregation Function'),
-              default: 'sum',
-              renderTrigger: false,
-              choices: [
-                ['sum', t('SUM (Add Subtotals)')],
-                ['avg', t('AVG (Mean of Children)')],
-                ['min', t('MIN (Minimum Value)')],
-                ['max', t('MAX (Maximum Value)')],
-                ['weighted_avg', t('Weighted Average / Ratio')],
-              ],
-              description: t('Default aggregation algorithm for calculating intermediate parent node subtotals.'),
-            },
-          },
-        ],
-        [
-          {
-            name: 'weightColumn',
-            config: {
-              type: 'TextControl',
-              label: t('Weight Metric'),
-              default: '',
-              renderTrigger: true,
-              description: t(
-                'Metric label used as weight (it must be one of the query metrics). Overrides the automatic volume weights; zero total weight falls back to the plain average.',
-              ),
-              visibility: ({ controls }: { controls: any }) => {
-                const aggregationMode = controls?.aggregationMode?.value;
-                return aggregationMode === 'weighted_avg';
-              },
             },
           },
         ],
@@ -975,10 +1025,9 @@ const config: ControlPanelConfig = {
       ],
     },
     {
-      label: t('Performance & Limits'),
+      label: t('Prestazioni'),
       expanded: false,
       controlSetRows: [
-        ['row_limit'],
         [
           {
             name: 'pageSize',
@@ -1000,23 +1049,6 @@ const config: ControlPanelConfig = {
               label: t('Virtualize Above Rows'),
               default: 500,
               renderTrigger: true,
-            },
-          },
-        ],
-        [
-          {
-            name: 'dimensionLimits',
-            config: {
-              type: 'TextAreaControl',
-              language: 'json',
-              label: t('Dimension Limits & Top N (optional)'),
-              default: '',
-              renderTrigger: true,
-              description: t(
-                'JSON array of dimension limit rules per hierarchy level or dimension name. ' +
-                  'Limits the visible branches to the Top N (or Bottom N) and collapses the rest into a synthetic "Others" row with exact metric sum. ' +
-                  'Example: [{"level": 1, "limit": 5, "metric": "volume", "mode": "top", "othersLabel": "Altri ({k})"}]',
-              ),
             },
           },
         ],
