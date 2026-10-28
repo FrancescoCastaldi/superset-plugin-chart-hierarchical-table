@@ -53,6 +53,11 @@ const customHexControl = (name: string, label: string) => ({
   },
 });
 
+// The pivot options only apply in multi-dimension mode once at least one pivot column is chosen.
+const hasPivotColumns = ({ controls }: { controls: any }) =>
+  controls?.hierarchyType?.value === 'multi_dimension' &&
+  Boolean(controls?.columns?.value && controls.columns.value.length > 0);
+
 // The time comparison reads its periods from the values of a single pivot column or general variance delta.
 const isSinglePivot = ({ controls }: { controls: any }) =>
   controls?.hierarchyType?.value === 'multi_dimension' &&
@@ -232,6 +237,7 @@ const config: ControlPanelConfig = {
       label: t('Opzioni delle colonne pivot'),
       expanded: false,
       tabOverride: 'data',
+      visibility: hasPivotColumns,
       controlSetRows: [
         [
           {
@@ -245,8 +251,7 @@ const config: ControlPanelConfig = {
                 'Display all metrics side-by-side under each pivot column value (e.g., [Ott 2026 > Totale | Delta]) instead of separating metrics into distinct column groups.',
               ),
               visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+                hasPivotColumns({ controls }),
             },
           },
           {
@@ -263,8 +268,7 @@ const config: ControlPanelConfig = {
               ],
               description: t('Order in which pivot columns appear across the table.'),
               visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+                hasPivotColumns({ controls }),
             },
           },
         ],
@@ -285,8 +289,7 @@ const config: ControlPanelConfig = {
                 'Posiziona la macro-colonna dei totali orizzontali di riga a sinistra (stile Qlik Sense) o a destra.',
               ),
               visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+                hasPivotColumns({ controls }),
             },
           },
           {
@@ -300,8 +303,7 @@ const config: ControlPanelConfig = {
                 'Testo visualizzato nell intestazione della colonna dei totali orizzontali (es. Totals, Totale Complessivo, Consuntivo).',
               ),
               visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
+                hasPivotColumns({ controls }) &&
                 controls?.pivotRowTotalsPosition?.value &&
                 controls?.pivotRowTotalsPosition?.value !== 'none',
             },
@@ -319,8 +321,7 @@ const config: ControlPanelConfig = {
                 'Mostra la colonna subtotale per ciascun gruppo pivot di primo livello (e nel blocco Totals) affiancata ai singoli valori della seconda dimensione pivot.',
               ),
               visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+                hasPivotColumns({ controls }),
             },
           },
           {
@@ -334,8 +335,7 @@ const config: ControlPanelConfig = {
                 'Testo per la colonna del subtotale di colonna (es. Totale, Subtotale, Somma).',
               ),
               visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
+                hasPivotColumns({ controls }) &&
                 controls?.showPivotColumnSubtotals?.value !== false,
             },
           },
@@ -828,8 +828,7 @@ const config: ControlPanelConfig = {
                 'Calcola automaticamente il delta temporale rispetto al periodo precedente lungo le colonne pivot senza window functions SQL.',
               ),
               visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0),
+                hasPivotColumns({ controls }),
             },
           },
           {
@@ -847,8 +846,7 @@ const config: ControlPanelConfig = {
               ],
               description: t('Numero di periodi indietro da usare come confronto per il delta.'),
               visibility: ({ controls }: { controls: any }) =>
-                controls?.hierarchyType?.value === 'multi_dimension' &&
-                Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
+                hasPivotColumns({ controls }) &&
                 controls?.pivotTimeDeltaMode?.value !== 'none',
             },
           },

@@ -2,7 +2,13 @@ import { isValidElement } from 'react';
 import controlPanel from '../src/plugin/controlPanel';
 
 type Row = unknown[];
-type Section = { label: string; expanded?: boolean; tabOverride?: string; controlSetRows: Row[] };
+type Section = {
+  label: string;
+  expanded?: boolean;
+  tabOverride?: string;
+  visibility?: (props: { controls: Record<string, { value: unknown }> }) => boolean;
+  controlSetRows: Row[];
+};
 
 const sections = controlPanel.controlPanelSections as Section[];
 
@@ -218,6 +224,31 @@ describe('controlPanel layout', () => {
 
   it('shows the query sections in the Data tab and the display sections in Customize', () => {
     expect(sections.map(tabOf)).toEqual(EXPECTED_LAYOUT.map(s => s.tab));
+  });
+
+  // The pivot options mean nothing without pivot columns: Superset hides the whole section then.
+  describe('pivot options section visibility', () => {
+    const pivotSection = (): Section => {
+      const found = sections.find(s => s.label === 'Opzioni delle colonne pivot');
+      if (!found?.visibility) throw new Error('Pivot options section has no visibility rule');
+      return found;
+    };
+    const visibleWith = (hierarchyType: string, columns: unknown[]): boolean =>
+      pivotSection().visibility!({
+        controls: { hierarchyType: { value: hierarchyType }, columns: { value: columns } },
+      });
+
+    it('shows the section when pivot columns are chosen in multi-dimension mode', () => {
+      expect(visibleWith('multi_dimension', ['anno'])).toBe(true);
+    });
+
+    it('hides the section when no pivot column is chosen', () => {
+      expect(visibleWith('multi_dimension', [])).toBe(false);
+    });
+
+    it('hides the section in parent-child mode even if pivot columns are stored', () => {
+      expect(visibleWith('parent_child', ['anno'])).toBe(false);
+    });
   });
 
   it('opens only the essential sections by default', () => {
