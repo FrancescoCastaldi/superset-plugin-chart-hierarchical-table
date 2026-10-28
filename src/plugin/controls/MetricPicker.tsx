@@ -1,5 +1,6 @@
-import { CSSProperties, ComponentType, useId, useState } from 'react';
+import { CSSProperties, ComponentType, useState } from 'react';
 import { EDITOR_TEXTS, joinList, splitList } from './ruleList';
+import { useUid } from './useUid';
 
 // Picks metric names from the ones chosen in the chart, instead of typing them in a text box.
 // The value stays what it was: one name, or names separated by commas ("casi, ricoveri").
@@ -34,7 +35,7 @@ export function MetricPicker({
   description,
   metricOptions = [],
 }: MetricPickerProps) {
-  const uid = useId();
+  const uid = useUid('picker');
   const [typed, setTyped] = useState('');
   const listId = `${uid}-metrics`;
   const names = splitList(value);

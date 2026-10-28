@@ -1,4 +1,4 @@
-import { CSSProperties, ComponentType, useEffect, useId, useState } from 'react';
+import { CSSProperties, ComponentType, useEffect, useState } from 'react';
 import {
   EDITOR_TEXTS,
   FieldSpec,
@@ -15,6 +15,7 @@ import {
   setField,
   validateRow,
 } from './ruleList';
+import { useUid } from './useUid';
 
 // Edits a list of rules as rows instead of a JSON text box. The value it reads and writes has the
 // same shape as before (JSON text or an array, see the spec), and a JSON view stays available for
@@ -153,7 +154,7 @@ export function RuleListEditor({
   metricOptions = [],
   dimensionOptions = [],
 }: RuleListEditorProps) {
-  const uid = useId();
+  const uid = useUid('rule');
   const parsed = parseList(value);
   const [jsonView, setJsonView] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);

@@ -1,7 +1,8 @@
-import { CSSProperties, useId } from 'react';
+import { CSSProperties } from 'react';
 import { NumberInput } from './RuleListEditor';
 import { isFilled, validateRow } from './ruleList';
 import { GOALS_SPEC, METRIC_DEFINITIONS_SPEC } from './ruleSpecs';
+import { useUid } from './useUid';
 import {
   Change,
   DEFAULT_GOAL_DIRECTION,
@@ -114,7 +115,7 @@ function Switch({
 }
 
 export function MetricSettingsCards({ inputs, actions, label, description }: MetricSettingsCardsProps) {
-  const uid = useId();
+  const uid = useUid('metric');
   const settings = buildMetricSettings(inputs);
 
   const apply = (metric: string, change: Change) => {
