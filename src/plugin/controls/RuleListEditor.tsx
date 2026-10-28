@@ -50,14 +50,16 @@ const toNumber = (text: string): number | undefined => {
 };
 
 // Keeps what is being typed (such as "1." or "-") while only a finished number reaches the value.
-function NumberInput({
+export function NumberInput({
   id,
   value,
   onCommit,
+  disabled = false,
 }: {
   id: string;
   value: unknown;
   onCommit: (value: number | undefined) => void;
+  disabled?: boolean;
 }) {
   const stored = isFilled(value) ? String(value) : '';
   const [draft, setDraft] = useState(stored);
@@ -78,6 +80,7 @@ function NumberInput({
         type="text"
         inputMode="decimal"
         value={draft}
+        disabled={disabled}
         aria-invalid={invalid}
         onChange={event => {
           const text = event.target.value;
