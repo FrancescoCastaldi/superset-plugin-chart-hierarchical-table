@@ -2,7 +2,7 @@ import { isValidElement } from 'react';
 import controlPanel from '../src/plugin/controlPanel';
 
 type Row = unknown[];
-type Section = { label: string; expanded?: boolean; controlSetRows: Row[] };
+type Section = { label: string; expanded?: boolean; tabOverride?: string; controlSetRows: Row[] };
 
 const sections = controlPanel.controlPanelSections as Section[];
 
@@ -50,19 +50,27 @@ const BASELINE_CONTROL_NAMES = [
 ];
 
 // The control panel is grouped by topic: one section per subject, in the order the user meets them.
-const EXPECTED_LAYOUT: { label: string; expanded: boolean; controls: string[] }[] = [
+const EXPECTED_LAYOUT: {
+  label: string;
+  tab: 'data' | 'customize';
+  expanded: boolean;
+  controls: string[];
+}[] = [
   {
     label: 'Struttura della gerarchia',
+    tab: 'data',
     expanded: true,
     controls: ['hierarchyType', 'groupby', 'columns', 'idColumn', 'parentIdColumn', 'labelColumn'],
   },
   {
     label: 'Metriche',
+    tab: 'data',
     expanded: true,
     controls: ['metrics', 'aggregationMode', 'weightColumn'],
   },
   {
     label: 'Opzioni delle colonne pivot',
+    tab: 'data',
     expanded: false,
     controls: [
       'combineMetric',
@@ -75,11 +83,13 @@ const EXPECTED_LAYOUT: { label: string; expanded: boolean; controls: string[] }[
   },
   {
     label: 'Filtri e limiti',
+    tab: 'data',
     expanded: false,
     controls: ['adhoc_filters', 'row_limit', 'dimensionLimits'],
   },
   {
     label: 'Albero e navigazione',
+    tab: 'customize',
     expanded: true,
     controls: [
       'initialExpandDepth',
@@ -94,11 +104,13 @@ const EXPECTED_LAYOUT: { label: string; expanded: boolean; controls: string[] }[
   },
   {
     label: 'Ordinamento',
+    tab: 'customize',
     expanded: false,
     controls: ['defaultSortColumn', 'defaultSortOrder', 'nullHandling'],
   },
   {
     label: 'Evidenziazione dei valori',
+    tab: 'customize',
     expanded: false,
     controls: [
       'minMaxDisplayMode',
@@ -110,6 +122,7 @@ const EXPECTED_LAYOUT: { label: string; expanded: boolean; controls: string[] }[
   },
   {
     label: 'Formato e tema',
+    tab: 'customize',
     expanded: false,
     controls: [
       'numberFormat',
@@ -124,6 +137,7 @@ const EXPECTED_LAYOUT: { label: string; expanded: boolean; controls: string[] }[
   },
   {
     label: 'Confronto nel tempo',
+    tab: 'customize',
     expanded: false,
     controls: [
       'showVarianceDelta',
@@ -136,11 +150,13 @@ const EXPECTED_LAYOUT: { label: string; expanded: boolean; controls: string[] }[
   },
   {
     label: 'Obiettivi, definizioni e calcoli',
+    tab: 'customize',
     expanded: false,
     controls: ['goals', 'metricDefinitions', 'tableCalculations'],
   },
   {
     label: 'Privacy sui piccoli numeri',
+    tab: 'customize',
     expanded: false,
     controls: [
       'suppressionThreshold',
@@ -151,11 +167,13 @@ const EXPECTED_LAYOUT: { label: string; expanded: boolean; controls: string[] }[
   },
   {
     label: 'Trend e interazioni',
+    tab: 'customize',
     expanded: false,
     controls: ['showSparklines', 'sparklineMetrics', 'emit_filter', 'enableContextMenu'],
   },
   {
     label: 'Prestazioni',
+    tab: 'customize',
     expanded: false,
     controls: ['pageSize', 'virtualizationThreshold'],
   },
@@ -174,6 +192,21 @@ const namesIn = (section: Section): string[] =>
 
 const allNames = (): string[] => sections.flatMap(namesIn);
 
+// Same rule as Superset 6.1.0 (ControlPanelsContainer): a section goes to the Data tab when it is
+// forced there or holds an object control that is not renderTrigger. String controls such as
+// 'row_limit' and 'adhoc_filters' do not count. Every other section goes to the Customize tab.
+const tabOf = (section: Section): 'data' | 'customize' => {
+  if (section.tabOverride === 'data') return 'data';
+  const forcesData = section.controlSetRows.flat().some(item => {
+    if (!item || typeof item !== 'object' || isValidElement(item) || !('config' in item)) {
+      return false;
+    }
+    const config = (item as { config?: Record<string, unknown> }).config;
+    return Boolean(config) && (!config?.renderTrigger || config?.tabOverride === 'data');
+  });
+  return forcesData ? 'data' : 'customize';
+};
+
 describe('controlPanel layout', () => {
   it('exposes the thirteen topic sections in canonical order', () => {
     expect(sections.map(s => s.label)).toEqual(EXPECTED_LAYOUT.map(s => s.label));
@@ -181,6 +214,10 @@ describe('controlPanel layout', () => {
 
   it('places every control in its topic section, in order', () => {
     expect(sections.map(namesIn)).toEqual(EXPECTED_LAYOUT.map(s => s.controls));
+  });
+
+  it('shows the query sections in the Data tab and the display sections in Customize', () => {
+    expect(sections.map(tabOf)).toEqual(EXPECTED_LAYOUT.map(s => s.tab));
   });
 
   it('opens only the essential sections by default', () => {

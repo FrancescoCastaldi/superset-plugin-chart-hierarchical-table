@@ -75,10 +75,15 @@ export const CUSTOM_D3_FORMAT_OPTIONS: [string, string][] = [
 ];
 
 const config: ControlPanelConfig = {
+  // Superset 6.1.0 shows a section in the Data tab when it is pinned there or holds a control
+  // without renderTrigger; only 'data' can be forced. The query sections are pinned so that
+  // they stay together; the display sections must keep renderTrigger on every control to stay
+  // in Customize (guarded by test/controlPanelLayout.test.ts).
   controlPanelSections: [
     {
       label: t('Struttura della gerarchia'),
       expanded: true,
+      tabOverride: 'data',
       controlSetRows: [
         [
           {
@@ -170,6 +175,7 @@ const config: ControlPanelConfig = {
     {
       label: t('Metriche'),
       expanded: true,
+      tabOverride: 'data',
       controlSetRows: [
         [
           {
@@ -225,6 +231,7 @@ const config: ControlPanelConfig = {
     {
       label: t('Opzioni delle colonne pivot'),
       expanded: false,
+      tabOverride: 'data',
       controlSetRows: [
         [
           {
@@ -338,6 +345,7 @@ const config: ControlPanelConfig = {
     {
       label: t('Filtri e limiti'),
       expanded: false,
+      tabOverride: 'data',
       controlSetRows: [
         ['adhoc_filters'],
         ['row_limit'],
