@@ -1,6 +1,7 @@
 import controlPanel, { CUSTOM_D3_FORMAT_OPTIONS } from '../src/plugin/controlPanel';
 import { HINT_PREFIX, HINT_TEXTS } from '../src/plugin/controls/hints';
 import { EDITOR_TEXTS, PARSE_ERRORS } from '../src/plugin/controls/ruleList';
+import { METRIC_SETTINGS_TEXTS } from '../src/plugin/controls/metricSettings';
 import { RULE_LIST_SPECS } from '../src/plugin/controls/ruleSpecs';
 
 type Choice = [unknown, string];
@@ -47,6 +48,9 @@ const visibleTexts = (): { where: string; text: string }[] => {
     add(`editor.${key}`, typeof text === 'function' ? text(2 as never) : text),
   );
   Object.entries(PARSE_ERRORS).forEach(([key, text]) => add(`parse.${key}`, text));
+  Object.entries(METRIC_SETTINGS_TEXTS).forEach(([key, text]) =>
+    add(`metricSettings.${key}`, typeof text === 'function' ? text(40) : text),
+  );
   Object.entries(RULE_LIST_SPECS).forEach(([name, spec]) => {
     add(`${name}.addLabel`, spec.addLabel);
     add(`${name}.emptyText`, spec.emptyText);

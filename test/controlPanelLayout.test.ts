@@ -81,7 +81,7 @@ const EXPECTED_LAYOUT: {
     label: 'Metriche',
     tab: 'data',
     expanded: true,
-    controls: ['metrics', 'aggregationMode', 'weightColumn'],
+    controls: ['metrics', 'aggregationMode', 'weightColumn', 'metricSettings'],
   },
   {
     label: 'Opzioni delle colonne pivot',
@@ -301,7 +301,7 @@ describe('controlPanel layout', () => {
 
 type ControlItem = { name?: string; config?: Record<string, unknown> } | string;
 
-const ADDED_IN_PHASE_2 = ['settingsLevel'];
+const ADDED_IN_PHASE_2 = ['settingsLevel', 'metricSettings'];
 
 const controlItems = (): ControlItem[] =>
   sections

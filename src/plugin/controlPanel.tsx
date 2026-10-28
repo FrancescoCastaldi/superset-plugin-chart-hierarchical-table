@@ -6,6 +6,7 @@ import {
 import { isValidHex } from '../utils/themes';
 import { SETTINGS_LEVEL, withSettingsLevel } from './controlVisibility';
 import { hintControl } from './controls/InlineHint';
+import { MetricSettingsCards, metricSettingsProps } from './controls/MetricSettingsCards';
 import { makeMetricPicker } from './controls/MetricPicker';
 import { editorOptionsFromState, makeRuleListControl } from './controls/RuleListEditor';
 import {
@@ -261,6 +262,24 @@ const config: ControlPanelConfig = {
           },
         ],
         [hintControl('hint_weight', weightHint)],
+        [
+          {
+            name: 'metricSettings',
+            config: {
+              type: MetricSettingsCards,
+              label: t('Impostazioni per metrica'),
+              // The card holds no value: it edits the goals, definitions, sparkline, protection
+              // and weight controls, so it only needs the state of the chart to stay up to date.
+              default: null,
+              renderTrigger: true,
+              shouldMapStateToProps: () => true,
+              mapStateToProps: metricSettingsProps,
+              description: t(
+                'Una scheda per ogni metrica con obiettivo, sparkline, protezione dai piccoli numeri e peso, più formato e polarità se la metrica ha una definizione. Scrive negli stessi campi delle altre sezioni.',
+              ),
+            },
+          },
+        ],
       ],
     },
     {

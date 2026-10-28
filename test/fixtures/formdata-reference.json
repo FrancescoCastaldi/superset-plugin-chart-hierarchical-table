@@ -59,6 +59,7 @@
   "sparklineMetrics": "revenue, prenotazioni",
   "aggregationMode": "weighted_avg",
   "weightColumn": "prenotazioni",
+  "metricSettings": null,
   "emit_filter": false,
   "enableContextMenu": false,
   "pageSize": 250,

@@ -19,6 +19,7 @@ exports[`controlPanel characterization before the UX refactor keeps the current 
       "metrics",
       "aggregationMode",
       "weightColumn",
+      "metricSettings",
     ],
     "section": "Metriche",
   },
