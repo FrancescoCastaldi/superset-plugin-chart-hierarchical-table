@@ -48,17 +48,17 @@ Le sezioni diventano argomenti. Nessun nome di controllo cambia, cambia solo dov
 
 | Scheda | Sezione nuova | Contenuto (nomi dei controlli esistenti) | Aperta di default |
 |:---|:---|:---|:---:|
-| Data | 1. Struttura della gerarchia | `hierarchyType`, `groupby`, `idColumn`, `parentIdColumn`, `labelColumn` | si |
+| Data | 1. Struttura della gerarchia | `hierarchyType`, `groupby`, `columns`, `idColumn`, `parentIdColumn`, `labelColumn` | si |
 | Data | 2. Metriche | `metrics`, `aggregationMode`, `weightColumn`, nuovo pannello "Impostazioni per metrica" | si |
-| Data | 3. Colonne pivot | `columns`, `combineMetric`, `pivotSortOrder`, `pivotRowTotalsPosition`, `pivotRowTotalsLabel`, `showPivotColumnSubtotals`, `pivotColumnSubtotalLabel` | solo se `columns` valorizzato |
+| Data | 3. Opzioni delle colonne pivot | `combineMetric`, `pivotSortOrder`, `pivotRowTotalsPosition`, `pivotRowTotalsLabel`, `showPivotColumnSubtotals`, `pivotColumnSubtotalLabel` | no, e nascosta finche non si scelgono colonne pivot (regola `visibility` di sezione) |
 | Data | 4. Filtri e limiti | `adhoc_filters`, `row_limit`, `dimensionLimits` (editor a righe) | no |
 | Customize | 5. Albero e navigazione | `initialExpandDepth`, `valueDisplayMode`, `showSubtotals`, `showGrandTotal`, `enableSearch`, `enableHierarchicalSort`, `stickyHeader`, `enableExport` | si |
 | Customize | 6. Ordinamento | `defaultSortColumn`, `defaultSortOrder`, `nullHandling` | no |
-| Customize | 7. Evidenziazione valori | `minMaxDisplayMode`, `minMaxScope`, `heatmapPalette`, `divergingMidpoint`, `conditionalFormatting` (editor a righe) | no |
+| Customize | 7. Evidenziazione dei valori | `minMaxDisplayMode`, `minMaxScope`, `heatmapPalette`, `divergingMidpoint`, `conditionalFormatting` (editor a righe) | no |
 | Customize | 8. Formato e tema | `numberFormat`, `currencySymbol`, `stripedRows`, `compactMode`, `themeProfile`, tre colori custom | no |
 | Customize | 9. Confronto nel tempo | `showVarianceDelta`, `timeGrain`, `referencePeriod`, `comparisonType`, `pivotTimeDeltaMode`, `pivotTimeDeltaLag` | no |
 | Customize | 10. Obiettivi, definizioni e calcoli | `goals`, `metricDefinitions`, `tableCalculations` (editor a righe) | no |
-| Customize | 11. Privacy dati piccoli | `suppressionThreshold`, `suppressionMetrics`, `complementarySuppression`, `suppressionLabel` | no |
+| Customize | 11. Privacy sui piccoli numeri | `suppressionThreshold`, `suppressionMetrics`, `complementarySuppression`, `suppressionLabel` | no |
 | Customize | 12. Trend e interazioni | `showSparklines`, `sparklineMetrics`, `emit_filter`, `enableContextMenu` | no |
 | Customize | 13. Prestazioni | `pageSize`, `virtualizationThreshold` | no |
 
@@ -149,7 +149,7 @@ Convenzione: percorsi relativi alla radice del plugin. Comando test singolo: `np
 
 ### Fase 1: Riorganizzazione (solo spostamenti e rinomine di etichette)
 
-**Task 1.1: Estrarre helper di sezione.** Creare `src/plugin/controlSections.ts` con funzioni `section(label, rows, options)` per ridurre la ripetizione; nessun cambio di comportamento. Test: lo snapshot del Task 0.1 resta identico.
+**Task 1.1: Estrarre helper di sezione. NON ESEGUITO.** Le 13 sezioni sono letterali omogenei e un helper `section()` non avrebbe ridotto la complessita; l'unica ripetizione reale (la condizione "ci sono colonne pivot", 8 volte) e stata risolta con `hasPivotColumns` nel Task 1.2b.
 
 **Task 1.2: Spostare le 13 sezioni della tabella 3.1.** Riordinare in `controlPanel.tsx`. Test fallente: nuovo test in `controlPanelLayout.test.ts` che verifica i titoli delle 13 sezioni e che ogni nome di `BASELINE_CONTROL_NAMES` compaia una sola volta. Verifica: passa dopo lo spostamento; lo snapshot dell'ordine cambia e viene aggiornato consapevolmente. Commit: `refactor(control-panel): regroup controls into 13 topic sections`.
 
@@ -241,3 +241,14 @@ Convenzione: percorsi relativi alla radice del plugin. Comando test singolo: `np
 - Task 0.4 (fatto, commit `a219456`): fixture `test/fixtures/formdata-reference.json` con un valore non predefinito per tutti i 61 controlli, e test `test/formDataReference.test.ts` che fissa il risultato di `resolveTransformOptions`. Le funzioni di normalizzazione accettano sia testo JSON sia array, ma i controlli attuali salvano `goals`, `metricDefinitions`, `tableCalculations`, `dimensionLimits` come TESTO e `conditionalFormatting` come ARRAY: gli editor devono mantenere esattamente questi tipi.
 - Vincoli per gli editor emersi dai normalizzatori: `tableCalculations` legge la chiave `display` e la rinomina `displayMode`; `weightColumn` ha effetto solo con `aggregationMode` uguale a `weighted_avg`; `sparklineMetrics` e `suppressionMetrics` sono stringhe separate da virgola. Esiste anche una chiave `enableWhatIf` letta da `resolveTransformOptions` ma senza controllo nel pannello: da decidere se esporla (domanda aperta D7).
 - Task 5.1 (prova finale): da fare.
+
+### Fase 1 completata il 2026-10-28 (branch `feat/ux-control-panel`)
+
+Suite finale: 45 suite, 492 test, 18 snapshot, tutti verdi. `tsc --noEmit` pulito, `npm run build` riuscito (`dist/` e ignorato da git). ESLint non e installato in questo ambiente, quindi `npm run lint` non e stato eseguito.
+
+- Task 1.2 (`16f7d8a`): 61 controlli ricollocati in 13 sezioni per argomento, senza modificare tipo, default, `renderTrigger` o `visibility` di nessuno (snapshot del contratto invariato). Rimossi gli helper dei sottogruppi `subsectionHeader` e `subsectionDivider`. Il test `test/conditionalFormatting.test.ts` cercava il controllo nel vecchio sottogruppo: aggiornato.
+- Task 1.3 (`c353151`): `tabOverride: 'data'` sulle sezioni 1-4. Nuovo test `tabOf` che replica la regola di Superset 6.1.0 e fa fallire la suite se una sezione Customize riceve un controllo senza `renderTrigger`. Nota: il tipo `TabOverride` di Superset dichiara anche `'customize'`, ma il container 6.1.0 non lo legge mai, quindi non ha effetto.
+- Task 1.2b (`cb50521`): helper `hasPivotColumns` al posto di 8 condizioni ripetute, e `visibility` di sezione che nasconde "Opzioni delle colonne pivot" finche non si scelgono colonne pivot in modalita per dimensioni. Per questo `columns` e rimasta nella sezione 1 e non nella 3.
+- Task 1.4 (`e2bd3f7`): tutte le etichette, descrizioni e voci di scelta in italiano, senza emoji ne doppie lingue; aggiunte le descrizioni mancanti a `nullHandling`, `pageSize` e `virtualizationThreshold`. Verificato che le chiavi delle 70 scelte e i 8 formati D3 siano identici a prima, quindi i chart salvati non cambiano. Nuovo test `test/controlPanelLanguage.test.ts` (etichetta e descrizione su ogni controllo, etichette di al massimo 60 caratteri, niente emoji, niente trattini lunghi o doppi, niente parole inglesi comuni).
+- Un errore di procedura corretto: il commit del Task 1.2 e partito con un test rosso (`conditionalFormatting`), perche avevo concatenato il commit ai test senza condizionarlo all'esito. Il commit non era stato pushato ed e stato corretto con un amend. Da allora ogni commit e condizionato all'esito della suite.
+- Non fatto: la prova visiva in un'istanza Superset reale (resta al Task 5.1).
