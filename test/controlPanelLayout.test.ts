@@ -183,3 +183,44 @@ describe('controlPanel layout', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 });
+
+type ControlItem = { name?: string; config?: Record<string, unknown> } | string;
+
+const controlItems = (): ControlItem[] =>
+  sections
+    .flatMap(s => s.controlSetRows.flat())
+    .filter((item): item is ControlItem => controlName(item) !== null);
+
+const describeType = (type: unknown): string => {
+  if (typeof type === 'function') return `component:${type.name}`;
+  return String(type ?? 'inherited');
+};
+
+describe('controlPanel characterization before the UX refactor', () => {
+  // Order and grouping change on purpose in the regrouping phase: update this snapshot there.
+  it('keeps the current section and control order', () => {
+    const order = sections.map(section => ({
+      section: section.label,
+      controls: namesIn(section),
+    }));
+    expect(order).toMatchSnapshot();
+  });
+
+  // Location independent: whatever section a control moves to, its contract must not change.
+  it('keeps the type, default and renderTrigger of every control', () => {
+    const contract = controlItems()
+      .map(item => {
+        if (typeof item === 'string') return { name: item };
+        const config = item.config ?? {};
+        return {
+          name: item.name,
+          type: describeType(config.type),
+          default: config.default === undefined ? 'inherited' : config.default,
+          renderTrigger: config.renderTrigger ?? 'inherited',
+          hasVisibility: typeof config.visibility === 'function',
+        };
+      })
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    expect(contract).toMatchSnapshot();
+  });
+});
