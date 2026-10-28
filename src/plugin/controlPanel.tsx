@@ -4,6 +4,9 @@ import {
   D3_FORMAT_OPTIONS,
 } from '@superset-ui/chart-controls';
 import { isValidHex } from '../utils/themes';
+import { SETTINGS_LEVEL, withSettingsLevel } from './controlVisibility';
+import { hintControl } from './controls/InlineHint';
+import { sparklineHint, suppressionHint, weightHint } from './controls/hints';
 
 const t = (str: string) => str;
 
@@ -90,6 +93,25 @@ const config: ControlPanelConfig = {
       expanded: true,
       tabOverride: 'data',
       controlSetRows: [
+        [
+          {
+            name: SETTINGS_LEVEL,
+            config: {
+              type: 'SelectControl',
+              label: t('Livello impostazioni'),
+              default: 'basic',
+              renderTrigger: true,
+              clearable: false,
+              choices: [
+                ['basic', t('Base (impostazioni essenziali)')],
+                ['advanced', t('Avanzato (tutte le opzioni)')],
+              ],
+              description: t(
+                'Base mostra le impostazioni essenziali, Avanzato tutte le opzioni. Le opzioni avanzate già impostate restano sempre visibili.',
+              ),
+            },
+          },
+        ],
         [
           {
             name: 'hierarchyType',
@@ -245,6 +267,7 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [hintControl('hint_weight', weightHint)],
       ],
     },
     {
@@ -979,6 +1002,7 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [hintControl('hint_suppression', suppressionHint)],
         [
           {
             name: 'complementarySuppression',
@@ -1040,6 +1064,7 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [hintControl('hint_sparklines', sparklineHint)],
         [
           {
             name: 'emit_filter',
@@ -1106,5 +1131,7 @@ const config: ControlPanelConfig = {
     },
   ],
 };
+
+withSettingsLevel(config.controlPanelSections);
 
 export default config;

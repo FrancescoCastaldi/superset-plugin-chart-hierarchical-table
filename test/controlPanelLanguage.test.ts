@@ -1,4 +1,5 @@
 import controlPanel, { CUSTOM_D3_FORMAT_OPTIONS } from '../src/plugin/controlPanel';
+import { HINT_PREFIX, HINT_TEXTS } from '../src/plugin/controls/hints';
 
 type Choice = [unknown, string];
 type Config = {
@@ -15,7 +16,8 @@ const controls = (): Control[] =>
     .filter(
       (item): item is Control =>
         Boolean(item) && typeof item === 'object' && 'config' in (item as object),
-    );
+    )
+    .filter(({ name }) => !name.startsWith(HINT_PREFIX));
 
 // Every text the user reads in the panel, with the control it belongs to.
 const visibleTexts = (): { where: string; text: string }[] => {
@@ -36,6 +38,9 @@ const visibleTexts = (): { where: string; text: string }[] => {
     );
   });
   CUSTOM_D3_FORMAT_OPTIONS.forEach(([value, label]) => add(`numberFormat.format[${value}]`, label));
+  Object.entries(HINT_TEXTS).forEach(([key, text]) =>
+    add(`hint.${key}`, typeof text === 'function' ? text(2) : text),
+  );
   return texts;
 };
 

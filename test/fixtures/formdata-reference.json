@@ -1,4 +1,5 @@
 {
+  "settingsLevel": "advanced",
   "hierarchyType": "multi_dimension",
   "groupby": ["area", "reparto"],
   "columns": ["anno"],

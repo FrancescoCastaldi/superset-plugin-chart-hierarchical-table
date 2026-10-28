@@ -5,6 +5,7 @@ jest.mock('@superset-ui/core', () => ({
 
 import controlPanel from '../src/plugin/controlPanel';
 import { resolveTransformOptions } from '../src/plugin/formDataOptions';
+import { HINT_PREFIX } from '../src/plugin/controls/hints';
 import reference from './fixtures/formdata-reference.json';
 
 type Section = { controlSetRows: unknown[][] };
@@ -19,7 +20,7 @@ const panelControlNames = (): string[] =>
       }
       return null;
     })
-    .filter((n): n is string => n !== null);
+    .filter((n): n is string => n !== null && !n.startsWith(HINT_PREFIX));
 
 // Synthetic form data that sets every control to a non-default value. The resolved options must
 // stay identical through the control panel UX refactor: saved charts keep their keys and formats.

@@ -1,5 +1,6 @@
 import { isValidElement } from 'react';
 import controlPanel from '../src/plugin/controlPanel';
+import { HINT_PREFIX } from '../src/plugin/controls/hints';
 
 type Row = unknown[];
 type Section = {
@@ -66,7 +67,15 @@ const EXPECTED_LAYOUT: {
     label: 'Struttura della gerarchia',
     tab: 'data',
     expanded: true,
-    controls: ['hierarchyType', 'groupby', 'columns', 'idColumn', 'parentIdColumn', 'labelColumn'],
+    controls: [
+      'settingsLevel',
+      'hierarchyType',
+      'groupby',
+      'columns',
+      'idColumn',
+      'parentIdColumn',
+      'labelColumn',
+    ],
   },
   {
     label: 'Metriche',
@@ -193,8 +202,12 @@ const controlName = (item: unknown): string | null => {
   return null;
 };
 
+// Hint controls only show a message; they are not settings and carry no chart value.
 const namesIn = (section: Section): string[] =>
-  section.controlSetRows.flat().map(controlName).filter((n): n is string => n !== null);
+  section.controlSetRows
+    .flat()
+    .map(controlName)
+    .filter((n): n is string => n !== null && !n.startsWith(HINT_PREFIX));
 
 const allNames = (): string[] => sections.flatMap(namesIn);
 
@@ -288,10 +301,15 @@ describe('controlPanel layout', () => {
 
 type ControlItem = { name?: string; config?: Record<string, unknown> } | string;
 
+const ADDED_IN_PHASE_2 = ['settingsLevel'];
+
 const controlItems = (): ControlItem[] =>
   sections
     .flatMap(s => s.controlSetRows.flat())
-    .filter((item): item is ControlItem => controlName(item) !== null);
+    .filter((item): item is ControlItem => {
+      const name = controlName(item);
+      return name !== null && !name.startsWith(HINT_PREFIX) && !ADDED_IN_PHASE_2.includes(name);
+    });
 
 const describeType = (type: unknown): string => {
   if (typeof type === 'function') return `component:${type.name}`;
@@ -309,7 +327,7 @@ describe('controlPanel characterization before the UX refactor', () => {
   });
 
   // Location independent: whatever section a control moves to, its contract must not change.
-  it('keeps the type, default and renderTrigger of every control', () => {
+  it('keeps the type, default and renderTrigger of every pre-existing control', () => {
     const contract = controlItems()
       .map(item => {
         if (typeof item === 'string') return { name: item };
@@ -319,7 +337,6 @@ describe('controlPanel characterization before the UX refactor', () => {
           type: describeType(config.type),
           default: config.default === undefined ? 'inherited' : config.default,
           renderTrigger: config.renderTrigger ?? 'inherited',
-          hasVisibility: typeof config.visibility === 'function',
         };
       })
       .sort((a, b) => String(a.name).localeCompare(String(b.name)));
