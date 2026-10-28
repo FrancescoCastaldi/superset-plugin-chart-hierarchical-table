@@ -230,7 +230,7 @@ Convenzione: percorsi relativi alla radice del plugin. Comando test singolo: `np
 | D4 | Delta: badge e colonne pivot restano separati o si unificano? | DEFAULT, da confermare: separati con avviso su quale usare. Unificazione solo dopo verifica dei chart in uso. |
 | D5 | Aggiungere `jsdom` e `@testing-library/react` come `devDependencies`? | DEFAULT, da confermare: si, solo dipendenze di sviluppo. |
 | D7 | Esporre nel pannello la funzione What-If (`enableWhatIf`), oggi attivabile solo da `form_data` e senza controllo? | DA DECIDERE: aggiungerla in "Trend e interazioni" come casella, oppure lasciarla nascosta. |
-| D8 | La sezione "Privacy sui piccoli numeri" deve restare nascosta in modalita Base? Per i dati sanitari la soppressione dei piccoli numeri e una protezione, e oggi si scopre solo passando ad Avanzato. | DA DECIDERE. Consiglio: mostrarla anche in Base con la soglia a 0 (cioe spenta), cosi chi pubblica dati sanitari la trova. Costo: +1 controllo visibile in Base. |
+| D8 | La sezione "Privacy sui piccoli numeri" resta nascosta in modalita Base? | DECISA: no, la soglia `suppressionThreshold` e un controllo Base (sedicesimo). Le altre opzioni della sezione compaiono quando la soglia e maggiore di 0. |
 | D6 | Dove pubblicare | DECISA: GitHub (`origin`, `main`) e aggiornamento del mirror in `superset-extensions` (che va anche su Bitbucket). Nessun repo Bitbucket dedicato. |
 
 ## 10. Registro dei risultati (da compilare durante l'esecuzione)
@@ -266,3 +266,5 @@ Suite finale: 47 suite, 524 test, 18 snapshot, tutti verdi. `tsc --noEmit` pulit
 - Snapshot: il contratto dei controlli preesistenti (tipo, default, `renderTrigger`) e identico a prima; ho tolto `hasVisibility` dallo snapshot perche la Fase 2 lo cambia di proposito, ed e coperto da test di comportamento. Nell'ordine compare solo `settingsLevel`.
 - Verificato sul codice di Superset 6.1.0: la `visibility` di un controllo riceve `(props, controlData)` con `props.controls`; quella di sezione riceve `(props, controls)`; `mapStateToProps` riceve lo stato di Explore (che ha `controls`).
 - Non fatto: prova visiva in un Superset reale (Task 5.1). Cosa in particolare guardare li: aspetto degli avvisi in tema scuro, e che il passaggio Base/Avanzato non richieda un nuovo "Aggiorna grafico".
+
+Aggiornamento D8 (commit `a47ef3f`): la lista Base passa da 15 a 16 controlli aggiungendo `suppressionThreshold`; su un chart nuovo si vedono 17 controlli (16 piu il selettore del livello) e le sezioni visibili in Base diventano 8, perche "Privacy sui piccoli numeri" resta visibile. Suite: 47 suite, 525 test.
