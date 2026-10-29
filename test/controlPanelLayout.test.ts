@@ -156,6 +156,7 @@ const EXPECTED_LAYOUT: {
     expanded: false,
     controls: [
       'showVarianceDelta',
+      'showVarianceBadges',
       'timeGrain',
       'referencePeriod',
       'comparisonType',

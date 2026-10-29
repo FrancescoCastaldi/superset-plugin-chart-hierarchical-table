@@ -433,6 +433,7 @@ export interface HierarchicalTableTransformedProps {
   emitFilter: boolean;
   enableContextMenu?: boolean;
   showVarianceDelta?: boolean;
+  showVarianceBadges?: boolean;
   goals?: MetricGoal[];
   conditionalFormatting?: ConditionalFormattingRule[];
   theme?: ResolvedTheme;

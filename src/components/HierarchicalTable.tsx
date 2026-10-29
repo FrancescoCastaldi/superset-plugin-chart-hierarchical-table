@@ -130,6 +130,7 @@ interface HierarchicalTableRowProps {
   dataBarZeroAxis?: boolean;
   theme: ResolvedTheme;
   showVarianceDelta?: boolean;
+  showVarianceBadges?: boolean;
   whatIfBaseline?: WhatIfBaseline;
   onToggleExpand: (key: string) => void;
   onNodeClick: (node: TreeNode) => void;
@@ -152,6 +153,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
   dataBarZeroAxis,
   theme,
   showVarianceDelta,
+  showVarianceBadges = true,
   whatIfBaseline,
   onToggleExpand,
   onNodeClick,
@@ -317,7 +319,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
 
         // Variance Delta Badge (showVarianceDelta)
         let cellVarianceDelta: number | null = null;
-        if (showVarianceDelta && !isDelta && isNumeric && !col?.key?.endsWith('___comp')) {
+        if (showVarianceDelta && showVarianceBadges && !isDelta && isNumeric && !col?.key?.endsWith('___comp')) {
           // 1. Pivot column: e.g. ${m}___${pVal} -> ${m}___delta_pct___${pVal}
           const pivotDeltaPctKey = col.key.includes('___')
             ? col.key.replace(/^(.+?)___(.+)$/, '$1___delta_pct___$2')
@@ -559,6 +561,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     emitFilter = true,
     enableContextMenu = true,
     showVarianceDelta = false,
+    showVarianceBadges = true,
     goals = NO_GOALS,
     conditionalFormatting = NO_RULES,
     theme = DEFAULT_THEME,
@@ -1122,7 +1125,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         const isNuovo = val === 'Nuovo';
 
         let gtVarianceDelta: number | null = null;
-        if (showVarianceDelta && !isDelta && typeof val === 'number' && !col?.key?.endsWith('___comp')) {
+        if (showVarianceDelta && showVarianceBadges && !isDelta && typeof val === 'number' && !col?.key?.endsWith('___comp')) {
           const pivotDeltaPctKey = col.key.includes('___')
             ? col.key.replace(/^(.+?)___(.+)$/, '$1___delta_pct___$2')
             : null;
@@ -1639,6 +1642,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                   dataBarZeroAxis={dataBarZeroAxis}
                   theme={theme}
                   showVarianceDelta={Boolean(showVarianceDelta)}
+                  showVarianceBadges={showVarianceBadges}
                   whatIfBaseline={effectiveWhatIfBaseline}
                   onToggleExpand={toggleExpand}
                   onNodeClick={handleNodeClick}

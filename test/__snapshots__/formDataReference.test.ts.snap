@@ -99,6 +99,7 @@ exports[`form data reference fixture resolves to the same transform options 1`] 
   "showPivotColumnSubtotals": false,
   "showSparklines": true,
   "showSubtotals": false,
+  "showVarianceBadges": true,
   "showVarianceDelta": true,
   "sparklineMetrics": [
     "revenue",

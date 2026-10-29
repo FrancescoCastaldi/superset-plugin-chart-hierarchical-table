@@ -45,6 +45,7 @@
   "customNegativeHex": "#B3261E",
   "customNeutralHex": "#4A6FA5",
   "showVarianceDelta": true,
+  "showVarianceBadges": true,
   "timeGrain": "quarter",
   "referencePeriod": "previous",
   "comparisonType": "prev_year_same_period",
