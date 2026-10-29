@@ -6,11 +6,51 @@ jest.mock('@superset-ui/core', () => ({
 import {
   getColumnName,
   getColumnNames,
+  getDimensionColumns,
   getMetricNames,
   resolveTransformOptions,
 } from '../src/plugin/formDataOptions';
 
 describe('formDataOptions', () => {
+  describe('getDimensionColumns', () => {
+    it('is empty for plain columns', () => {
+      expect(getDimensionColumns(['regione', { column_name: 'regione', label: 'regione' }])).toEqual({});
+      expect(getDimensionColumns(undefined)).toEqual({});
+    });
+
+    it('maps the label of a custom SQL column to the column it holds', () => {
+      expect(
+        getDimensionColumns([
+          { expressionType: 'SQL', label: 'Mese di Riferimento', sqlExpression: 'MESE_SLOT' },
+          { expressionType: 'SQL', label: 'Sede', sqlExpression: ' SEDE ' },
+        ]),
+      ).toEqual({ 'Mese di Riferimento': 'MESE_SLOT', Sede: 'SEDE' });
+    });
+
+    it('carries the expression for anything that is not a plain column', () => {
+      expect(
+        getDimensionColumns([
+          { expressionType: 'SQL', label: 'Fascia', sqlExpression: "CONCAT(A, '-', B)" },
+        ]),
+      ).toEqual({
+        Fascia: { expressionType: 'SQL', sqlExpression: "CONCAT(A, '-', B)", label: 'Fascia' },
+      });
+    });
+
+    it('uses the column name of a physical column shown under another label', () => {
+      expect(getDimensionColumns([{ column_name: 'MESE_SLOT', label: 'Mese' }])).toEqual({ Mese: 'MESE_SLOT' });
+    });
+
+    it('is resolved with the other options', () => {
+      const options = resolveTransformOptions({
+        groupby: [{ expressionType: 'SQL', label: 'Sede', sqlExpression: 'SEDE' }, 'regione'],
+        metrics: ['m'],
+      });
+      expect(options.dimensions).toEqual(['Sede', 'regione']);
+      expect(options.dimensionColumns).toEqual({ Sede: 'SEDE' });
+    });
+  });
+
   it('extracts metric names from saved metrics and adhoc metric objects', () => {
     expect(
       getMetricNames(['accesso_diretto', { label: 'Accesso Diretto (Corrente)' }, { metric_name: 'accesso_diretto_conf' }]),

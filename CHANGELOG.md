@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2026-10-29
+### Fixed
+- **Cross-filtering: il click su una riga ora aggiorna sempre la tabella**: la notifica alla dashboard partiva dentro l'updater di `setState`, cioè durante il render del componente, e a seconda dei casi l'aggiornamento della dashboard si perdeva o arrivava a metà render lasciando la tabella indietro. Ora la selezione è tenuta anche in un ref e la dashboard viene avvisata dal gestore del click (`useCrossFilterSelection`): più click ravvicinati si sommano correttamente.
+- **La tabella segue la dashboard**: la selezione fatta dalla tabella viene salvata nel filter state (`selectedNodes`); se viene tolta o cambiata altrove (barra dei filtri, altro grafico, reset) la tabella la mostra aggiornata, e un filtro già attivo al caricamento della dashboard compare selezionato. L'eco dei propri click non sovrascrive i click successivi.
+- **Colonne giuste nei filtri**: con raggruppamenti su colonne SQL personalizzate (per esempio "Mese di Riferimento" = `MESE_SLOT`) il filtro nominava l'etichetta, che non è una colonna del dataset, e gli altri grafici non reagivano. Ora il filtro nomina la colonna reale (o porta l'espressione se non è una colonna semplice) e usa i valori memorizzati nel database e non quelli formattati dalla tabella.
+
 ## [0.11.0] - 2026-10-29
 ### Added
 - **Controllo "Show the period next to each metric"** (`showPeriodInMetricLabel`, spento di default): scrive accanto al nome di ogni metrica l'arco temporale che copre (per esempio `Richieste (nov 2025 – ott 2026)`), accanto alle colonne di confronto il periodo con cui sono misurate (`Richieste (Confronto) (1 mese fa)`) e sulle colonne delta entrambi (`Δ% Richieste (ott 2026 vs mese precedente)`). L'arco si legge dai periodi presenti nei dati, dall'offset del confronto nativo (`time_compare`) o dall'intervallo applicato alla query, quindi segue i filtri della dashboard. Le colonne pivot restano invariate: la loro intestazione nomina già il periodo.

@@ -10,7 +10,7 @@ import {
 
 const CLEAR_MASK = {
   extraFormData: { filters: [] },
-  filterState: { value: null, selectedValues: [], filters: null, selectedFilters: null },
+  filterState: { value: null, selectedValues: [], filters: null, selectedFilters: null, selectedNodes: [] },
 };
 
 describe('eventHandlers', () => {
@@ -64,6 +64,7 @@ describe('eventHandlers', () => {
           label: 'asl: ASL1, regione: Umbria',
           filters: { regione: ['Lazio', 'Umbria'], asl: ['ASL1'] },
           selectedFilters: { regione: ['Lazio', 'Umbria'], asl: ['ASL1'] },
+          selectedNodes: items,
         },
       });
     });
@@ -79,6 +80,7 @@ describe('eventHandlers', () => {
           label: 'regione: Lazio',
           filters: { regione: ['Lazio'] },
           selectedFilters: { regione: ['Lazio'] },
+          selectedNodes: [],
         },
       });
     });
@@ -87,6 +89,75 @@ describe('eventHandlers', () => {
       const mask = buildSingleDimensionDataMask('regione', ['Lazio', 'Umbria']);
       expect(mask.extraFormData.filters[0].val).toEqual(['Lazio', 'Umbria']);
       expect(mask.filterState.label).toBe('regione: Lazio, Umbria');
+    });
+  });
+
+  describe('columns of the dashboard filter', () => {
+    const specs = {
+      'Mese di Riferimento': 'MESE_SLOT',
+      Fascia: { expressionType: 'SQL' as const, sqlExpression: "CONCAT(A, '-', B)", label: 'Fascia' },
+    };
+
+    it('names the real column instead of the label of a custom SQL column', () => {
+      const items = [
+        {
+          key: 'k',
+          dimension: 'Mese di Riferimento',
+          value: 'ott 2026',
+          rawValue: '2026-10',
+          pathMap: { 'Mese di Riferimento': '2026-10' },
+        },
+      ];
+      const mask = buildMultiSelectionDataMask(items, specs);
+      expect(mask.extraFormData.filters).toEqual([{ col: 'MESE_SLOT', op: 'IN', val: ['2026-10'] }]);
+      // The dashboard keeps the label: it is what the table shows and what the selection is read back by.
+      expect(mask.filterState.filters).toEqual({ 'Mese di Riferimento': ['2026-10'] });
+    });
+
+    it('carries the expression itself when the column is not a plain one', () => {
+      const mask = buildSingleDimensionDataMask('Fascia', 'A-B', specs);
+      expect(mask.extraFormData.filters[0].col).toEqual(specs.Fascia);
+    });
+
+    it('filters on the label of a dimension that has no other column', () => {
+      expect(buildSingleDimensionDataMask('regione', 'Lazio', specs).extraFormData.filters[0].col).toBe('regione');
+    });
+
+    it('filters on the stored value when a node has no path map', () => {
+      expect(
+        groupSelectedFiltersByDimension([{ dimension: 'regione', value: 'Lazio', rawValue: 'LAZ' }]),
+      ).toEqual({ regione: ['LAZ'] });
+    });
+
+    it('applies the column specs through the handler', () => {
+      const setDataMask = jest.fn();
+      const handler = createCrossFilterHandler({
+        isCrossFilterActive: true,
+        setDataMask,
+        columnSpecs: specs,
+      });
+      handler('Mese di Riferimento', ['2026-10'], undefined, false, [
+        { key: 'k', dimension: 'Mese di Riferimento', value: 'ott 2026', pathMap: { 'Mese di Riferimento': '2026-10' } },
+      ]);
+      expect(setDataMask.mock.calls[0][0].extraFormData.filters).toEqual([
+        { col: 'MESE_SLOT', op: 'IN', val: ['2026-10'] },
+      ]);
+    });
+  });
+
+  describe('selected nodes in the filter state', () => {
+    it('keeps the nodes the dashboard has to give back to the table', () => {
+      const mask = buildMultiSelectionDataMask([
+        { key: 'k', dimension: 'asl', value: 'ASL1', rawValue: 'A001', pathMap: { asl: 'A001' }, extra: 'dropped' },
+      ]);
+      expect(mask.filterState.selectedNodes).toEqual([
+        { key: 'k', dimension: 'asl', value: 'ASL1', rawValue: 'A001', pathMap: { asl: 'A001' } },
+      ]);
+    });
+
+    it('is empty for a single value and for a clear', () => {
+      expect(buildSingleDimensionDataMask('asl', 'ASL1').filterState.selectedNodes).toEqual([]);
+      expect(buildClearFilterDataMask().filterState.selectedNodes).toEqual([]);
     });
   });
 

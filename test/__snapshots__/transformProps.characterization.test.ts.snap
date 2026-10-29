@@ -14,6 +14,7 @@ exports[`transformProps characterization (pre-refactor snapshot) empty data 1`] 
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -63,6 +64,26 @@ exports[`transformProps characterization (pre-refactor snapshot) empty data 1`] 
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -105,6 +126,24 @@ exports[`transformProps characterization (pre-refactor snapshot) empty data 1`] 
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -129,6 +168,7 @@ exports[`transformProps characterization (pre-refactor snapshot) empty data 1`] 
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -162,6 +202,7 @@ exports[`transformProps characterization (pre-refactor snapshot) empty data 1`] 
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -202,6 +243,7 @@ exports[`transformProps characterization (pre-refactor snapshot) empty data 1`] 
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -224,6 +266,7 @@ exports[`transformProps characterization (pre-refactor snapshot) empty data 1`] 
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -369,6 +412,7 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -418,6 +462,26 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -460,6 +524,24 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -484,6 +566,7 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -517,6 +600,7 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -557,6 +641,7 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -579,6 +664,7 @@ exports[`transformProps characterization (pre-refactor snapshot) flat multi-dime
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -1174,6 +1260,7 @@ exports[`transformProps characterization (pre-refactor snapshot) flat with snake
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -1760,6 +1847,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -1809,6 +1897,26 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -1851,6 +1959,24 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -1875,6 +2001,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -1908,6 +2035,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -1948,6 +2076,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -1970,6 +2099,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -3598,6 +3728,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -3647,6 +3778,26 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -3689,6 +3840,24 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -3713,6 +3882,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -3746,6 +3916,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -3786,6 +3957,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -3808,6 +3980,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot wit
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -4496,6 +4669,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot, in
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -4545,6 +4719,26 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot, in
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -4587,6 +4781,24 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot, in
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -4611,6 +4823,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot, in
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -4644,6 +4857,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot, in
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -4684,6 +4898,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot, in
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -4706,6 +4921,7 @@ exports[`transformProps characterization (pre-refactor snapshot) multi pivot, in
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -5471,6 +5687,7 @@ exports[`transformProps characterization (pre-refactor snapshot) parent-child hi
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -5520,6 +5737,26 @@ exports[`transformProps characterization (pre-refactor snapshot) parent-child hi
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -5562,6 +5799,24 @@ exports[`transformProps characterization (pre-refactor snapshot) parent-child hi
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -5586,6 +5841,7 @@ exports[`transformProps characterization (pre-refactor snapshot) parent-child hi
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -5619,6 +5875,7 @@ exports[`transformProps characterization (pre-refactor snapshot) parent-child hi
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -5659,6 +5916,7 @@ exports[`transformProps characterization (pre-refactor snapshot) parent-child hi
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -5681,6 +5939,7 @@ exports[`transformProps characterization (pre-refactor snapshot) parent-child hi
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -5989,6 +6248,7 @@ exports[`transformProps characterization (pre-refactor snapshot) rawFormData mer
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -6249,6 +6509,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -6298,6 +6559,26 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -6340,6 +6621,24 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -6364,6 +6663,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -6397,6 +6697,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -6437,6 +6738,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -6459,6 +6761,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -7697,6 +8000,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -7746,6 +8050,26 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -7788,6 +8112,24 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -7812,6 +8154,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -7845,6 +8188,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -7885,6 +8229,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -7907,6 +8252,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot co
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -8433,6 +8779,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot on
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -8482,6 +8829,26 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot on
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -8524,6 +8891,24 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot on
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -8548,6 +8933,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot on
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -8581,6 +8967,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot on
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -8621,6 +9008,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot on
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -8643,6 +9031,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot on
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -9069,6 +9458,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -9118,6 +9508,26 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -9160,6 +9570,24 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -9184,6 +9612,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -9217,6 +9646,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -9257,6 +9687,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -9279,6 +9710,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -9819,6 +10251,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -9868,6 +10301,26 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -9910,6 +10363,24 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -9934,6 +10405,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -9967,6 +10439,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -10007,6 +10480,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -10029,6 +10503,7 @@ exports[`transformProps characterization (pre-refactor snapshot) single pivot se
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -11272,6 +11747,7 @@ exports[`transformProps characterization (pre-refactor snapshot) variance delta 
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -11321,6 +11797,26 @@ exports[`transformProps characterization (pre-refactor snapshot) variance delta 
               "Lazio",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL1",
+              "pathMap": {
+                "asl": "ASL1",
+                "regione": "Lazio",
+              },
+              "value": "ASL1",
+            },
+            {
+              "dimension": "asl",
+              "key": "Lazio > ASL2",
+              "pathMap": {
+                "asl": "ASL2",
+                "regione": "Lazio",
+              },
+              "value": "ASL2",
+            },
+          ],
           "selectedValues": [
             "ASL1",
             "ASL2",
@@ -11363,6 +11859,24 @@ exports[`transformProps characterization (pre-refactor snapshot) variance delta 
               "Umbria",
             ],
           },
+          "selectedNodes": [
+            {
+              "dimension": "regione",
+              "key": "Lazio",
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Lazio#2",
+              "pathMap": {},
+              "value": "Lazio",
+            },
+            {
+              "dimension": "regione",
+              "key": "Umbria",
+              "value": "Umbria",
+            },
+          ],
           "selectedValues": [
             "Lazio",
             "Lazio",
@@ -11387,6 +11901,7 @@ exports[`transformProps characterization (pre-refactor snapshot) variance delta 
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },
@@ -11420,6 +11935,7 @@ exports[`transformProps characterization (pre-refactor snapshot) variance delta 
               "Lazio",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
           ],
@@ -11460,6 +11976,7 @@ exports[`transformProps characterization (pre-refactor snapshot) variance delta 
               "Umbria",
             ],
           },
+          "selectedNodes": [],
           "selectedValues": [
             "Lazio",
             "Umbria",
@@ -11482,6 +11999,7 @@ exports[`transformProps characterization (pre-refactor snapshot) variance delta 
         "filterState": {
           "filters": null,
           "selectedFilters": null,
+          "selectedNodes": [],
           "selectedValues": [],
           "value": null,
         },

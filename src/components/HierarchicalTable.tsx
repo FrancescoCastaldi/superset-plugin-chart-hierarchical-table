@@ -35,6 +35,7 @@ import { buildContextMenuFilters } from '../plugin/contextMenu';
 import { computeDivergingColor, computeBipolarDataBar } from '../utils/advancedCellVisuals';
 import { getTheme, ResolvedTheme } from '../utils/themes';
 import { useFlatTreeVirtualization } from './useFlatTreeVirtualization';
+import { useCrossFilterSelection } from './useCrossFilterSelection';
 import { applyWhatIfScenario, computeWhatIfDelta } from '../utils/whatIfEngine';
 import { createScenarioManager } from '../utils/whatIfScenarioManager';
 import WhatIfToolbar from './WhatIfToolbar';
@@ -678,9 +679,19 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const [selectedFilterMap, setSelectedFilterMap] = useState<
-    Map<string, { key: string; dimension: string; value: string; pathMap?: Record<string, string> }>
-  >(new Map());
+  // Rows picked for cross-filtering: the dashboard is told from the click, and its own state is followed.
+  const {
+    selection: selectedFilterMap,
+    toggleNode: handleNodeClick,
+    removeNode: handleRemoveSingleFilter,
+    clearSelection: handleClearActiveFilter,
+  } = useCrossFilterSelection({
+    dimensions,
+    emitFilter,
+    onCrossFilter,
+    onClearFilter,
+    filterState: props.filterState,
+  });
 
   const containerStyle = useMemo(() => {
     const style: React.CSSProperties = {
@@ -884,77 +895,6 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   const filteredData = useMemo(() => {
     return filterTreeBySearch(sortedData, debouncedSearch);
   }, [sortedData, debouncedSearch]);
-
-  // Handle Node Click for Multi-Selection Cross-Filtering
-  const handleNodeClick = useCallback(
-    (node: TreeNode) => {
-      if (!emitFilter || !onCrossFilter) return;
-
-      setSelectedFilterMap(prev => {
-        const next = new Map(prev);
-        if (next.has(node.key)) {
-          next.delete(node.key);
-        } else {
-          const dimensionName = node.dimension || dimensions[node.depth] || 'Dimension';
-          const pathMap: Record<string, string> = {};
-          if (dimensions.length > 0 && node.path && node.path.length > 0) {
-            for (let i = 0; i <= node.depth && i < dimensions.length; i++) {
-              pathMap[dimensions[i]] = node.path[i];
-            }
-          }
-          next.set(node.key, {
-            key: node.key,
-            dimension: dimensionName,
-            value: node.name,
-            pathMap,
-          });
-        }
-
-        const filterItems = Array.from(next.values());
-        if (filterItems.length === 0) {
-          if (onClearFilter) {
-            onClearFilter();
-          } else {
-            onCrossFilter(node.dimension || 'Dimension', [], undefined, true, []);
-          }
-        } else {
-          const dimensionName = node.dimension || dimensions[node.depth] || 'Dimension';
-          const values = filterItems.map(f => f.value);
-          const pathMaps = filterItems.map(f => f.pathMap || {});
-          onCrossFilter(dimensionName, values, pathMaps, false, filterItems);
-        }
-
-        return next;
-      });
-    },
-    [dimensions, emitFilter, onCrossFilter, onClearFilter],
-  );
-
-  const handleRemoveSingleFilter = useCallback(
-    (key: string) => {
-      setSelectedFilterMap(prev => {
-        const next = new Map(prev);
-        next.delete(key);
-        const filterItems = Array.from(next.values());
-        if (filterItems.length === 0) {
-          if (onClearFilter) onClearFilter();
-        } else if (onCrossFilter) {
-          const values = filterItems.map(f => f.value);
-          const pathMaps = filterItems.map(f => f.pathMap || {});
-          onCrossFilter(filterItems[0].dimension, values, pathMaps, false, filterItems);
-        }
-        return next;
-      });
-    },
-    [onCrossFilter, onClearFilter],
-  );
-
-  const handleClearActiveFilter = useCallback(() => {
-    setSelectedFilterMap(new Map());
-    if (onClearFilter) {
-      onClearFilter();
-    }
-  }, [onClearFilter]);
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, targetNode: TreeNode | null, targetColumn?: TableColumn) => {
