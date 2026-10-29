@@ -1,5 +1,6 @@
 import { ensureIsArray } from '@superset-ui/core';
 import {
+  DimensionColumn,
   AggregationFunction,
   ComparisonReferencePeriod,
   ComparisonStrategy,
@@ -32,6 +33,8 @@ import { getTheme, ResolvedTheme } from '../utils/themes';
 export interface TransformOptions {
   hierarchyType: HierarchyType;
   dimensions: string[];
+  /** Real column of each dimension, only where it differs from the label (custom SQL columns). */
+  dimensionColumns: Record<string, DimensionColumn>;
   pivotDimensions: string[];
   metrics: string[];
   idColumn: string;
@@ -139,6 +142,33 @@ export function getColumnNames(rawColumns: any): string[] {
   );
 }
 
+const SIMPLE_COLUMN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/**
+ * A custom SQL column is shown under its label, which is not a column of the dataset: a filter on
+ * the label reaches nobody. Where the expression is just a column the filter names that column,
+ * otherwise it carries the expression itself.
+ */
+export function getDimensionColumns(rawColumns: any): Record<string, DimensionColumn> {
+  const specs: Record<string, DimensionColumn> = {};
+  for (const raw of ensureIsArray(rawColumns)) {
+    if (!raw || typeof raw !== 'object') continue;
+    const label: string = raw.label || raw.column_name || raw.sqlExpression;
+    if (!label) continue;
+    let spec: DimensionColumn | null = null;
+    if (raw.column_name) {
+      spec = raw.column_name;
+    } else if (typeof raw.sqlExpression === 'string' && raw.sqlExpression.trim()) {
+      const expression = raw.sqlExpression.trim();
+      spec = SIMPLE_COLUMN.test(expression)
+        ? expression
+        : { expressionType: 'SQL', sqlExpression: expression, label };
+    }
+    if (spec !== null && spec !== label) specs[label] = spec;
+  }
+  return specs;
+}
+
 export function getColumnName(column: any): string {
   return typeof column === 'string' ? column : column?.column_name || column?.label || '';
 }
@@ -217,14 +247,14 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     pivot_time_delta_lag,
   } = mergedFormData;
 
-  const dimensions = getColumnNames(
+  const rawDimensions =
     groupby ||
     hierarchyDimensions ||
     hierarchy_dimensions ||
     mergedFormData.tree_dimensions ||
     mergedFormData.treeDimensions ||
-    mergedFormData.dimensions,
-  );
+    mergedFormData.dimensions;
+  const dimensions = getColumnNames(rawDimensions);
   const pivotDimensions = getColumnNames(
     mergedFormData.columns ||
     mergedFormData.pivot_columns ||
@@ -234,6 +264,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
   return {
     hierarchyType,
     dimensions,
+    dimensionColumns: getDimensionColumns(rawDimensions),
     pivotDimensions,
     metrics: getMetricNames(rawMetrics),
     idColumn: getColumnName(idColumn),

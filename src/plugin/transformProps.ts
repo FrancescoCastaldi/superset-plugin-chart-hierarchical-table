@@ -178,6 +178,7 @@ export default function transformProps(
     filterState,
     onCrossFilter: createCrossFilterHandler({
       isCrossFilterActive: options.isCrossFilterActive,
+      columnSpecs: options.dimensionColumns,
       setDataMask,
       onAddFilter,
     }),

@@ -440,13 +440,15 @@ export interface HierarchicalTableTransformedProps {
   filterState?: {
     value?: any;
     selectedValues?: string[];
-    filters?: any[];
+    filters?: any;
+    /** Nodes this chart selected, kept by the dashboard so that the table can show them again. */
+    selectedNodes?: SelectedFilterItem[];
   };
   onContextMenu?: (clientX: number, clientY: number, filters?: ContextMenuFilters) => void;
   onCrossFilter?: (
     dimension: string,
-    value: string | string[],
-    pathMap?: Record<string, string> | Record<string, string>[],
+    value: FilterValue | FilterValue[],
+    pathMap?: Record<string, FilterValue> | Record<string, FilterValue>[],
     isCurrentlySelected?: boolean,
     allSelectedFilters?: SelectedFilterItem[],
   ) => void;
@@ -457,11 +459,23 @@ export interface HierarchicalTableTransformedProps {
   onWhatIfChange?: (scenario: WhatIfScenario | null) => void;
 }
 
+/** A dimension is a dataset column, or a custom SQL column that the dashboard filter can carry as is. */
+export type DimensionColumn =
+  | string
+  | { expressionType: 'SQL'; sqlExpression: string; label: string };
+
+/** Value of a dimension as the database stores it: what a dashboard filter has to compare with. */
+export type FilterValue = string | number | boolean | null;
+
 export interface SelectedFilterItem {
   key: string;
   dimension: string;
+  /** What the table shows for the node. */
   value: string;
-  pathMap?: Record<string, string>;
+  /** The stored value of the node, when it differs from what the table shows. */
+  rawValue?: FilterValue;
+  /** Stored value of each level of the path, by dimension. */
+  pathMap?: Record<string, FilterValue>;
 }
 
 export type HierarchicalTableChartProps = ChartProps & {
