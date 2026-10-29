@@ -18,6 +18,12 @@ import {
   formatByDefinition,
 } from '../utils/metricSemantics';
 import { applyTableCalculations } from '../utils/tableCalculations';
+import {
+  applyPeriodLabels,
+  detectComparisonOffset,
+  resolvePeriodScope,
+} from '../utils/periodLabels';
+import { collectDistinctPivotKeys } from './pivotOrdering';
 
 /**
  * Column with the number format and the polarity of its metric definition. Delta columns keep
@@ -60,9 +66,32 @@ export default function transformProps(
   applyMetricDefinitions(treeData, undefined, options.metricDefinitions, options.dimensions);
   const layout = buildMetricLayout(treeData, dataRecords, options, metrics);
 
+  const metricColumns = layout.columns.map(column => applyColumnDefinition(column, options));
   const columns: TableColumn[] = [
     buildHierarchyColumn(options.hierarchyType, options.dimensions),
-    ...layout.columns.map(column => applyColumnDefinition(column, options)),
+    ...(options.showPeriodInMetricLabel
+      ? applyPeriodLabels(
+          metricColumns,
+          resolvePeriodScope({
+            periodKeys: options.isPivotMode
+              ? collectDistinctPivotKeys(dataRecords, options.pivotDimensions)
+              : treeData.map(node => node.name),
+            comparisonOffset: detectComparisonOffset(
+              dataRecords as Record<string, unknown>[],
+              options.metrics,
+              { ...rawFormData, ...formData },
+            ),
+            timeRange: {
+              from: queriesData?.[0]?.from_dttm,
+              to: queriesData?.[0]?.to_dttm,
+            },
+            strategy: resolveTimeDeltaStrategy(options),
+            // Outside the pivot comparison the grain is read from the data: the control default
+            // (year) would label monthly rows as a year.
+            grain: resolveTimeDeltaStrategy(options) ? options.comparisonTimeGrain : 'auto',
+          }),
+        )
+      : metricColumns),
   ];
 
   const grandTotalNode = buildGrandTotalNode({

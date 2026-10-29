@@ -62,6 +62,7 @@ export interface TransformOptions {
   enableExport: boolean;
   showVarianceDelta: boolean;
   showVarianceBadges: boolean;
+  showPeriodInMetricLabel: boolean;
   combineMetric: any;
   pivotSortOrder: PivotSortOrder;
   pivotRowTotalsPosition: PivotRowTotalsPosition;
@@ -197,6 +198,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     enable_export,
     showVarianceDelta,
     showVarianceBadges = true,
+    showPeriodInMetricLabel = false,
     combineMetric = true,
     combine_metric,
     pivotSortOrder = 'desc',
@@ -288,6 +290,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     enableExport: enableExport ?? enable_export ?? true,
     showVarianceDelta,
     showVarianceBadges: showVarianceBadges !== false,
+    showPeriodInMetricLabel: Boolean(showPeriodInMetricLabel),
     combineMetric: combineMetric ?? combine_metric ?? true,
     pivotSortOrder: pivotSortOrder || pivot_sort_order || 'desc',
     pivotRowTotalsPosition: pivotRowTotalsPosition || pivot_row_totals_position || 'none',

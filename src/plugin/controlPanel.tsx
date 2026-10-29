@@ -706,11 +706,24 @@ const config: ControlPanelConfig = {
             name: 'showVarianceBadges',
             config: {
               type: 'CheckboxControl',
-              label: t('Mostra le etichette Δ % accanto ai valori'),
+              label: t('Show the Δ % badges next to the values (Etichette Δ %)'),
               renderTrigger: true,
               default: true,
               description: t(
-                'Se disattivata, la variazione resta solo nelle colonne Δ % e i valori assoluti non portano il simbolo di percentuale.',
+                'When off, the variance stays in the Δ % columns only and absolute values such as counts carry no percent sign.',
+              ),
+              visibility: isComparisonVisible,
+            },
+          },
+          {
+            name: 'showPeriodInMetricLabel',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Show the period next to each metric (Arco temporale)'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Writes next to every metric name the span it covers, and next to the comparison and delta columns what they are measured against.',
               ),
             },
           },
