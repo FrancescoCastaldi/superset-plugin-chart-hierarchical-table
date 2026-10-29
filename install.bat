@@ -16,13 +16,16 @@ echo.
 :: 2. Esecuzione script PowerShell con passaggio esplicito della cartella sorgente
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PLUGIN_DIR%\install-plugin.ps1" -PluginPath "%PLUGIN_DIR%" -SkipBuild %*
 
-if %ERRORLEVEL% neq 0 (
+set "RC=%ERRORLEVEL%"
+if %RC% neq 0 (
     echo.
-    echo [ERRORE] L'installazione di Hierarchical Table ha riscontrato un errore (Codice: %ERRORLEVEL%).
+    echo [ERRORE] L'installazione di Hierarchical Table ha riscontrato un errore ^(Codice: %RC%^).
 ) else (
     echo.
-    echo [OK] Hierarchical Table aggiornato e registrato con successo!
+    echo [OK] Hierarchical Table aggiornato e registrato con successo
 )
 
 echo.
-pause
+rem Con NO_PAUSE=1 non aspetta il tasto (uso da script); il codice di uscita e' quello dell'installazione.
+if not "%NO_PAUSE%"=="1" pause
+exit /b %RC%
