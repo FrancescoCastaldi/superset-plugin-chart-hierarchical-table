@@ -169,6 +169,10 @@ export default function transformProps(
     ...(options.showVarianceDelta ? { showVarianceDelta: true } : {}),
     // Omitted when on (the default) so existing charts keep their props shape.
     ...(options.showVarianceDelta && !options.showVarianceBadges ? { showVarianceBadges: false } : {}),
+    // Layout flags, omitted when off so that charts keep their previous props shape.
+    ...(options.resizableColumns ? { resizableColumns: true } : {}),
+    ...(options.wrapHeaderLabels ? { wrapHeaderLabels: true } : {}),
+    ...(options.reorderColumnsByDrag ? { reorderColumnsByDrag: true } : {}),
     // Omitted when unset so charts without goals keep their previous props shape.
     ...(options.goals.length > 0 ? { goals: options.goals } : {}),
     ...(options.conditionalFormatting.length > 0

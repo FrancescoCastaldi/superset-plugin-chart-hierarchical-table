@@ -967,3 +967,81 @@ th.sortable-header:hover .sort-indicator-inactive::after {
   border: 1px solid #fecaca;
 }
 
+
+/* Wrapping labels (flag): long headers and row labels go onto more lines instead of being cut or
+   stretching the table. */
+.hierarchical-table.wrap-labels {
+  min-width: 100%;
+  max-width: none;
+}
+
+.hierarchical-table.wrap-labels th {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+  vertical-align: bottom;
+}
+
+.hierarchical-table.wrap-labels td.hierarchy-cell .node-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.hierarchical-table.wrap-labels td.hierarchy-cell {
+  overflow: visible;
+}
+
+.hierarchical-table.sticky-header.wrap-labels tr.pivot-sub-header-row th {
+  top: var(--pivot-sub-top, 33px);
+}
+
+/* Resizable columns (flag): a handle on the right edge of each header. */
+.hierarchical-table.resizable-columns th {
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hierarchical-table.resizable-columns.sticky-header th,
+.hierarchical-table.resizable-columns th.hierarchy-col {
+  position: sticky;
+}
+
+.hierarchical-table.resizable-columns.wrap-labels th {
+  text-overflow: clip;
+}
+
+.hierarchical-table.resizable-columns td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hierarchical-table th .col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  z-index: 30;
+}
+
+.hierarchical-table th .col-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 22%;
+  right: 3px;
+  width: 2px;
+  height: 56%;
+  border-radius: 1px;
+  background: #cbd5e1;
+  transition: background-color 0.12s ease;
+}
+
+.hierarchical-table th .col-resize-handle:hover::after {
+  background: #2563eb;
+}

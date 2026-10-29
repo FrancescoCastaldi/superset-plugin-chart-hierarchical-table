@@ -437,6 +437,46 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'wrapHeaderLabels',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Testi a capo automatico (intestazioni ed etichette lunghe)'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Le intestazioni e le etichette di riga troppo lunghe vanno a capo invece di essere tagliate o di allargare la tabella.',
+              ),
+            },
+          },
+          {
+            name: 'resizableColumns',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Colonne ridimensionabili (trascina il bordo dell\'intestazione)'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Permette di allargare o stringere ogni colonna trascinando il bordo destro della sua intestazione; doppio clic sul bordo per ripristinarla. Le larghezze restano memorizzate nel browser.',
+              ),
+            },
+          },
+        ],
+        [
+          {
+            name: 'reorderColumnsByDrag',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Colonne spostabili con il trascinamento'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Permette di trascinare le intestazioni delle metriche per cambiarne l\'ordine, senza passare dal pannello. Vale per le tabelle senza colonne pivot; l\'ordine resta memorizzato nel browser.',
+              ),
+            },
+          },
+        ],
+        [
+          {
             name: 'enableHierarchicalSort',
             config: {
               type: 'CheckboxControl',

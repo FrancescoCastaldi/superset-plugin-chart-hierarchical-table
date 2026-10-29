@@ -434,6 +434,12 @@ export interface HierarchicalTableTransformedProps {
   enableContextMenu?: boolean;
   showVarianceDelta?: boolean;
   showVarianceBadges?: boolean;
+  /** Column widths can be dragged from the edge of the header (omitted when off). */
+  resizableColumns?: boolean;
+  /** Long header and row labels wrap onto more lines (omitted when off). */
+  wrapHeaderLabels?: boolean;
+  /** Metric columns can be dragged to another place, with no help from the dashboard (omitted when off). */
+  reorderColumnsByDrag?: boolean;
   goals?: MetricGoal[];
   conditionalFormatting?: ConditionalFormattingRule[];
   theme?: ResolvedTheme;
