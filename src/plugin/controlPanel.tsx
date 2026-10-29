@@ -768,6 +768,62 @@ const config: ControlPanelConfig = {
             },
           },
           {
+            name: 'periodLabelsFromFilters',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Periodo di riferimento e di confronto nelle intestazioni'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Aggiunge alle intestazioni dei valori correnti il mese di riferimento, a quelle dei valori di confronto il mese di confronto e alle variazioni entrambi, per esempio "Richieste (Corrente) · ott 2026". I periodi sono quelli su cui gira davvero la query, quindi seguono i filtri della dashboard e, se non ne è applicato nessuno, i valori predefiniti del dataset. Serve un dataset con le colonne anno e mese del periodo.',
+              ),
+            },
+          },
+          {
+            name: 'periodReferenceYearColumn',
+            config: {
+              type: 'TextControl',
+              label: t('Colonna anno di riferimento'),
+              renderTrigger: true,
+              default: 'ANNO_CORRENTE',
+              description: t('Colonna del dataset con questa parte del periodo; vale solo con il periodo nelle intestazioni acceso.'),
+              visibility: ({ controls }: { controls: any }) => Boolean(controls?.periodLabelsFromFilters?.value),
+            },
+          },
+          {
+            name: 'periodReferenceMonthColumn',
+            config: {
+              type: 'TextControl',
+              label: t('Colonna mese di riferimento'),
+              renderTrigger: true,
+              default: 'MESE_CORRENTE',
+              description: t('Colonna del dataset con questa parte del periodo; vale solo con il periodo nelle intestazioni acceso.'),
+              visibility: ({ controls }: { controls: any }) => Boolean(controls?.periodLabelsFromFilters?.value),
+            },
+          },
+          {
+            name: 'periodComparisonYearColumn',
+            config: {
+              type: 'TextControl',
+              label: t('Colonna anno di confronto'),
+              renderTrigger: true,
+              default: 'ANNO_CONFRONTO',
+              description: t('Colonna del dataset con questa parte del periodo; vale solo con il periodo nelle intestazioni acceso.'),
+              visibility: ({ controls }: { controls: any }) => Boolean(controls?.periodLabelsFromFilters?.value),
+            },
+          },
+          {
+            name: 'periodComparisonMonthColumn',
+            config: {
+              type: 'TextControl',
+              label: t('Colonna mese di confronto'),
+              renderTrigger: true,
+              default: 'MESE_CONFRONTO',
+              description: t('Colonna del dataset con questa parte del periodo; vale solo con il periodo nelle intestazioni acceso.'),
+              visibility: ({ controls }: { controls: any }) => Boolean(controls?.periodLabelsFromFilters?.value),
+            },
+          },
+          {
             name: 'timeGrain',
             config: {
               type: 'SelectControl',

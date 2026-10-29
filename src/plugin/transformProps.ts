@@ -24,6 +24,11 @@ import {
   resolvePeriodScope,
 } from '../utils/periodLabels';
 import { collectDistinctPivotKeys } from './pivotOrdering';
+import {
+  applyDynamicPeriodTitles,
+  readChartPeriods,
+  stripPeriodColumns,
+} from '../utils/dynamicPeriodLabels';
 
 /**
  * Column with the number format and the polarity of its metric definition. Delta columns keep
@@ -59,17 +64,23 @@ export default function transformProps(
   const { onAddFilter, setDataMask, onContextMenu, onReorderMetrics, onWhatIfChange } = hooks || {};
 
   const options = resolveTransformOptions({ ...rawFormData, ...formData });
-  const dataRecords: DataRecord[] = queriesData?.[0]?.data || [];
+  const fetchedRecords: DataRecord[] = queriesData?.[0]?.data || [];
+  // The periods the query ran on come with the data, and are not data of the table.
+  const periods = options.periodLabelsFromFilters ? readChartPeriods(fetchedRecords) : null;
+  const dataRecords: DataRecord[] = options.periodLabelsFromFilters
+    ? stripPeriodColumns(fetchedRecords)
+    : fetchedRecords;
 
   const { treeData, metrics } = buildTreeData(dataRecords, options);
   // Explicit metric definitions first, so that the deltas computed by the layout read the right values.
   applyMetricDefinitions(treeData, undefined, options.metricDefinitions, options.dimensions);
   const layout = buildMetricLayout(treeData, dataRecords, options, metrics);
 
-  const metricColumns = layout.columns.map(column => applyColumnDefinition(column, options));
+  const definedColumns = layout.columns.map(column => applyColumnDefinition(column, options));
+  const metricColumns = applyDynamicPeriodTitles(definedColumns, periods);
   const columns: TableColumn[] = [
     buildHierarchyColumn(options.hierarchyType, options.dimensions),
-    ...(options.showPeriodInMetricLabel
+    ...(options.showPeriodInMetricLabel && !periods
       ? applyPeriodLabels(
           metricColumns,
           resolvePeriodScope({

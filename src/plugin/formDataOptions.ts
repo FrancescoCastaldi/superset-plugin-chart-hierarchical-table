@@ -69,6 +69,8 @@ export interface TransformOptions {
   wrapHeaderLabels: boolean;
   reorderColumnsByDrag: boolean;
   showPeriodInMetricLabel: boolean;
+  /** Titles carry the reference and comparison periods the query really used. */
+  periodLabelsFromFilters: boolean;
   combineMetric: any;
   pivotSortOrder: PivotSortOrder;
   pivotRowTotalsPosition: PivotRowTotalsPosition;
@@ -235,6 +237,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     wrapHeaderLabels = false,
     reorderColumnsByDrag = false,
     showPeriodInMetricLabel = false,
+    periodLabelsFromFilters = false,
     combineMetric = true,
     combine_metric,
     pivotSortOrder = 'desc',
@@ -331,6 +334,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     wrapHeaderLabels: Boolean(wrapHeaderLabels),
     reorderColumnsByDrag: Boolean(reorderColumnsByDrag),
     showPeriodInMetricLabel: Boolean(showPeriodInMetricLabel),
+    periodLabelsFromFilters: Boolean(periodLabelsFromFilters),
     combineMetric: combineMetric ?? combine_metric ?? true,
     pivotSortOrder: pivotSortOrder || pivot_sort_order || 'desc',
     pivotRowTotalsPosition: pivotRowTotalsPosition || pivot_row_totals_position || 'none',

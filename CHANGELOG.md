@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-10-29
+### Added
+- **Periodo di riferimento e di confronto nelle intestazioni** (`periodLabelsFromFilters`, spento di default): aggiunge alle intestazioni dei valori correnti il mese di riferimento, a quelle dei valori di confronto il mese di confronto e alle variazioni entrambi, per esempio `Richieste (Corrente) · ott 2026`, `Richieste (Confronto) · set 2026`, `Variazione Richieste (%) · ott 2026 vs set 2026`. I periodi sono quelli su cui la query gira davvero: la query chiede insieme ai dati le colonne anno e mese del dataset (`ANNO_CORRENTE`, `MESE_CORRENTE`, `ANNO_CONFRONTO`, `MESE_CONFRONTO`, nomi modificabili), quindi seguono i filtri della dashboard e, se nessun filtro è applicato, i valori predefiniti del dataset. Anno e mese vanno insieme come coppia: più valori selezionati non si combinano. Le colonne dei periodi non compaiono nei dati della tabella. Una colonna è di riferimento se nel nome ha "corrente" o "riferimento", di confronto se ha "confronto", variazione se ha "variazione" o "delta"; le altre restano com'erano. Se è acceso anche l'arco temporale delle metriche, ha la precedenza questo. Spento, nulla cambia.
+
 ## [0.12.1] - 2026-10-29
 ### Added
 - **Adattamento dinamico a tutta larghezza (100% width)**: le colonne della tabella si espandono in modo proporzionale per occupare l'intero spazio orizzontale disponibile nel contenitore, eliminando lo spazio bianco vuoto a destra su viste ampie (Explore e riquadri dashboard).

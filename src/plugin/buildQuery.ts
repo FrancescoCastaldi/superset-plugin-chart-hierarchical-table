@@ -1,5 +1,6 @@
 import { buildQueryContext, QueryContext, ensureIsArray } from '@superset-ui/core';
 import { HierarchicalTableFormData } from '../types';
+import { buildPeriodMetrics, resolvePeriodColumns } from '../utils/dynamicPeriodLabels';
 
 export default function buildQuery(formData: HierarchicalTableFormData): QueryContext {
   const fd: any = formData || {};
@@ -33,10 +34,15 @@ export default function buildQuery(formData: HierarchicalTableFormData): QueryCo
       baseQueryObject.extra_form_data?.time_compare,
     ).filter(Boolean);
 
+    // With dynamic period labels the query also asks for the periods it is run on.
+    const queryMetrics = fd.periodLabelsFromFilters
+      ? [...ensureIsArray(metrics), ...buildPeriodMetrics(resolvePeriodColumns(fd))]
+      : metrics;
+
     const query: any = {
       ...baseQueryObject,
       columns,
-      metrics,
+      metrics: queryMetrics,
     };
 
     if (dashboardTimeCompare.length > 0) {
