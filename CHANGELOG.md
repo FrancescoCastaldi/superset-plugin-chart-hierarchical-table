@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-10-29
+### Added
+- **Testi a capo automatico** (`wrapHeaderLabels`, spento di default): le intestazioni e le etichette di riga troppo lunghe vanno a capo invece di essere tagliate o di spingere fuori le colonne a destra (per esempio `Δ% Richieste (dic 2025 – ott 2026 vs mese precedente)`). La seconda riga dell'intestazione sticky delle tabelle pivot scala sotto la prima, che con il testo a capo è più alta.
+- **Colonne ridimensionabili** (`resizableColumns`, spento di default): un bordo trascinabile a destra di ogni intestazione allarga o stringe la colonna (da 56 a 900 px), doppio clic sul bordo la ripristina; la tabella prende la somma delle larghezze, quindi una colonna più stretta restringe davvero la tabella e una più larga la fa scorrere. Le larghezze restano nel browser, per grafico.
+- **Colonne spostabili con il trascinamento** (`reorderColumnsByDrag`, spento di default): le intestazioni delle metriche si trascinano dove si vuole (anche le colonne Δ), con intestazione e valori che si spostano insieme, senza bisogno del pannello o di un aiuto della dashboard (prima serviva l'hook `onReorderMetrics`, che Superset non fornisce). Vale per le tabelle senza colonne pivot; l'ordine resta nel browser, per grafico.
+- **Ripristina colonne**: con larghezze o ordine personalizzati compare nella barra il pulsante che rimette tutto come da configurazione.
+- Con i tre flag spenti la tabella è identica a prima.
+
 ## [0.11.1] - 2026-10-29
 ### Fixed
 - **Cross-filtering: il click su una riga ora aggiorna sempre la tabella**: la notifica alla dashboard partiva dentro l'updater di `setState`, cioè durante il render del componente, e a seconda dei casi l'aggiornamento della dashboard si perdeva o arrivava a metà render lasciando la tabella indietro. Ora la selezione è tenuta anche in un ref e la dashboard viene avvisata dal gestore del click (`useCrossFilterSelection`): più click ravvicinati si sommano correttamente.

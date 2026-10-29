@@ -36,6 +36,7 @@ import { computeDivergingColor, computeBipolarDataBar } from '../utils/advancedC
 import { getTheme, ResolvedTheme } from '../utils/themes';
 import { useFlatTreeVirtualization } from './useFlatTreeVirtualization';
 import { useCrossFilterSelection } from './useCrossFilterSelection';
+import { useColumnLayout } from './useColumnLayout';
 import { applyWhatIfScenario, computeWhatIfDelta } from '../utils/whatIfEngine';
 import { createScenarioManager } from '../utils/whatIfScenarioManager';
 import WhatIfToolbar from './WhatIfToolbar';
@@ -539,7 +540,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     width,
     height,
     data = [],
-    columns = [],
+    columns: sourceColumns = [],
     dimensions = [],
     initialExpandDepth = 1,
     valueDisplayMode = 'all',
@@ -563,6 +564,9 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     enableContextMenu = true,
     showVarianceDelta = false,
     showVarianceBadges = true,
+    resizableColumns = false,
+    wrapHeaderLabels = false,
+    reorderColumnsByDrag = false,
     goals = NO_GOALS,
     conditionalFormatting = NO_RULES,
     theme = DEFAULT_THEME,
@@ -692,6 +696,38 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     onClearFilter,
     filterState: props.filterState,
   });
+
+  // Widths and order of the columns as the viewer set them (only with the layout flags on).
+  const columnLayout = useColumnLayout({
+    columns: sourceColumns,
+    resizable: resizableColumns,
+    reorderable: reorderColumnsByDrag,
+    isPivotMode: Boolean(props.isPivotMode),
+    storageId: (props.formData as any)?.slice_id,
+  });
+  const columns = columnLayout.columns;
+
+  const renderResizeHandle = (col?: { key: string }) =>
+    resizableColumns && col ? (
+      <span
+        className="col-resize-handle"
+        role="separator"
+        aria-orientation="vertical"
+        title="Trascina per ridimensionare, doppio clic per ripristinare"
+        onMouseDown={e =>
+          columnLayout.startResize(
+            e,
+            col.key,
+            (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect().width,
+          )
+        }
+        onClick={e => e.stopPropagation()}
+        onDoubleClick={e => {
+          e.stopPropagation();
+          columnLayout.resetWidth(col.key);
+        }}
+      />
+    ) : null;
 
   const containerStyle = useMemo(() => {
     const style: React.CSSProperties = {
@@ -864,7 +900,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
   const handleHeaderSort = useCallback(
     (columnKey: string) => {
-      if (!enableHierarchicalSort || isDraggingColumnRef.current) return;
+      if (!enableHierarchicalSort || isDraggingColumnRef.current || columnLayout.wasJustResized()) return;
       const isCurrent =
         sortColumn === columnKey ||
         (isHierarchySortKey(sortColumn, dimensions) && isHierarchySortKey(columnKey, dimensions));
@@ -880,7 +916,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         setSortDirection('asc');
       }
     },
-    [dimensions, enableHierarchicalSort, sortColumn],
+    [columnLayout, dimensions, enableHierarchicalSort, sortColumn],
   );
 
   // Sibling-aware recursive in-tree sorting
@@ -951,6 +987,37 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   });
 
   const displayCols = useMemo(() => getDisplayColumns(columns), [columns]);
+
+  // With resizable columns the table takes the sum of its column widths, so that a narrower column
+  // really narrows the table, and a wider one scrolls it, instead of the others giving way.
+  const fixedTableStyle = useMemo((): React.CSSProperties | undefined => {
+    if (!resizableColumns) return undefined;
+    const total = columns.reduce((sum, col) => {
+      const width = columnLayout.widthOf(col);
+      const px = typeof width === 'number' ? width : parseFloat(String(width ?? ''));
+      return sum + (Number.isFinite(px) ? px : columnLayout.defaultWidth);
+    }, 0);
+    return { tableLayout: 'fixed', width: total, minWidth: total, maxWidth: 'none' };
+  }, [resizableColumns, columns, columnLayout]);
+
+  // Sticky second header row sits under the first one, which is taller when its labels wrap.
+  const theadRef = useRef<HTMLTableSectionElement>(null);
+  const [firstHeaderRowHeight, setFirstHeaderRowHeight] = useState<number | null>(null);
+  useEffect(() => {
+    if (!wrapHeaderLabels || !props.isPivotMode) {
+      setFirstHeaderRowHeight(null);
+      return undefined;
+    }
+    const measure = () => {
+      const row = theadRef.current?.querySelector('tr.pivot-group-header-row');
+      const heightNow = row ? Math.ceil(row.getBoundingClientRect().height) : 0;
+      setFirstHeaderRowHeight(heightNow > 0 ? heightNow : null);
+    };
+    measure();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (observer && theadRef.current) observer.observe(theadRef.current);
+    return () => observer?.disconnect();
+  }, [wrapHeaderLabels, props.isPivotMode, columns, width]);
 
   // Pre-computed column metadata (avoids 10k+ string checks during rendering)
   const columnMetaMap = useMemo(
@@ -1265,6 +1332,16 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               <option value="parents_only">Solo padri</option>
             </select>
           </div>
+          {columnLayout.customized && (
+            <button
+              type="button"
+              className="toolbar-btn"
+              onClick={columnLayout.reset}
+              title="Ripristina larghezze e ordine delle colonne"
+            >
+              Ripristina colonne
+            </button>
+          )}
           {enableExport && (
             <button
               type="button"
@@ -1295,9 +1372,22 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             compact: compactMode,
             striped: stripedRows,
             'pivot-matrix-mode': props.isPivotMode,
+            'wrap-labels': wrapHeaderLabels,
+            'resizable-columns': resizableColumns,
           })}
+          style={{
+            ...fixedTableStyle,
+            ...(firstHeaderRowHeight ? ({ '--pivot-sub-top': `${firstHeaderRowHeight}px` } as React.CSSProperties) : {}),
+          }}
         >
-          <thead>
+          {resizableColumns && (
+            <colgroup>
+              {columns.map(col => (
+                <col key={col.key} style={{ width: columnLayout.widthOf(col) ?? columnLayout.defaultWidth }} />
+              ))}
+            </colgroup>
+          )}
+          <thead ref={theadRef}>
             {props.isPivotMode && props.pivotHeaderGroups && props.pivotHeaderGroups.length > 0 ? (
               <>
                 {/* Level 1: Main Metric Header Row */}
@@ -1333,13 +1423,15 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                         : 'none'
                     }
                     style={{
-                      width: columns[0]?.width,
-                      minWidth: columns[0]?.width,
+                      width: columnLayout.widthOf(columns[0]),
+                      minWidth: columnLayout.widthOf(columns[0]),
+                      ...(resizableColumns ? { maxWidth: columnLayout.widthOf(columns[0]) } : {}),
                       cursor: enableHierarchicalSort ? 'pointer' : undefined,
                     }}
                   >
                     <span>{columns[0]?.title}</span>
                     {renderSortIndicator('__hierarchy_tree__')}
+                    {renderResizeHandle(columns[0])}
                   </th>
                   {props.pivotHeaderGroups.map(group => {
                     const isSortable = Boolean(enableHierarchicalSort);
@@ -1461,8 +1553,8 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                             : 'none'
                         }
                         style={{
-                          width: col.width,
-                          minWidth: col.width,
+                          width: columnLayout.widthOf(col),
+                          minWidth: columnLayout.widthOf(col),
                           cursor: isSortable || isSubDraggable ? 'pointer' : undefined,
                         }}
                       >
@@ -1475,6 +1567,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                           {col.title}
                         </span>
                         {renderSortIndicator(col.key)}
+                        {renderResizeHandle(col)}
                       </th>
                     );
                   })}
@@ -1489,21 +1582,57 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     (sortColumn === sortKey ||
                       (col.isHierarchyDimension && isHierarchySortKey(sortColumn, dimensions))) &&
                     sortDirection !== 'none';
+                  // The flag lets the viewer move columns without the dashboard's help; otherwise the
+                  // reorder goes through the host hook, as before.
+                  const isLocalDraggable = columnLayout.reorderable && Boolean(col.isMetric);
                   const flatMetricKey = onReorderMetrics ? getMetricKeyFromColumn(col, baseMetrics) : null;
-                  const isFlatDraggable = Boolean(onReorderMetrics && flatMetricKey);
-                  const isFlatDragging = draggedMetricCol === flatMetricKey;
-                  const isFlatTargetBefore = dropTargetCol?.metric === flatMetricKey && dropTargetCol.position === 'before';
-                  const isFlatTargetAfter = dropTargetCol?.metric === flatMetricKey && dropTargetCol.position === 'after';
+                  const isFlatDraggable = isLocalDraggable || Boolean(onReorderMetrics && flatMetricKey);
+                  const localDrag = columnLayout.drag;
+                  const isFlatDragging = isLocalDraggable
+                    ? localDrag.dragKey === col.key
+                    : draggedMetricCol === flatMetricKey;
+                  const isFlatTargetBefore = isLocalDraggable
+                    ? localDrag.dropTarget?.key === col.key && localDrag.dropTarget.position === 'before'
+                    : dropTargetCol?.metric === flatMetricKey && dropTargetCol.position === 'before';
+                  const isFlatTargetAfter = isLocalDraggable
+                    ? localDrag.dropTarget?.key === col.key && localDrag.dropTarget.position === 'after'
+                    : dropTargetCol?.metric === flatMetricKey && dropTargetCol.position === 'after';
 
                   return (
                     <th
                       key={col.key}
                       draggable={isFlatDraggable}
-                      onDragStart={isFlatDraggable ? e => handleColumnDragStart(e, flatMetricKey!) : undefined}
-                      onDragOver={isFlatDraggable ? e => handleColumnDragOver(e, flatMetricKey!) : undefined}
-                      onDragLeave={isFlatDraggable ? e => handleColumnDragLeave(e, flatMetricKey!) : undefined}
-                      onDrop={isFlatDraggable ? e => handleColumnDrop(e, flatMetricKey!) : undefined}
-                      onDragEnd={isFlatDraggable ? handleColumnDragEnd : undefined}
+                      onDragStart={
+                        isLocalDraggable
+                          ? e => localDrag.onDragStart(e, col.key)
+                          : isFlatDraggable
+                          ? e => handleColumnDragStart(e, flatMetricKey!)
+                          : undefined
+                      }
+                      onDragOver={
+                        isLocalDraggable
+                          ? e => localDrag.onDragOver(e, col.key)
+                          : isFlatDraggable
+                          ? e => handleColumnDragOver(e, flatMetricKey!)
+                          : undefined
+                      }
+                      onDragLeave={
+                        isLocalDraggable
+                          ? e => localDrag.onDragLeave(e, col.key)
+                          : isFlatDraggable
+                          ? e => handleColumnDragLeave(e, flatMetricKey!)
+                          : undefined
+                      }
+                      onDrop={
+                        isLocalDraggable
+                          ? e => localDrag.onDrop(e, col.key)
+                          : isFlatDraggable
+                          ? e => handleColumnDrop(e, flatMetricKey!)
+                          : undefined
+                      }
+                      onDragEnd={
+                        isLocalDraggable ? localDrag.onDragEnd : isFlatDraggable ? handleColumnDragEnd : undefined
+                      }
                       className={classNames({
                         'hierarchy-col': col.isHierarchyDimension,
                         'metric-header': col.isMetric,
@@ -1535,8 +1664,9 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                           : 'none'
                       }
                       style={{
-                        width: col.width,
-                        minWidth: col.width,
+                        width: columnLayout.widthOf(col),
+                        minWidth: columnLayout.widthOf(col),
+                        ...(resizableColumns && col.isHierarchyDimension ? { maxWidth: columnLayout.widthOf(col) } : {}),
                         cursor: isSortable || isFlatDraggable ? 'pointer' : undefined,
                       }}
                     >
@@ -1549,6 +1679,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                         {col.title}
                       </span>
                       {renderSortIndicator(sortKey)}
+                      {renderResizeHandle(col)}
                     </th>
                   );
                 })}
