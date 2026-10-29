@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1] - 2026-10-29
+### Added
+- **Adattamento dinamico a tutta larghezza (100% width)**: le colonne della tabella si espandono in modo proporzionale per occupare l'intero spazio orizzontale disponibile nel contenitore, eliminando lo spazio bianco vuoto a destra su viste ampie (Explore e riquadri dashboard).
+- **Bilanciamento del ridimensionamento manuale**: se una o piu colonne vengono ridimensionate manualmente con `resizableColumns`, le colonne rimanenti non personalizzate continuano ad assorbire lo spazio residuo per mantenere la tabella a pieno schermo. Se la somma delle colonne supera la larghezza del contenitore, le dimensioni vengono preservate consentendo lo scorrimento orizzontale naturale.
+- **Rilevamento reattivo del contenitore**: tramite `ResizeObserver` la tabella ricalcola e adatta istantaneamente le proporzioni delle colonne al ridimensionamento della finestra del browser o al collasso ed espansione della barra laterale dei controlli di Explore.
+
 ## [0.12.0] - 2026-10-29
 ### Added
 - **Testi a capo automatico** (`wrapHeaderLabels`, spento di default): le intestazioni e le etichette di riga troppo lunghe vanno a capo invece di essere tagliate o di spingere fuori le colonne a destra (per esempio `Δ% Richieste (dic 2025 – ott 2026 vs mese precedente)`). La seconda riga dell'intestazione sticky delle tabelle pivot scala sotto la prima, che con il testo a capo è più alta.

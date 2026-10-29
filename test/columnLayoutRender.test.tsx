@@ -174,4 +174,77 @@ describe('column layout flags in the table', () => {
     expect(window.localStorage.getItem(layoutStorageKey(77))).toBeNull();
     t.unmount();
   });
+
+  it('dynamically expands columns to fill 100% of container width when measured', () => {
+    const clientWidthSpy = jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this.classList && this.classList.contains('table-scroll-wrapper')) {
+        return 1200;
+      }
+      return 0;
+    });
+
+    const t = mount({ resizableColumns: true });
+    const cols = t.all('colgroup col');
+    expect(cols).toHaveLength(3);
+    const total = cols.reduce((sum, col) => sum + parseFloat(col.style.width), 0);
+    expect(total).toBe(1200);
+    expect(parseFloat(t.q('table.hierarchical-table').style.width)).toBe(1200);
+
+    const colWidths = cols.map(c => parseFloat(c.style.width));
+    expect(colWidths[0]).toBe(611);
+    expect(colWidths[1]).toBe(295);
+    expect(colWidths[2]).toBe(294);
+
+    clientWidthSpy.mockRestore();
+    t.unmount();
+  });
+
+  it('allows resizing in a dynamically expanded table and respects reset', () => {
+    const clientWidthSpy = jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this.classList && this.classList.contains('table-scroll-wrapper')) {
+        return 1200;
+      }
+      return 0;
+    });
+
+    const t = mount({ resizableColumns: true });
+    const handle = t.all('thead .col-resize-handle')[1];
+    jest.spyOn(handle.parentElement as HTMLElement, 'getBoundingClientRect').mockReturnValue({
+      width: 295,
+      left: 611,
+      right: 906,
+      top: 0,
+      bottom: 30,
+      height: 30,
+      x: 611,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    act(() => {
+      Simulate.mouseDown(handle, { clientX: 906 });
+    });
+    act(() => {
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 956 }));
+    });
+    act(() => {
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 956 }));
+    });
+
+    expect(parseFloat(t.all('colgroup col')[1].style.width)).toBe(345);
+    expect(parseFloat(t.q('table.hierarchical-table').style.width)).toBe(1200);
+
+    // Double-click resets that column back to proportional
+    act(() => {
+      Simulate.doubleClick(handle);
+    });
+    expect(parseFloat(t.all('colgroup col')[1].style.width)).toBe(295);
+
+    clientWidthSpy.mockRestore();
+    t.unmount();
+  });
 });

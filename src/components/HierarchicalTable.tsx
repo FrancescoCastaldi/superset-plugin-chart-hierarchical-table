@@ -697,6 +697,32 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     filterState: props.filterState,
   });
 
+  const scrollWrapperRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+
+  useEffect(() => {
+    const el = scrollWrapperRef.current;
+    if (!el) return undefined;
+
+    const measure = () => {
+      const clientWidth = el.clientWidth;
+      if (clientWidth > 0) {
+        setContainerWidth(prev => (prev !== clientWidth ? clientWidth : prev));
+      }
+    };
+
+    measure();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => measure());
+      observer.observe(el);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [width]);
+
   // Widths and order of the columns as the viewer set them (only with the layout flags on).
   const columnLayout = useColumnLayout({
     columns: sourceColumns,
@@ -704,6 +730,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
     reorderable: reorderColumnsByDrag,
     isPivotMode: Boolean(props.isPivotMode),
     storageId: (props.formData as any)?.slice_id,
+    containerWidth,
   });
   const columns = columnLayout.columns;
 
@@ -992,11 +1019,14 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
   // really narrows the table, and a wider one scrolls it, instead of the others giving way.
   const fixedTableStyle = useMemo((): React.CSSProperties | undefined => {
     if (!resizableColumns) return undefined;
-    const total = columns.reduce((sum, col) => {
-      const width = columnLayout.widthOf(col);
-      const px = typeof width === 'number' ? width : parseFloat(String(width ?? ''));
-      return sum + (Number.isFinite(px) ? px : columnLayout.defaultWidth);
-    }, 0);
+    const total =
+      columnLayout.totalWidth > 0
+        ? columnLayout.totalWidth
+        : columns.reduce((sum, col) => {
+            const width = columnLayout.widthOf(col);
+            const px = typeof width === 'number' ? width : parseFloat(String(width ?? ''));
+            return sum + (Number.isFinite(px) ? px : columnLayout.defaultWidth);
+          }, 0);
     return { tableLayout: 'fixed', width: total, minWidth: total, maxWidth: 'none' };
   }, [resizableColumns, columns, columnLayout]);
 
@@ -1363,6 +1393,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
       {/* Table Content */}
       <div
+        ref={scrollWrapperRef}
         className="table-scroll-wrapper"
         onScroll={e => rows.length < visibleRows.length && setScrollTop(quantizeScrollTop(e.currentTarget.scrollTop))}
       >

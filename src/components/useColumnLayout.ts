@@ -4,6 +4,7 @@ import {
   DEFAULT_METRIC_WIDTH,
   EMPTY_LAYOUT,
   applyColumnOrder,
+  calculateDynamicColumnWidths,
   clampWidth,
   isCustomLayout,
   layoutStorageKey,
@@ -27,6 +28,8 @@ export interface ColumnLayoutOptions<T extends LayoutColumn> {
   isPivotMode: boolean;
   /** Identity of the chart, to keep the layout of each one apart. */
   storageId?: string | number | null;
+  /** Available container width for dynamic proportional column distribution. */
+  containerWidth?: number;
 }
 
 type DropPosition = 'before' | 'after';
@@ -37,6 +40,7 @@ export function useColumnLayout<T extends LayoutColumn>({
   reorderable,
   isPivotMode,
   storageId,
+  containerWidth,
 }: ColumnLayoutOptions<T>) {
   const storageKey = layoutStorageKey(storageId);
   const active = resizable || reorderable;
@@ -59,10 +63,25 @@ export function useColumnLayout<T extends LayoutColumn>({
     [canReorder, columns, layout.order],
   );
 
+  const dynamicLayout = useMemo(
+    () =>
+      calculateDynamicColumnWidths({
+        columns: orderedColumns,
+        customWidths: layout.widths,
+        containerWidth: containerWidth ?? 0,
+        defaultMetricWidth: DEFAULT_METRIC_WIDTH,
+      }),
+    [orderedColumns, layout.widths, containerWidth],
+  );
+
   const widthOf = useCallback(
-    (column: LayoutColumn): number | string | undefined =>
-      resizable && layout.widths[column.key] !== undefined ? layout.widths[column.key] : column.width,
-    [resizable, layout.widths],
+    (column: LayoutColumn): number | string | undefined => {
+      if (dynamicLayout.widths[column.key] !== undefined) {
+        return dynamicLayout.widths[column.key];
+      }
+      return resizable && layout.widths[column.key] !== undefined ? layout.widths[column.key] : column.width;
+    },
+    [dynamicLayout.widths, resizable, layout.widths],
   );
 
   // ---------------------------------------------------------------- resize
@@ -180,6 +199,8 @@ export function useColumnLayout<T extends LayoutColumn>({
     reorderable: canReorder,
     widthOf,
     defaultWidth: DEFAULT_METRIC_WIDTH,
+    totalWidth: dynamicLayout.totalWidth,
+    isExpanded: dynamicLayout.isExpanded,
     startResize,
     resetWidth,
     wasJustResized,
