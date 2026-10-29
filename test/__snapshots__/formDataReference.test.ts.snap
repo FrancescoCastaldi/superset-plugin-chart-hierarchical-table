@@ -96,6 +96,7 @@ exports[`form data reference fixture resolves to the same transform options 1`] 
   "pivotTimeDeltaLag": 3,
   "pivotTimeDeltaMode": "both",
   "showGrandTotal": false,
+  "showPeriodInMetricLabel": false,
   "showPivotColumnSubtotals": false,
   "showSparklines": true,
   "showSubtotals": false,

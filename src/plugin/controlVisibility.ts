@@ -40,6 +40,7 @@ export const FOLLOWS: Record<string, string> = {
   customNegativeHex: 'themeProfile',
   customNeutralHex: 'themeProfile',
   showVarianceBadges: 'showVarianceDelta',
+  showPeriodInMetricLabel: 'showVarianceDelta',
   timeGrain: 'showVarianceDelta',
   referencePeriod: 'showVarianceDelta',
   comparisonType: 'showVarianceDelta',

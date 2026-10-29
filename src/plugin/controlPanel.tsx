@@ -836,6 +836,18 @@ const config: ControlPanelConfig = {
             },
           },
           {
+            name: 'showPeriodInMetricLabel',
+            config: {
+              type: 'CheckboxControl',
+              label: t("Mostra l'arco temporale accanto alle metriche"),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Scrive accanto al nome di ogni metrica il periodo che copre, accanto alle colonne di confronto quello con cui sono misurate e sulle colonne delta entrambi.',
+              ),
+            },
+          },
+          {
             name: 'timeGrain',
             config: {
               type: 'SelectControl',

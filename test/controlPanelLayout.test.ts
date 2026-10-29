@@ -46,6 +46,7 @@ const BASELINE_CONTROL_NAMES = [
   'minMaxDisplayMode',
   'minMaxScope',
   'showVarianceDelta',
+  'showPeriodInMetricLabel',
   'timeGrain',
   'referencePeriod',
   'comparisonType',
@@ -157,6 +158,7 @@ const EXPECTED_LAYOUT: {
     controls: [
       'showVarianceDelta',
       'showVarianceBadges',
+      'showPeriodInMetricLabel',
       'timeGrain',
       'referencePeriod',
       'comparisonType',

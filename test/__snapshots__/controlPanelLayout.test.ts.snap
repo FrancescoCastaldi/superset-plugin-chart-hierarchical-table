@@ -90,6 +90,7 @@ exports[`controlPanel characterization before the UX refactor keeps the current 
     "controls": [
       "showVarianceDelta",
       "showVarianceBadges",
+      "showPeriodInMetricLabel",
       "timeGrain",
       "referencePeriod",
       "comparisonType",
@@ -397,6 +398,12 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
   {
     "default": true,
     "name": "showGrandTotal",
+    "renderTrigger": true,
+    "type": "CheckboxControl",
+  },
+  {
+    "default": false,
+    "name": "showPeriodInMetricLabel",
     "renderTrigger": true,
     "type": "CheckboxControl",
   },

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-10-29
+### Added
+- **Controllo "Show the period next to each metric"** (`showPeriodInMetricLabel`, spento di default): scrive accanto al nome di ogni metrica l'arco temporale che copre (per esempio `Richieste (nov 2025 – ott 2026)`), accanto alle colonne di confronto il periodo con cui sono misurate (`Richieste (Confronto) (1 mese fa)`) e sulle colonne delta entrambi (`Δ% Richieste (ott 2026 vs mese precedente)`). L'arco si legge dai periodi presenti nei dati, dall'offset del confronto nativo (`time_compare`) o dall'intervallo applicato alla query, quindi segue i filtri della dashboard. Le colonne pivot restano invariate: la loro intestazione nomina già il periodo.
+
 ## [0.10.5] - 2026-10-29
 ### Added
 - **Controllo "Mostra le etichette Δ % accanto ai valori"** (`showVarianceBadges`, attivo di default): se disattivato, con "Mostra le variazioni rispetto al periodo" acceso la variazione resta solo nelle colonne Δ % e i valori assoluti (per esempio Richieste) non portano più l'etichetta percentuale accanto. Nessun cambiamento per i grafici esistenti.
