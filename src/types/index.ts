@@ -270,6 +270,8 @@ export interface HierarchicalTableFormData extends QueryFormData {
   // Cross Filtering (Superset 6.1.0)
   emit_filter?: boolean;
   enableCrossFiltering?: boolean;
+  /** The table is filtered by its own cross-filter too, so it shows only the selection. */
+  crossFilterAppliesToSelf?: boolean;
 
   // Context Menu & Drill
   enableContextMenu?: boolean;

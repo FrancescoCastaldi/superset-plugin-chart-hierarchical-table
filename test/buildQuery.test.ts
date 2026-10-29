@@ -41,3 +41,26 @@ describe('HierarchicalTable buildQuery', () => {
     expect(q.time_offsets).toEqual(['2026-08-01 : 2026-08-31']);
   });
 });
+
+describe('HierarchicalTable buildQuery with its own cross-filter', () => {
+  const base = {
+    datasource: '1__table',
+    hierarchyType: 'multi_dimension',
+    groupby: ['sede', 'regime'],
+    metrics: ['revenue'],
+  };
+  const selfFilters = [{ col: 'sede', op: 'IN', val: ['ROMA'] }];
+
+  it('adds the own filters to the query when the option is on', () => {
+    const context = buildQuery({ ...base, crossFilterAppliesToSelf: true } as any, { ownState: { selfFilters } });
+    expect((context as any).queries[0].filters).toEqual(selfFilters);
+  });
+
+  it('ignores them with the option off, or when there is no own state', () => {
+    expect((buildQuery(base as any, { ownState: { selfFilters } }) as any).queries[0].filters).toBeUndefined();
+    expect((buildQuery({ ...base, crossFilterAppliesToSelf: true } as any) as any).queries[0].filters).toBeUndefined();
+    expect(
+      (buildQuery({ ...base, crossFilterAppliesToSelf: true } as any, { ownState: { selfFilters: [] } }) as any).queries[0].filters,
+    ).toBeUndefined();
+  });
+});

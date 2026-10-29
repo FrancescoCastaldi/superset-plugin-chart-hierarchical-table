@@ -235,3 +235,27 @@ describe('eventHandlers', () => {
     });
   });
 });
+
+describe('cross-filter applied to the chart itself', () => {
+  const items = [{ key: 'a', dimension: 'sede', value: 'Roma', pathMap: { sede: 'ROMA' } }];
+
+  it('keeps the same filters as the chart own state, and clears them with the selection', () => {
+    const setDataMask = jest.fn();
+    const handler = createCrossFilterHandler({ isCrossFilterActive: true, setDataMask, applyToSelf: true });
+    handler('sede', ['ROMA'], undefined, false, items);
+    const mask = setDataMask.mock.calls[0][0];
+    expect(mask.extraFormData.filters).toEqual([{ col: 'sede', op: 'IN', val: ['ROMA'] }]);
+    expect(mask.ownState).toEqual({ selfFilters: mask.extraFormData.filters });
+
+    createClearFilterHandler(setDataMask, true)();
+    expect(setDataMask.mock.calls[1][0].ownState).toEqual({ selfFilters: [] });
+  });
+
+  it('leaves the data mask exactly as it was with the option off', () => {
+    const setDataMask = jest.fn();
+    createCrossFilterHandler({ isCrossFilterActive: true, setDataMask })('sede', ['ROMA'], undefined, false, items);
+    createClearFilterHandler(setDataMask)();
+    expect(setDataMask.mock.calls[0][0]).not.toHaveProperty('ownState');
+    expect(setDataMask.mock.calls[1][0]).toEqual(CLEAR_MASK);
+  });
+});

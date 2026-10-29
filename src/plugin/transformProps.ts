@@ -196,7 +196,8 @@ export default function transformProps(
       columnSpecs: options.dimensionColumns,
       setDataMask,
       onAddFilter,
+      applyToSelf: options.crossFilterAppliesToSelf,
     }),
-    onClearFilter: createClearFilterHandler(setDataMask),
+    onClearFilter: createClearFilterHandler(setDataMask, options.crossFilterAppliesToSelf),
   };
 }

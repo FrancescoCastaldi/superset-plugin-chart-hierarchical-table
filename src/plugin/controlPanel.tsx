@@ -1081,6 +1081,19 @@ const config: ControlPanelConfig = {
             },
           },
           {
+            name: 'crossFilterAppliesToSelf',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Filtra anche questa tabella'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Quando si seleziona una riga, il cross-filter si applica anche alla tabella stessa, che mostra solo quanto selezionato (con i totali ricalcolati). Togliendo la selezione torna tutto.',
+              ),
+              visibility: ({ controls }: { controls: any }) => controls?.emit_filter?.value !== false,
+            },
+          },
+          {
             name: 'enableContextMenu',
             config: {
               type: 'CheckboxControl',

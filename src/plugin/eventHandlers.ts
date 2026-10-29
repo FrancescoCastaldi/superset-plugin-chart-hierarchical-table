@@ -149,28 +149,42 @@ export function computeCrossFilterDataMask(
   return buildSingleDimensionDataMask(dimension, value, specs);
 }
 
+/**
+ * The same filters, kept as the chart's own state as well: a dashboard never applies a chart's
+ * cross-filter to the chart itself, so the query reads them back from here (`buildQuery`).
+ */
+export function withSelfFilters<T extends { extraFormData: { filters?: any[] } }>(dataMask: T, applyToSelf?: boolean) {
+  if (!applyToSelf) return dataMask;
+  return { ...dataMask, ownState: { selfFilters: dataMask.extraFormData.filters ?? [] } };
+}
+
 export function createCrossFilterHandler({
   isCrossFilterActive,
   setDataMask,
   onAddFilter,
   columnSpecs,
+  applyToSelf,
 }: {
   isCrossFilterActive: boolean;
   setDataMask?: SetDataMask;
   onAddFilter?: AddFilter;
   columnSpecs?: ColumnSpecs;
+  applyToSelf?: boolean;
 }): CrossFilterHandler {
   return (dimension, value, _pathMap, isCurrentlySelected, allSelectedFilters) => {
     if (!isCrossFilterActive) return;
 
     if (setDataMask) {
       setDataMask(
-        computeCrossFilterDataMask(
-          dimension,
-          value,
-          isCurrentlySelected,
-          allSelectedFilters,
-          columnSpecs,
+        withSelfFilters(
+          computeCrossFilterDataMask(
+            dimension,
+            value,
+            isCurrentlySelected,
+            allSelectedFilters,
+            columnSpecs,
+          ),
+          applyToSelf,
         ),
       );
     } else if (onAddFilter && dimension && value) {
@@ -179,10 +193,10 @@ export function createCrossFilterHandler({
   };
 }
 
-export function createClearFilterHandler(setDataMask?: SetDataMask): () => void {
+export function createClearFilterHandler(setDataMask?: SetDataMask, applyToSelf?: boolean): () => void {
   return () => {
     if (setDataMask) {
-      setDataMask(buildClearFilterDataMask());
+      setDataMask(withSelfFilters(buildClearFilterDataMask(), applyToSelf));
     }
   };
 }

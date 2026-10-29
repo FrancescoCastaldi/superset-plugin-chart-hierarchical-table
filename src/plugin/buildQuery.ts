@@ -2,7 +2,10 @@ import { buildQueryContext, QueryContext, ensureIsArray } from '@superset-ui/cor
 import { HierarchicalTableFormData } from '../types';
 import { buildPeriodMetrics, resolvePeriodColumns } from '../utils/dynamicPeriodLabels';
 
-export default function buildQuery(formData: HierarchicalTableFormData): QueryContext {
+export default function buildQuery(
+  formData: HierarchicalTableFormData,
+  options?: { ownState?: Record<string, any> },
+): QueryContext {
   const fd: any = formData || {};
   const {
     hierarchyType = 'multi_dimension',
@@ -44,6 +47,12 @@ export default function buildQuery(formData: HierarchicalTableFormData): QueryCo
       columns,
       metrics: queryMetrics,
     };
+
+    // The chart's own cross-filter, which the dashboard does not apply to the chart that emits it.
+    const selfFilters = fd.crossFilterAppliesToSelf ? ensureIsArray(options?.ownState?.selfFilters) : [];
+    if (selfFilters.length > 0) {
+      query.filters = [...ensureIsArray(query.filters), ...selfFilters];
+    }
 
     if (dashboardTimeCompare.length > 0) {
       query.time_offsets = dashboardTimeCompare;

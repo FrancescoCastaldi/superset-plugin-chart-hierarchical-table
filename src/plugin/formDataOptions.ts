@@ -71,6 +71,8 @@ export interface TransformOptions {
   showPeriodInMetricLabel: boolean;
   /** Titles carry the reference and comparison periods the query really used. */
   periodLabelsFromFilters: boolean;
+  /** The chart's own cross-filter narrows its own query as well. */
+  crossFilterAppliesToSelf: boolean;
   combineMetric: any;
   pivotSortOrder: PivotSortOrder;
   pivotRowTotalsPosition: PivotRowTotalsPosition;
@@ -238,6 +240,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     reorderColumnsByDrag = false,
     showPeriodInMetricLabel = false,
     periodLabelsFromFilters = false,
+    crossFilterAppliesToSelf = false,
     combineMetric = true,
     combine_metric,
     pivotSortOrder = 'desc',
@@ -335,6 +338,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     reorderColumnsByDrag: Boolean(reorderColumnsByDrag),
     showPeriodInMetricLabel: Boolean(showPeriodInMetricLabel),
     periodLabelsFromFilters: Boolean(periodLabelsFromFilters),
+    crossFilterAppliesToSelf: Boolean(crossFilterAppliesToSelf),
     combineMetric: combineMetric ?? combine_metric ?? true,
     pivotSortOrder: pivotSortOrder || pivot_sort_order || 'desc',
     pivotRowTotalsPosition: pivotRowTotalsPosition || pivot_row_totals_position || 'none',
