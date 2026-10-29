@@ -50,6 +50,9 @@ exports[`controlPanel characterization before the UX refactor keeps the current 
       "showGrandTotal",
       "stickyHeader",
       "enableSearch",
+      "wrapHeaderLabels",
+      "resizableColumns",
+      "reorderColumnsByDrag",
       "enableHierarchicalSort",
       "enableExport",
     ],
@@ -393,6 +396,18 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "type": "SelectControl",
   },
   {
+    "default": false,
+    "name": "reorderColumnsByDrag",
+    "renderTrigger": true,
+    "type": "CheckboxControl",
+  },
+  {
+    "default": false,
+    "name": "resizableColumns",
+    "renderTrigger": true,
+    "type": "CheckboxControl",
+  },
+  {
     "name": "row_limit",
   },
   {
@@ -508,6 +523,12 @@ exports[`controlPanel characterization before the UX refactor keeps the type, de
     "name": "weightColumn",
     "renderTrigger": true,
     "type": "component:MetricPicker",
+  },
+  {
+    "default": false,
+    "name": "wrapHeaderLabels",
+    "renderTrigger": true,
+    "type": "CheckboxControl",
   },
 ]
 `;

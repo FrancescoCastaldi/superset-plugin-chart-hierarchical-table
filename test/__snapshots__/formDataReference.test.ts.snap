@@ -96,6 +96,8 @@ exports[`form data reference fixture resolves to the same transform options 1`] 
   "pivotSortOrder": "asc",
   "pivotTimeDeltaLag": 3,
   "pivotTimeDeltaMode": "both",
+  "reorderColumnsByDrag": false,
+  "resizableColumns": false,
   "showGrandTotal": false,
   "showPeriodInMetricLabel": false,
   "showPivotColumnSubtotals": false,
@@ -139,5 +141,6 @@ exports[`form data reference fixture resolves to the same transform options 1`] 
   },
   "valueDisplayMode": "leaves_only",
   "weightColumn": "prenotazioni",
+  "wrapHeaderLabels": false,
 }
 `;

@@ -533,11 +533,11 @@ const config: ControlPanelConfig = {
             name: 'resizableColumns',
             config: {
               type: 'CheckboxControl',
-              label: t('Colonne ridimensionabili (trascina il bordo dell\'intestazione)'),
+              label: t('Colonne ridimensionabili'),
               renderTrigger: true,
               default: false,
               description: t(
-                'Permette di allargare o stringere ogni colonna trascinando il bordo destro della sua intestazione; doppio clic sul bordo per ripristinarla. Le larghezze restano memorizzate nel browser.',
+                'Permette di allargare o stringere ogni colonna trascinando il bordo destro della sua intestazione (doppio clic sul bordo per ripristinarla). Le larghezze restano memorizzate nel browser.',
               ),
             },
           },
