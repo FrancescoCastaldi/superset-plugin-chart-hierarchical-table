@@ -1,6 +1,7 @@
 export const MIN_COLUMN_WIDTH = 56;
 export const MAX_COLUMN_WIDTH = 900;
 export const DEFAULT_METRIC_WIDTH = 120;
+export const DEFAULT_HIERARCHY_WIDTH = 280;
 
 /** What the viewer changed of the table layout: column widths and the order of the metric columns. */
 export interface ColumnLayoutState {
@@ -13,6 +14,135 @@ export const EMPTY_LAYOUT: ColumnLayoutState = { widths: {}, order: [] };
 export function clampWidth(width: number): number {
   if (!Number.isFinite(width)) return DEFAULT_METRIC_WIDTH;
   return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, Math.round(width)));
+}
+
+export interface DynamicColumnWidthsOptions {
+  columns: Array<{ key: string; isMetric?: boolean; width?: number | string }>;
+  customWidths: Record<string, number>;
+  containerWidth: number;
+  defaultMetricWidth?: number;
+}
+
+export interface DynamicColumnWidthsResult {
+  widths: Record<string, number>;
+  totalWidth: number;
+  isExpanded: boolean;
+}
+
+export function getColumnBaseWidth(
+  column: { key: string; isMetric?: boolean; width?: number | string },
+  defaultMetricWidth = DEFAULT_METRIC_WIDTH,
+): number {
+  if (typeof column.width === 'number' && Number.isFinite(column.width) && column.width > 0) {
+    return Math.round(column.width);
+  }
+  if (typeof column.width === 'string') {
+    const parsed = parseFloat(column.width);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.round(parsed);
+    }
+  }
+  return column.isMetric ? defaultMetricWidth : DEFAULT_HIERARCHY_WIDTH;
+}
+
+/**
+ * Calculates dynamic column widths so that when container space is available,
+ * columns expand proportionally to fill 100% of the container width without leaving
+ * blank space. If columns exceed container width, base or user widths are preserved
+ * to allow smooth horizontal scrolling.
+ */
+export function calculateDynamicColumnWidths({
+  columns,
+  customWidths,
+  containerWidth,
+  defaultMetricWidth = DEFAULT_METRIC_WIDTH,
+}: DynamicColumnWidthsOptions): DynamicColumnWidthsResult {
+  if (!columns || columns.length === 0) {
+    return { widths: {}, totalWidth: 0, isExpanded: false };
+  }
+
+  const targetWidth =
+    typeof containerWidth === 'number' && Number.isFinite(containerWidth) && containerWidth > 0
+      ? Math.round(containerWidth)
+      : 0;
+
+  const colDetails = columns.map(col => {
+    const hasCustom = customWidths[col.key] !== undefined;
+    const baseWidth = hasCustom
+      ? clampWidth(customWidths[col.key])
+      : getColumnBaseWidth(col, defaultMetricWidth);
+    return {
+      key: col.key,
+      isCustom: hasCustom,
+      baseWidth,
+    };
+  });
+
+  const totalBaseWidth = colDetails.reduce((sum, c) => sum + c.baseWidth, 0);
+
+  // If container width is not measured or columns naturally need more space than available,
+  // keep base widths to prevent squishing and let container scroll horizontally.
+  if (targetWidth <= totalBaseWidth || targetWidth <= 0) {
+    const widths: Record<string, number> = {};
+    for (const c of colDetails) {
+      widths[c.key] = c.baseWidth;
+    }
+    return { widths, totalWidth: totalBaseWidth, isExpanded: false };
+  }
+
+  // Container is wider than total base widths: expand columns to fill 100% of available space
+  const customCols = colDetails.filter(c => c.isCustom);
+  const nonCustomCols = colDetails.filter(c => !c.isCustom);
+  const widths: Record<string, number> = {};
+
+  if (nonCustomCols.length === 0) {
+    // Every column was customized by user: scale proportionally to fill 100%
+    const scale = targetWidth / totalBaseWidth;
+    let accumulated = 0;
+    colDetails.forEach((c, idx) => {
+      if (idx === colDetails.length - 1) {
+        widths[c.key] = targetWidth - accumulated;
+      } else {
+        const w = Math.round(c.baseWidth * scale);
+        widths[c.key] = w;
+        accumulated += w;
+      }
+    });
+    return { widths, totalWidth: targetWidth, isExpanded: true };
+  }
+
+  // Custom columns retain user-specified sizes
+  let customSum = 0;
+  for (const c of customCols) {
+    widths[c.key] = c.baseWidth;
+    customSum += c.baseWidth;
+  }
+
+  const remainingAvailable = targetWidth - customSum;
+  const nonCustomBaseSum = nonCustomCols.reduce((sum, c) => sum + c.baseWidth, 0);
+
+  if (remainingAvailable > nonCustomBaseSum) {
+    // Non-custom columns scale proportionally to take all remaining space
+    const scale = remainingAvailable / nonCustomBaseSum;
+    let accumulated = 0;
+    nonCustomCols.forEach((c, idx) => {
+      if (idx === nonCustomCols.length - 1) {
+        widths[c.key] = remainingAvailable - accumulated;
+      } else {
+        const w = Math.round(c.baseWidth * scale);
+        widths[c.key] = w;
+        accumulated += w;
+      }
+    });
+    return { widths, totalWidth: targetWidth, isExpanded: true };
+  }
+
+  // User made custom columns wider than available space: uncustomized keep base width
+  for (const c of nonCustomCols) {
+    widths[c.key] = c.baseWidth;
+  }
+  const finalTotal = customSum + nonCustomBaseSum;
+  return { widths, totalWidth: finalTotal, isExpanded: false };
 }
 
 /**
