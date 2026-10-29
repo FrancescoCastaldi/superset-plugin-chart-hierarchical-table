@@ -703,6 +703,18 @@ const config: ControlPanelConfig = {
             },
           },
           {
+            name: 'showVarianceBadges',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Mostra le etichette Δ % accanto ai valori'),
+              renderTrigger: true,
+              default: true,
+              description: t(
+                'Se disattivata, la variazione resta solo nelle colonne Δ % e i valori assoluti non portano il simbolo di percentuale.',
+              ),
+            },
+          },
+          {
             name: 'timeGrain',
             config: {
               type: 'SelectControl',

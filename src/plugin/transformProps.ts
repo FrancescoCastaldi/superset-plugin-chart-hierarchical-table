@@ -138,6 +138,8 @@ export default function transformProps(
     ...(options.enableWhatIf ? { enableWhatIf: true } : {}),
     ...(onWhatIfChange ? { onWhatIfChange } : {}),
     ...(options.showVarianceDelta ? { showVarianceDelta: true } : {}),
+    // Omitted when on (the default) so existing charts keep their props shape.
+    ...(options.showVarianceDelta && !options.showVarianceBadges ? { showVarianceBadges: false } : {}),
     // Omitted when unset so charts without goals keep their previous props shape.
     ...(options.goals.length > 0 ? { goals: options.goals } : {}),
     ...(options.conditionalFormatting.length > 0

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.5] - 2026-10-29
+### Added
+- **Controllo "Mostra le etichette Δ % accanto ai valori"** (`showVarianceBadges`, attivo di default): se disattivato, con "Mostra le variazioni rispetto al periodo" acceso la variazione resta solo nelle colonne Δ % e i valori assoluti (per esempio Richieste) non portano più l'etichetta percentuale accanto. Nessun cambiamento per i grafici esistenti.
+
 ## [0.10.4] - 2026-10-26
 ### Fixed
 - **Controlli non bloccanti in Explore**: Rimossa la validazione obbligatoria (`validators: []`) e aggiunto `clearable: true` per `groupby`, `columns` e `metrics` per prevenire errori di salvataggio o esecuzione per parametri mancanti quando si naviga la vista Explore di Superset.

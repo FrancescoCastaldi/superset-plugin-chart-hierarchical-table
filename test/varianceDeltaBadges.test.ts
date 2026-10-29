@@ -31,6 +31,20 @@ describe('Variance Delta Badges and Native Pivot Delta Polarity', () => {
     expect(transformed.showVarianceDelta).toBe(true);
   });
 
+  it('forwards showVarianceBadges only when switched off', () => {
+    const build = (extra: Record<string, unknown>) =>
+      transformProps({
+        width: 800,
+        height: 400,
+        formData: { groupby: ['reparto'], metrics: ['accessi'], showVarianceDelta: true, ...extra },
+        queriesData: [{ data: [{ reparto: 'Cardiologia', accessi: 100 }] }],
+      } as unknown as HierarchicalTableChartProps);
+
+    expect(build({})).not.toHaveProperty('showVarianceBadges');
+    expect(build({ showVarianceBadges: true })).not.toHaveProperty('showVarianceBadges');
+    expect(build({ showVarianceBadges: false }).showVarianceBadges).toBe(false);
+  });
+
   it('computes native pivot delta columns and assigns correct polarity from base metric', () => {
     const rawProps = {
       width: 800,
