@@ -7,54 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.0] - 2026-10-29
 ### Added
-- **Filtra anche questa tabella** (`crossFilterAppliesToSelf`, spento di default): quando si clicca una riga, il cross-filter si applica anche alla tabella stessa, che mostra solo quanto selezionato e le righe sopra di essa, con i totali ricalcolati sui soli dati filtrati. Una dashboard non applica mai il cross-filter al grafico che lo emette, quindi gli stessi filtri vengono tenuti anche nello stato proprio del grafico (`ownState.selfFilters`) e `buildQuery` li aggiunge alla query. Togliendo la selezione (anche con "Pulisci tutto") la tabella torna completa. Spento, nulla cambia.
+- **Also filter this table** (`crossFilterAppliesToSelf`, off by default): when a row is clicked, the cross-filter also applies to the table itself, which shows only the selected rows and the rows above them, with the totals recalculated on the filtered data only. A dashboard never applies the cross-filter to the chart that emits it, so the same filters are also kept in the chart's own state (`ownState.selfFilters`) and `buildQuery` adds them to the query. Removing the selection (including with "Pulisci tutto") brings the full table back. When off, nothing changes.
 
 ## [0.13.0] - 2026-10-29
 ### Added
-- **Periodo di riferimento e di confronto nelle intestazioni** (`periodLabelsFromFilters`, spento di default): aggiunge alle intestazioni dei valori correnti il mese di riferimento, a quelle dei valori di confronto il mese di confronto e alle variazioni entrambi, per esempio `Richieste (Corrente) · ott 2026`, `Richieste (Confronto) · set 2026`, `Variazione Richieste (%) · ott 2026 vs set 2026`. I periodi sono quelli su cui la query gira davvero: la query chiede insieme ai dati le colonne anno e mese del dataset (`ANNO_CORRENTE`, `MESE_CORRENTE`, `ANNO_CONFRONTO`, `MESE_CONFRONTO`, nomi modificabili), quindi seguono i filtri della dashboard e, se nessun filtro è applicato, i valori predefiniti del dataset. Anno e mese vanno insieme come coppia: più valori selezionati non si combinano. Le colonne dei periodi non compaiono nei dati della tabella. Una colonna è di riferimento se nel nome ha "corrente" o "riferimento", di confronto se ha "confronto", variazione se ha "variazione" o "delta"; le altre restano com'erano. Se è acceso anche l'arco temporale delle metriche, ha la precedenza questo. Spento, nulla cambia.
+- **Reference and comparison periods in the headers** (`periodLabelsFromFilters`, off by default): adds the reference month to the headers of the current values, the comparison month to the headers of the comparison values, and both to the variations, for example `Richieste (Corrente) · ott 2026`, `Richieste (Confronto) · set 2026`, `Variazione Richieste (%) · ott 2026 vs set 2026`. The periods are the ones the query really runs on: the query asks for the year and month columns of the dataset together with the data (`ANNO_CORRENTE`, `MESE_CORRENTE`, `ANNO_CONFRONTO`, `MESE_CONFRONTO`, names can be changed), so they follow the dashboard filters and, when no filter is applied, the default values of the dataset. Year and month go together as a pair: multiple selected values are not combined. The period columns do not appear in the table data. A column is a reference column if its name contains "corrente" or "riferimento", a comparison column if it contains "confronto", and a variation column if it contains "variazione" or "delta"; the others stay as they were. If the time span of the metrics is also on, this one takes precedence. When off, nothing changes.
 
 ## [0.12.1] - 2026-10-29
 ### Added
-- **Adattamento dinamico a tutta larghezza (100% width)**: le colonne della tabella si espandono in modo proporzionale per occupare l'intero spazio orizzontale disponibile nel contenitore, eliminando lo spazio bianco vuoto a destra su viste ampie (Explore e riquadri dashboard).
-- **Bilanciamento del ridimensionamento manuale**: se una o piu colonne vengono ridimensionate manualmente con `resizableColumns`, le colonne rimanenti non personalizzate continuano ad assorbire lo spazio residuo per mantenere la tabella a pieno schermo. Se la somma delle colonne supera la larghezza del contenitore, le dimensioni vengono preservate consentendo lo scorrimento orizzontale naturale.
-- **Rilevamento reattivo del contenitore**: tramite `ResizeObserver` la tabella ricalcola e adatta istantaneamente le proporzioni delle colonne al ridimensionamento della finestra del browser o al collasso ed espansione della barra laterale dei controlli di Explore.
+- **Dynamic full-width fit (100% width)**: the table columns expand proportionally to fill the whole horizontal space available in the container, removing the empty white space on the right in wide views (Explore and dashboard tiles).
+- **Balancing of manual resizing**: if one or more columns are resized manually with `resizableColumns`, the remaining columns that were not customized keep absorbing the leftover space to keep the table full-screen. If the sum of the columns exceeds the container width, the sizes are preserved, allowing natural horizontal scrolling.
+- **Reactive container detection**: via `ResizeObserver` the table recalculates and instantly adapts the column proportions when the browser window is resized or when the Explore controls sidebar collapses or expands.
 
 ## [0.12.0] - 2026-10-29
 ### Added
-- **Testi a capo automatico** (`wrapHeaderLabels`, spento di default): le intestazioni e le etichette di riga troppo lunghe vanno a capo invece di essere tagliate o di spingere fuori le colonne a destra (per esempio `Δ% Richieste (dic 2025 – ott 2026 vs mese precedente)`). La seconda riga dell'intestazione sticky delle tabelle pivot scala sotto la prima, che con il testo a capo è più alta.
-- **Colonne ridimensionabili** (`resizableColumns`, spento di default): un bordo trascinabile a destra di ogni intestazione allarga o stringe la colonna (da 56 a 900 px), doppio clic sul bordo la ripristina; la tabella prende la somma delle larghezze, quindi una colonna più stretta restringe davvero la tabella e una più larga la fa scorrere. Le larghezze restano nel browser, per grafico.
-- **Colonne spostabili con il trascinamento** (`reorderColumnsByDrag`, spento di default): le intestazioni delle metriche si trascinano dove si vuole (anche le colonne Δ), con intestazione e valori che si spostano insieme, senza bisogno del pannello o di un aiuto della dashboard (prima serviva l'hook `onReorderMetrics`, che Superset non fornisce). Vale per le tabelle senza colonne pivot; l'ordine resta nel browser, per grafico.
-- **Ripristina colonne**: con larghezze o ordine personalizzati compare nella barra il pulsante che rimette tutto come da configurazione.
-- Con i tre flag spenti la tabella è identica a prima.
+- **Automatic text wrapping** (`wrapHeaderLabels`, off by default): headers and row labels that are too long wrap onto several lines instead of being cut off or pushing the columns to the right (for example `Δ% Richieste (dic 2025 – ott 2026 vs mese precedente)`). The second row of the sticky header of pivot tables scales below the first one, which is taller when the text wraps.
+- **Resizable columns** (`resizableColumns`, off by default): a draggable edge on the right of each header widens or narrows the column (from 56 to 900 px), and a double click on the edge restores it. The table takes the sum of the widths, so a narrower column really narrows the table and a wider one makes it scroll. Widths are kept in the browser, per chart.
+- **Drag-to-reorder columns** (`reorderColumnsByDrag`, off by default): metric headers can be dragged wherever you want (including the Δ columns), with the header and the values moving together, without needing the control panel or a dashboard helper (before, it required the `onReorderMetrics` hook, which Superset does not provide). It applies to tables without pivot columns; the order is kept in the browser, per chart.
+- **Restore columns**: with custom widths or order, the `Ripristina colonne` button appears in the toolbar and puts everything back as configured.
+- With the three flags off, the table is identical to before.
 
 ## [0.11.1] - 2026-10-29
 ### Fixed
-- **Cross-filtering: il click su una riga ora aggiorna sempre la tabella**: la notifica alla dashboard partiva dentro l'updater di `setState`, cioè durante il render del componente, e a seconda dei casi l'aggiornamento della dashboard si perdeva o arrivava a metà render lasciando la tabella indietro. Ora la selezione è tenuta anche in un ref e la dashboard viene avvisata dal gestore del click (`useCrossFilterSelection`): più click ravvicinati si sommano correttamente.
-- **La tabella segue la dashboard**: la selezione fatta dalla tabella viene salvata nel filter state (`selectedNodes`); se viene tolta o cambiata altrove (barra dei filtri, altro grafico, reset) la tabella la mostra aggiornata, e un filtro già attivo al caricamento della dashboard compare selezionato. L'eco dei propri click non sovrascrive i click successivi.
-- **Colonne giuste nei filtri**: con raggruppamenti su colonne SQL personalizzate (per esempio "Mese di Riferimento" = `MESE_SLOT`) il filtro nominava l'etichetta, che non è una colonna del dataset, e gli altri grafici non reagivano. Ora il filtro nomina la colonna reale (o porta l'espressione se non è una colonna semplice) e usa i valori memorizzati nel database e non quelli formattati dalla tabella.
+- **Cross-filtering: clicking a row now always updates the table**: the notification to the dashboard was sent from inside the `setState` updater, that is during the component render, and depending on the case the dashboard update was lost or arrived mid-render, leaving the table behind. Now the selection is also kept in a ref and the dashboard is notified by the click handler (`useCrossFilterSelection`): several quick clicks add up correctly.
+- **The table follows the dashboard**: the selection made in the table is saved in the filter state (`selectedNodes`). If it is removed or changed elsewhere (filter bar, another chart, reset), the table shows the update, and a filter already active when the dashboard loads appears selected. The echo of its own clicks does not overwrite later clicks.
+- **Correct columns in filters**: with groupings on custom SQL columns (for example "Mese di Riferimento" = `MESE_SLOT`), the filter named the label, which is not a column of the dataset, and the other charts did not react. Now the filter names the real column (or carries the expression if it is not a simple column) and uses the values stored in the database rather than the ones formatted by the table.
 
 ## [0.11.0] - 2026-10-29
 ### Added
-- **Controllo "Show the period next to each metric"** (`showPeriodInMetricLabel`, spento di default): scrive accanto al nome di ogni metrica l'arco temporale che copre (per esempio `Richieste (nov 2025 – ott 2026)`), accanto alle colonne di confronto il periodo con cui sono misurate (`Richieste (Confronto) (1 mese fa)`) e sulle colonne delta entrambi (`Δ% Richieste (ott 2026 vs mese precedente)`). L'arco si legge dai periodi presenti nei dati, dall'offset del confronto nativo (`time_compare`) o dall'intervallo applicato alla query, quindi segue i filtri della dashboard. Le colonne pivot restano invariate: la loro intestazione nomina già il periodo.
+- **"Show the period next to each metric" control** (`showPeriodInMetricLabel`, off by default): writes beside each metric name the time span it covers (for example `Richieste (nov 2025 – ott 2026)`), beside the comparison columns the period they are measured on (`Richieste (Confronto) (1 mese fa)`), and on the delta columns both (`Δ% Richieste (ott 2026 vs mese precedente)`). The span is read from the periods present in the data, from the native comparison offset (`time_compare`) or from the interval applied to the query, so it follows the dashboard filters. Pivot columns stay unchanged: their header already names the period.
 
 ## [0.10.5] - 2026-10-29
 ### Added
-- **Controllo "Mostra le etichette Δ % accanto ai valori"** (`showVarianceBadges`, attivo di default): se disattivato, con "Mostra le variazioni rispetto al periodo" acceso la variazione resta solo nelle colonne Δ % e i valori assoluti (per esempio Richieste) non portano più l'etichetta percentuale accanto. Nessun cambiamento per i grafici esistenti.
+- **"Show Δ % labels next to values" control** (`showVarianceBadges`, on by default): when turned off, with "Show variations versus the period" on, the variation stays only in the Δ % columns, and the absolute values (for example Richieste) no longer carry the percentage label next to them. No change for existing charts.
 
 ## [0.10.4] - 2026-10-26
 ### Fixed
-- **Controlli non bloccanti in Explore**: Rimossa la validazione obbligatoria (`validators: []`) e aggiunto `clearable: true` per `groupby`, `columns` e `metrics` per prevenire errori di salvataggio o esecuzione per parametri mancanti quando si naviga la vista Explore di Superset.
+- **Non-blocking controls in Explore**: Removed the mandatory validation (`validators: []`) and added `clearable: true` for `groupby`, `columns` and `metrics`, to prevent save or run errors caused by missing parameters when navigating the Superset Explore view.
 
 ## [0.10.3] - 2026-10-26
 ### Added
-- **Calibrazione larghezza colonne per viste comparative**: Calibrato il layout a 9 colonne (1260px su standard desktop 1440px) per prevenire overflow e barre di scorrimento orizzontali.
-- **Motore di aggregazione gerarchica robusto**: Gestione accurata dei punti percentuali (Delta p.p.) nel calcolo dei subtotali di nodo e del grand total, con preservazione della gerarchia ad albero.
+- **Column width calibration for comparative views**: Calibrated the 9-column layout (1260px on a standard 1440px desktop) to prevent overflow and horizontal scrollbars.
+- **Robust hierarchical aggregation engine**: Accurate handling of percentage points (Delta p.p.) in the calculation of node subtotals and of the grand total, preserving the tree hierarchy.
 
 ## [0.10.2] - 2026-10-25
 ### Added
-- **Ricalcolo Robusto dei Delta in Punti Percentuali (Delta (punti %), Delta p.p.)**: Estesa la logica di recomputeDerivedMetrics in src/utils/aggregations.ts per calcolare la differenza aritmetica esatta (corr - conf) anziche la variazione percentuale relativa per tutte le metriche espresse in punti percentuali (punti %, p.p., punti percentuali, _pp).
-- **Heuristic di Prossimita Posizionale per Tabelle Multi-Blocco**: Introdotto findPrecedingMetricPair che individua le colonne operando (corr e conf) immediatamente precedenti a ciascuna colonna delta nella lista delle metriche, garantendo che tabelle con molteplici KPI affiancati colleghino ciascun delta al proprio blocco di appartenenza.
-- **Formattazione e Riconoscimento Colonne Delta**: Aggiornati isDeltaColumn in src/utils/tableColumns.ts e formatMetricValue in src/utils/formatters.ts per riconoscere e formattare automaticamente le metriche in punti percentuali con suffisso esplicito p.p. e segno (es. +4.5 p.p., -2.3 p.p.).
+- **Robust recalculation of deltas in percentage points (Delta (punti %), Delta p.p.)**: Extended the logic of recomputeDerivedMetrics in src/utils/aggregations.ts to compute the exact arithmetic difference (corr - conf) instead of the relative percentage change for all metrics expressed in percentage points (punti %, p.p., punti percentuali, _pp).
+- **Positional proximity heuristic for multi-block tables**: Introduced findPrecedingMetricPair, which finds the operand columns (corr and conf) immediately preceding each delta column in the metrics list, ensuring that tables with several KPIs side by side link each delta to its own block.
+- **Delta column formatting and recognition**: Updated isDeltaColumn in src/utils/tableColumns.ts and formatMetricValue in src/utils/formatters.ts to automatically recognize and format metrics in percentage points with the explicit p.p. suffix and sign (e.g. +4.5 p.p., -2.3 p.p.).
 
 ## [0.10.1] - 2026-10-24
 ### Added
@@ -244,65 +244,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.9] - 2026-10-07
 ### Fixed
-- **Idempotenza Rigida della Registrazione in `MainPreset.ts`**: La verifica di configurazione esistente in `install-plugin.ps1` e' ora riga-esatta sulla forma canonica `new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),`: le varianti legacy con `.register()`, le indentazioni anomale e i duplicati vengono normalizzati alla forma canonica invece di essere considerati gia' configurati.
+- **Rigid idempotence of the registration in `MainPreset.ts`**: The check for an existing configuration in `install-plugin.ps1` now matches the canonical form line by line: `new HierarchicalTableChartPlugin().configure({ key: 'hierarchical_table' }),`. Legacy variants with `.register()`, anomalous indentation and duplicates are normalized to the canonical form instead of being considered already configured.
 
 ### Removed
-- **Copia Annidata Stale `packages/superset-plugin-chart-hierarchical-table` (v0.2.3)**: Eliminata la copia legacy del plugin in `packages/` (il plugin vive nella root del repository). Rimossi di conseguenza i fallback su `packages/` in `install-plugin.ps1` e il percorso sorgente in `scripts/install.ps1`, aggiornato il target `test-frontend` del `Makefile` per eseguire i test dalla root, eliminata la voce extraneous da `package-lock.json` e aggiornati i riferimenti in `MAINTAINER.md` e `docs/installation.md`. Il package Python `packages/superset-hierarchical-table-backend` resta intatto.
+- **Stale nested copy `packages/superset-plugin-chart-hierarchical-table` (v0.2.3)**: Removed the legacy copy of the plugin in `packages/` (the plugin lives at the root of the repository). As a consequence, removed the fallbacks to `packages/` in `install-plugin.ps1` and the source path in `scripts/install.ps1`, updated the `test-frontend` target of the `Makefile` to run the tests from the root, removed the extraneous entry from `package-lock.json` and updated the references in `MAINTAINER.md` and `docs/installation.md`. The Python package `packages/superset-hierarchical-table-backend` is left intact.
 
 ## [0.2.8] - 2026-10-06
 ### Added
-- **Two-Way Hierarchical Pivot Columns (Due Colonne Pivot a Incrocio Gerarchico Stile Qlik Sense)**: Architettura universale per la suddivisione multidimensionale orizzontale in presenza di due dimensioni pivot (es. Fascia Oraria e Canale), con mantenimento dell'aggregazione corretta e isolata per ciascuna colonna foglia.
-- **Subtotali Intermedi di Colonna (`showPivotColumnSubtotals`)**: Controllo per abilitare la colonna subtotale (`Totale`) all'interno di ciascun gruppo pivot di primo livello, calcolata come aggregazione chiusa delle colonne figlie.
-- **Etichetta Personalizzabile Subtotale Colonne (`pivotColumnSubtotalLabel`)**: Campo di testo per personalizzare l'etichetta del subtotale di colonna (default `Totale`).
-- **Scomposizione Macro-Blocco Totals per Canale**: Espansione del gruppo Totali Orizzontali di Riga (`Totals`) per includere sia il Grand Total complessivo sia i totali aggregati per ciascun valore della seconda dimensione pivot lungo tutte le fasce.
-- **Stili CSS Dedicati per Subtotali di Colonna**: Classi `.pivot-subtotal-col` e `.pivot-subtotal-cell` per la formattazione distinta delle colonne di subtotale rispetto alle celle foglia e ai totali di riga.
-- **Suite di Test Dedicata `test/multiPivotColumns.test.ts`**: Test Jest completi per la costruzione dell'albero a due dimensioni pivot, quadratura contabile su Grand Total ed emissione corretta di intestazioni a due livelli.
+- **Two-Way Hierarchical Pivot Columns (Qlik Sense-style hierarchical cross columns)**: Universal architecture for the horizontal multidimensional split when there are two pivot dimensions (e.g. Fascia Oraria and Canale), keeping the aggregation correct and isolated for each leaf column.
+- **Intermediate column subtotals (`showPivotColumnSubtotals`)**: Control to enable the subtotal column (`Totale`) inside each first-level pivot group, computed as a closed aggregation of the child columns.
+- **Customizable column subtotal label (`pivotColumnSubtotalLabel`)**: Text field to customize the label of the column subtotal (default `Totale`).
+- **Row totals macro-block split by channel**: Expansion of the horizontal row totals group (`Totals`) to include both the overall Grand Total and the totals aggregated for each value of the second pivot dimension across all the slots.
+- **Dedicated CSS styles for column subtotals**: Classes `.pivot-subtotal-col` and `.pivot-subtotal-cell` for the distinct formatting of subtotal columns compared with the leaf cells and the row totals.
+- **Dedicated test suite `test/multiPivotColumns.test.ts`**: Complete Jest tests for building the two-pivot-dimension tree, accounting reconciliation on the Grand Total and correct emission of two-level headers.
 
 ### Changed
-- **Pannello Controlli Explore**: Integrati i controlli per i subtotali di colonna pivot direttamente nel flusso di configurazione query.
+- **Explore control panel**: Integrated the pivot column subtotal controls directly into the query configuration flow.
 
 ## [0.2.7] - 2026-10-06
 ### Added
-- **Two-Way Pivot Matrix Grid (Griglia Bidimensionale a Incrocio Stile Qlik/Excel)**: Architettura universale per il calcolo automatico dei Totali Orizzontali di Riga (`computeHorizontalRowTotals`) per ciascun nodo (foglie, subtotali intermedi e Grand Total).
-- **Posizionamento Configurabile dei Totali Orizzontali (`pivotRowTotalsPosition`)**: Nuovo controllo in Explore per posizionare il macro-blocco dei Totali a sinistra (`left`, stile Qlik Sense, visibile subito prima dello scroll orizzontale), a destra (`right`, stile Excel/classico in fondo alla tabella), oppure disattivato (`none`).
-- **Etichetta Personalizzabile Totali Orizzontali (`pivotRowTotalsLabel`)**: Controllo testo per personalizzare l'etichetta dell'intestazione (es. `Totals`, `Totale Complessivo`, `Consuntivo`).
-- **Quadratura Matematica all'Incrocio dei Totali**: Perfetta coerenza contabile bidirezionale tra la somma dei totali di riga e la somma dei totali di colonna sul Grand Total.
-- **Stili CSS Dedicati per Colonne Totali**: Classi `.pivot-row-totals-group`, `.pivot-row-totals-col` e `.pivot-row-totals-cell` per una chiara distinzione visiva delle colonne di aggregazione.
-- **Suite di Unit Test Jest**: Aggiunto `test/pivotRowTotals.test.ts` con 5 scenari completi per validazione algebrica, posizionamento a sinistra/destra e compatibilità con Grand Total.
+- **Two-Way Pivot Matrix Grid (Qlik/Excel-style cross grid)**: Universal architecture for the automatic calculation of the Horizontal Row Totals (`computeHorizontalRowTotals`) for each node (leaves, intermediate subtotals and Grand Total).
+- **Configurable position of the horizontal row totals (`pivotRowTotalsPosition`)**: New Explore control to place the Totals macro-block on the left (`left`, Qlik Sense style, visible right before the horizontal scroll), on the right (`right`, Excel/classic style at the end of the table), or turned off (`none`).
+- **Customizable horizontal totals label (`pivotRowTotalsLabel`)**: Text control to customize the header label (e.g. `Totals`, `Totale Complessivo`, `Consuntivo`).
+- **Mathematical reconciliation at the totals intersection**: Perfect two-way accounting consistency between the sum of the row totals and the sum of the column totals on the Grand Total.
+- **Dedicated CSS styles for total columns**: Classes `.pivot-row-totals-group`, `.pivot-row-totals-col` and `.pivot-row-totals-cell` for a clear visual distinction of the aggregation columns.
+- **Jest unit test suite**: Added `test/pivotRowTotals.test.ts` with 5 complete scenarios for algebraic validation, left/right positioning and compatibility with the Grand Total.
 
 ### Fixed
-- **Script di Test Resilienti**: Script `test` e `test:watch` in `package.json` aggiornati per supportare sia l'esecuzione autonoma che quella all'interno del monorepo.
+- **Resilient test scripts**: The `test` and `test:watch` scripts in `package.json` were updated to support both standalone execution and execution inside the monorepo.
 ### Changed
-- **Pannello Controlli Explore**: Spostati i controlli del calcolo delta automatico (`pivotTimeDeltaMode` e `pivotTimeDeltaLag`) direttamente nella sezione principale Query subito sotto le colonne pivot e l'ordinamento, rendendoli immediatamente accessibili senza dover aprire il blocco avanzato.
-- **Supporto Ottimizzato a Singola Metrica**: Abilitata la generazione automatica delle sub-colonne Delta sotto ciascun mese anche con una sola metrica numerica selezionata (es. `Totale`), eliminando l'obbligo di calcolare la colonna Delta lato SQL/DWH.
+- **Explore control panel**: Moved the automatic delta calculation controls (`pivotTimeDeltaMode` and `pivotTimeDeltaLag`) directly into the main Query section, right below the pivot columns and the sorting, making them immediately accessible without opening the advanced block.
+- **Optimized support for a single metric**: Enabled the automatic generation of the Delta sub-columns under each month even with a single numeric metric selected (e.g. `Totale`), removing the need to calculate the Delta column on the SQL/DWH side.
 
 ## [0.2.5] - 2026-10-05
 ### Added
-- **combineMetric (Affiancamento Metriche Pivot)**: Nuova opzione nel control panel che inverte la gerarchia delle testate, esponendo le colonne per periodo temporale (es. Ott 2026, Set 2026) al primo livello e affiancando le metriche (`Totale | Delta`) al secondo livello, replicando fedelmente il comportamento di `pivot_table_v2`.
-- **pivotSortOrder (Ordinamento Colonne Pivot)**: Supporto per ordinamento temporale decrescente (`desc`, più recente a sinistra), crescente (`asc`, cronologico) o ordine query (`none`).
-- **pivotTimeDeltaMode (Delta Temporale Automatico)**: Calcolo nativo e dinamico del Delta assoluto e/o percentuale lungo le colonne pivot senza window functions SQL (`LAG OVER`), con applicazione ricorsiva a foglie, subtotali e Grand Total.
-- **pivotTimeDeltaLag (Passo di Confronto)**: Possibilità di selezionare lo scostamento temporale (1 periodo per MoM/YoY, 2 o 3 per QoQ, 12 per YoY mensile).
-- **Unit Test Suite**: Aggiunta suite di collaudo completa `test/pivotTimeDelta.test.ts` con 6 test di quadratura matematica per delta assoluto, percentuale, gestione null/nuovi nodi, Grand Total e integrazione `transformProps`.
+- **combineMetric (Pivot Metrics Side by Side)**: New option in the control panel that inverts the header hierarchy, exposing the columns per time period (e.g. Ott 2026, Set 2026) at the first level and placing the metrics side by side (`Totale | Delta`) at the second level, faithfully replicating the behavior of `pivot_table_v2`.
+- **pivotSortOrder (Pivot Column Sorting)**: Support for descending time sorting (`desc`, most recent on the left), ascending (`asc`, chronological) or query order (`none`).
+- **pivotTimeDeltaMode (Automatic Time Delta)**: Native and dynamic calculation of the absolute and/or percentage delta along the pivot columns without SQL window functions (`LAG OVER`), applied recursively to leaves, subtotals and Grand Total.
+- **pivotTimeDeltaLag (Comparison Step)**: Ability to select the time offset (1 period for MoM/YoY, 2 or 3 for QoQ, 12 for monthly YoY).
+- **Unit Test Suite**: Added the complete test suite `test/pivotTimeDelta.test.ts` with 6 mathematical reconciliation tests for absolute and percentage delta, handling of null/new nodes, Grand Total and `transformProps` integration.
 
 ### Changed
-- **HierarchicalTable & Formatters**: Riconoscimento automatico e formattazione con prefissi cromatici (`.delta-positive`, `.delta-negative`, badge `Nuovo`) sia per chiavi generate dinamicamente che per colonne delta native del dataset.
+- **HierarchicalTable & Formatters**: Automatic recognition and formatting with color prefixes (`.delta-positive`, `.delta-negative`, `Nuovo` badge), both for dynamically generated keys and for native delta columns of the dataset.
 
 ### Fixed
-- **Jest Test Script**: Allineato il percorso del binario Jest in `package.json`.
+- **Jest test script**: Aligned the Jest binary path in `package.json`.
 
 ## [0.2.4] - 2026-10-05
 ### Added
-- **Sticky Hierarchy Column**: Implementata colonna gerarchica sticky a sinistra (`position: sticky; left: 0`) con ombra di separazione per mantenere sempre visibile l'albero durante lo scroll orizzontale in tabelle pivot estese.
-- **Debounced Search**: Introdotto debouncing a 250ms con input controllato immediato e pulsante di reset rapido per la casella di ricerca testuale.
+- **Sticky Hierarchy Column**: Implemented a sticky hierarchy column on the left (`position: sticky; left: 0`) with a separation shadow, keeping the tree always visible during horizontal scrolling in extended pivot tables.
+- **Debounced Search**: Introduced a 250ms debounce with immediate controlled input and a quick reset button for the text search box.
 
 ### Changed
-- **React.memo Row Component**: Scorporato e memoizzato il rendering delle righe nel componente `HierarchicalTableRow`, prevenendo re-render a cascata durante l'espansione dei nodi o la digitazione.
-- **Precomputed Column Metadata**: Ottimizzato il lookup delle colonne metriche tramite mappa pre-computata (`columnMetaMap`), eliminando controlli ridondanti sulle stringhe ad ogni frame.
-- **CSS Layout Isolation**: Aggiunta la direttiva CSS `contain: layout style` sulle righe della tabella per ridurre i tempi di reflow del browser su dataset voluminosi.
+- **React.memo Row Component**: Split out and memoized the row rendering in the `HierarchicalTableRow` component, preventing cascading re-renders during node expansion or typing.
+- **Precomputed Column Metadata**: Optimized the lookup of metric columns through a precomputed map (`columnMetaMap`), removing redundant string checks on every frame.
+- **CSS Layout Isolation**: Added the CSS directive `contain: layout style` on the table rows to reduce browser reflow times on large datasets.
 
 ## [0.2.3] - 2026-10-05
 ### Fixed
-- **Time Comparison Module Resolution**: Sincronizzato il modulo `src/utils/timeComparison.ts` nella cartella `packages/` e prioritizzato il percorso radice `src/index.ts` nello script `install-plugin.ps1`, risolvendo l'errore di build Webpack `Can't resolve '../utils/timeComparison'`.
+- **Time Comparison Module Resolution**: Synchronized the module `src/utils/timeComparison.ts` into the `packages/` folder and prioritized the root path `src/index.ts` in the `install-plugin.ps1` script, resolving the Webpack build error `Can't resolve '../utils/timeComparison'`.
 
 ## [0.2.2] - 2026-10-02
 ### Added
