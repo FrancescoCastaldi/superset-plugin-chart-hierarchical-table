@@ -28,12 +28,12 @@ export function isDeltaColumn(col: Pick<TableColumn, 'key' | 'title'>): boolean 
   const t = (col.title || '').toLowerCase();
   return (
     k.includes('delta') ||
-    k.includes('variazione') ||
+    (k.includes('variazione') || k.includes('change')) ||
     hasDiffToken(k) ||
     k.includes('p.p.') ||
     k.includes('punti') ||
     t.includes('delta') ||
-    t.includes('variazione') ||
+    (t.includes('variazione') || t.includes('change')) ||
     hasDiffToken(t) ||
     t.includes('δ') ||
     (col.title || '').includes('Δ') ||

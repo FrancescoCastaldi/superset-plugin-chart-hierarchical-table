@@ -251,7 +251,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     pivot_row_totals_label,
     showPivotColumnSubtotals = true,
     show_pivot_column_subtotals,
-    pivotColumnSubtotalLabel = 'Totale',
+    pivotColumnSubtotalLabel = 'Total',
     pivot_column_subtotal_label,
     pivotTimeDeltaMode = 'none',
     pivot_time_delta_mode,
@@ -344,7 +344,7 @@ export function resolveTransformOptions(mergedFormData: any): TransformOptions {
     pivotRowTotalsPosition: pivotRowTotalsPosition || pivot_row_totals_position || 'none',
     pivotRowTotalsLabel: pivotRowTotalsLabel || pivot_row_totals_label || 'Totals',
     showPivotColumnSubtotals: showPivotColumnSubtotals ?? show_pivot_column_subtotals ?? true,
-    pivotColumnSubtotalLabel: pivotColumnSubtotalLabel || pivot_column_subtotal_label || 'Totale',
+    pivotColumnSubtotalLabel: pivotColumnSubtotalLabel || pivot_column_subtotal_label || 'Total',
     pivotTimeDeltaMode: pivotTimeDeltaMode || pivot_time_delta_mode || 'none',
     pivotTimeDeltaLag: Number(pivotTimeDeltaLag || pivot_time_delta_lag || 1),
     // Saved charts keep the control names timeGrain / referencePeriod / comparisonType.

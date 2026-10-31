@@ -54,7 +54,7 @@ export const isDerivedMetric = memoizeByName(function isDerivedMetric(metricName
   return (
     m.includes('delta') ||
     hasDiffToken(m) ||
-    m.includes('variazione') ||
+    (m.includes('variazione') || m.includes('change')) ||
     m.includes('pct') ||
     m.includes('percent') ||
     m.includes('tasso') ||
@@ -70,12 +70,12 @@ export const isDerivedMetric = memoizeByName(function isDerivedMetric(metricName
  */
 export const isRateMetric = memoizeByName(function isRateMetric(metricName: string): boolean {
   const m = metricName.toLowerCase();
-  const isDelta = m.includes('delta') || m.includes('variazione') || hasDiffToken(m);
+  const isDelta = m.includes('delta') || (m.includes('variazione') || m.includes('change')) || hasDiffToken(m);
   const isAcceptanceRate =
     m.includes('acc_corr') ||
     m.includes('acc_conf') ||
     (m.includes('accettazione') &&
-      !m.includes('totale') &&
+      !(m.includes('totale') || m.includes('total')) &&
       !m.includes('numero') &&
       !m.includes('conteggio'));
   return (
@@ -262,7 +262,7 @@ function derivedFallbackWeightKey(metric: string, metricNames: string[], explici
         !isDerivedMetric(k),
     ) ||
     metricNames.find(k => isTotalName(k) && !isDerivedMetric(k)) ||
-    `Totale${suffix}`
+    `Total${suffix}`
   );
 }
 
@@ -278,7 +278,7 @@ export function isPercentagePointsDiff(metricName: string): boolean {
     m.endsWith('_pp') ||
     m.endsWith(' pp') ||
     (
-      (m.includes('delta') || m.includes('variazione') || hasDiffToken(m)) &&
+      (m.includes('delta') || (m.includes('variazione') || m.includes('change')) || hasDiffToken(m)) &&
       (m.includes('acc') || m.includes('accettazione')) &&
       !m.includes('pct') &&
       !m.includes('percent') &&
@@ -306,7 +306,7 @@ function findPrecedingMetricPair(
     const cLower = splitMetricKey(candidate).base.toLowerCase();
     const isExcluded =
       cLower.includes('delta') ||
-      cLower.includes('variazione') ||
+      (cLower.includes('variazione') || cLower.includes('change')) ||
       hasDiffToken(cLower) ||
       cLower.includes('punti') ||
       cLower.includes('p.p') ||
@@ -317,9 +317,9 @@ function findPrecedingMetricPair(
       continue;
     }
 
-    if (!foundCorr && (cLower.includes('corr') || cLower.includes('corrente') || cLower.includes('1ª') || cLower.includes('1a'))) {
+    if (!foundCorr && (cLower.includes('corr') || (cLower.includes('corrente') || cLower.includes('current')) || cLower.includes('1ª') || cLower.includes('1a'))) {
       foundCorr = candidate;
-    } else if (!foundConf && (cLower.includes('conf') || cLower.includes('confronto') || cLower.includes('prec'))) {
+    } else if (!foundConf && (cLower.includes('conf') || (cLower.includes('confronto') || cLower.includes('comparison')) || cLower.includes('prec'))) {
       foundConf = candidate;
     }
 
@@ -343,7 +343,7 @@ function findMetricPair(
 ): { corrKey: string; confKey: string } {
   const isExcluded = (k: string) => {
     const l = k.toLowerCase();
-    return l.includes('delta') || l.includes('variazione') || hasDiffToken(l);
+    return l.includes('delta') || (l.includes('variazione') || l.includes('change')) || hasDiffToken(l);
   };
 
   const matchesDomain = (k: string) => {
@@ -356,7 +356,7 @@ function findMetricPair(
       k =>
         k.endsWith(suffix) &&
         matchesDomain(k) &&
-        (k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')) &&
+        (k.toLowerCase().includes('corr') || (k.toLowerCase().includes('corrente') || k.toLowerCase().includes('current'))) &&
         !isExcluded(k),
     ) || fallbackCorr;
 
@@ -365,7 +365,7 @@ function findMetricPair(
       k =>
         k.endsWith(suffix) &&
         matchesDomain(k) &&
-        (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
+        (k.toLowerCase().includes('conf') || (k.toLowerCase().includes('confronto') || k.toLowerCase().includes('comparison'))) &&
         !isExcluded(k),
     ) || fallbackConf;
 
@@ -420,7 +420,7 @@ export function recomputeDerivedMetrics(
 
     // 1. Delta / Variazione Richieste (Percentage)
     if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
+      (mLower.includes('delta') || (mLower.includes('variazione') || mLower.includes('change')) || hasDiffToken(mLower)) &&
       (mLower.includes('richieste') || mLower.includes('volume'))
     ) {
       const { corrKey, confKey } = findMetricPair(
@@ -435,7 +435,7 @@ export function recomputeDerivedMetrics(
 
     // 1a. Delta / Variazione Accesso Diretto (Percentage)
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
+      (mLower.includes('delta') || (mLower.includes('variazione') || mLower.includes('change')) || hasDiffToken(mLower)) &&
       (mLower.includes('accesso') || mLower.includes('diretto'))
     ) {
       const { corrKey, confKey } = findMetricPair(
@@ -450,7 +450,7 @@ export function recomputeDerivedMetrics(
 
     // 1b. Delta / Variazione Programmata (Percentage)
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
+      (mLower.includes('delta') || (mLower.includes('variazione') || mLower.includes('change')) || hasDiffToken(mLower)) &&
       (mLower.includes('programmata') || mLower.includes('programmazione'))
     ) {
       const { corrKey, confKey } = findMetricPair(
@@ -465,7 +465,7 @@ export function recomputeDerivedMetrics(
 
     // 1c. Delta / Variazione Prime Visite (Percentage)
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
+      (mLower.includes('delta') || (mLower.includes('variazione') || mLower.includes('change')) || hasDiffToken(mLower)) &&
       (mLower.includes('prime') || mLower.includes('visite')) &&
       !mLower.includes('su totale') &&
       !mLower.includes('% su')
@@ -482,7 +482,7 @@ export function recomputeDerivedMetrics(
 
     // 1d. Delta / Variazione Controlli (Percentage)
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
+      (mLower.includes('delta') || (mLower.includes('variazione') || mLower.includes('change')) || hasDiffToken(mLower)) &&
       mLower.includes('controlli')
     ) {
       const { corrKey, confKey } = findMetricPair(
@@ -527,7 +527,7 @@ export function recomputeDerivedMetrics(
 
     // 3. Delta Acceptance / Percentage Points difference (delta_acc = acc_corr - acc_conf) in p.p.
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower) || mLower.includes('punti %') || mLower.includes('p.p.')) &&
+      (mLower.includes('delta') || (mLower.includes('variazione') || mLower.includes('change')) || hasDiffToken(mLower) || mLower.includes('punti %') || mLower.includes('p.p.')) &&
       (
         mLower.includes('acc') ||
         mLower.includes('accettazione') ||
@@ -546,7 +546,7 @@ export function recomputeDerivedMetrics(
           k =>
             k.endsWith(suffix) &&
             (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione') || k.toLowerCase().includes('tasso') || k.toLowerCase().includes('quota')) &&
-            (k.toLowerCase().includes('corr') || k.toLowerCase().includes('1ª') || k.toLowerCase().includes('1a') || k.toLowerCase().includes('corrente')) &&
+            (k.toLowerCase().includes('corr') || k.toLowerCase().includes('1ª') || k.toLowerCase().includes('1a') || (k.toLowerCase().includes('corrente') || k.toLowerCase().includes('current'))) &&
             !k.toLowerCase().includes('delta') &&
             !k.toLowerCase().includes('diff') &&
             !k.toLowerCase().includes('conf'),
@@ -560,7 +560,7 @@ export function recomputeDerivedMetrics(
           k =>
             k.endsWith(suffix) &&
             (k.toLowerCase().includes('acc') || k.toLowerCase().includes('accettazione') || k.toLowerCase().includes('tasso') || k.toLowerCase().includes('quota')) &&
-            (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
+            (k.toLowerCase().includes('conf') || (k.toLowerCase().includes('confronto') || k.toLowerCase().includes('comparison'))) &&
             !k.toLowerCase().includes('delta') &&
             !k.toLowerCase().includes('diff') &&
             !k.toLowerCase().includes('corr'),
@@ -580,7 +580,7 @@ export function recomputeDerivedMetrics(
 
     // 4. Delta Lead Time (delta_lt_off = lt_off_corr - lt_off_conf) in gg
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
+      (mLower.includes('delta') || (mLower.includes('variazione') || mLower.includes('change')) || hasDiffToken(mLower)) &&
       (mLower.includes('attesa') || mLower.includes('lt_off') || mLower.includes('lead') || (mLower.includes('giorni') && !mLower.includes('settimana'))) &&
       !mLower.includes('acc')
     ) {
@@ -600,7 +600,7 @@ export function recomputeDerivedMetrics(
           k =>
             k.endsWith(suffix) &&
             (k.toLowerCase().includes('attesa') || k.toLowerCase().includes('lt_off') || k.toLowerCase().includes('lead')) &&
-            (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
+            (k.toLowerCase().includes('conf') || (k.toLowerCase().includes('confronto') || k.toLowerCase().includes('comparison'))) &&
             !k.toLowerCase().includes('delta') &&
             !k.toLowerCase().includes('diff') &&
             !k.toLowerCase().includes('corr'),
@@ -618,7 +618,7 @@ export function recomputeDerivedMetrics(
 
     // 5. Generic fallback for ANY percentage variation
     else if (
-      (mLower.includes('delta') || mLower.includes('variazione') || hasDiffToken(mLower)) &&
+      (mLower.includes('delta') || (mLower.includes('variazione') || mLower.includes('change')) || hasDiffToken(mLower)) &&
       (mLower.includes('%') || mLower.includes('pct') || mLower.includes('percent'))
     ) {
       const preceding = findPrecedingMetricPair(allMetricKeys, keyIdx, suffix);
@@ -627,9 +627,9 @@ export function recomputeDerivedMetrics(
         allMetricKeys.find(
           k =>
             k.endsWith(suffix) &&
-            (k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')) &&
+            (k.toLowerCase().includes('corr') || (k.toLowerCase().includes('corrente') || k.toLowerCase().includes('current'))) &&
             !k.toLowerCase().includes('delta') &&
-            !k.toLowerCase().includes('variazione') &&
+            !(k.toLowerCase().includes('variazione') || k.toLowerCase().includes('change')) &&
             !k.toLowerCase().includes('diff'),
         ) ||
         preceding.corrKey;
@@ -638,9 +638,9 @@ export function recomputeDerivedMetrics(
         allMetricKeys.find(
           k =>
             k.endsWith(suffix) &&
-            (k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')) &&
+            (k.toLowerCase().includes('conf') || (k.toLowerCase().includes('confronto') || k.toLowerCase().includes('comparison'))) &&
             !k.toLowerCase().includes('delta') &&
-            !k.toLowerCase().includes('variazione') &&
+            !(k.toLowerCase().includes('variazione') || k.toLowerCase().includes('change')) &&
             !k.toLowerCase().includes('diff'),
         ) ||
         preceding.confKey;
@@ -724,7 +724,7 @@ export function recomputeDerivedMetrics(
             k.endsWith(suffix) &&
             ['totale', 'total', 'volume', 'tot'].includes(splitMetricKey(k).base.trim().toLowerCase()) &&
             !isDerivedMetric(k),
-        ) || `Totale${suffix}`;
+        ) || `Total${suffix}`;
 
       const numVal = metrics[numKey];
       const totVal = metrics[totKey];
@@ -772,14 +772,14 @@ export function rollupTreeMetrics(
           } else if (isRateMetric(metric)) {
             // For rate/average metrics, compute weighted average using volume if possible
             const { suffix } = splitMetricKey(metric);
-            const isConf = metric.toLowerCase().includes('conf') || metric.toLowerCase().includes('confronto');
+            const isConf = metric.toLowerCase().includes('conf') || (metric.toLowerCase().includes('confronto') || metric.toLowerCase().includes('comparison'));
             const weightKey =
               metricNames.find(
                 k =>
                   (k.toLowerCase().includes('richieste') || k.toLowerCase().includes('volume')) &&
                   (isConf
-                    ? k.toLowerCase().includes('conf') || k.toLowerCase().includes('confronto')
-                    : k.toLowerCase().includes('corr') || k.toLowerCase().includes('corrente')),
+                    ? k.toLowerCase().includes('conf') || (k.toLowerCase().includes('confronto') || k.toLowerCase().includes('comparison'))
+                    : k.toLowerCase().includes('corr') || (k.toLowerCase().includes('corrente') || k.toLowerCase().includes('current'))),
               ) || (isConf ? `richieste_conf${suffix}` : `richieste_corr${suffix}`);
             aggregatedVal = roundTenth(weightedMean(node.children, metric, weightKey));
           } else {

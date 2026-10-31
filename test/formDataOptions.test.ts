@@ -94,7 +94,7 @@ describe('formDataOptions', () => {
       pivotRowTotalsPosition: 'none',
       pivotRowTotalsLabel: 'Totals',
       showPivotColumnSubtotals: true,
-      pivotColumnSubtotalLabel: 'Totale',
+      pivotColumnSubtotalLabel: 'Total',
       pivotTimeDeltaMode: 'none',
       pivotTimeDeltaLag: 1,
     });

@@ -122,7 +122,7 @@ if (-not $SupersetPath) {
     foreach ($cand in $Candidates) {
         if ($cand -and (Test-Path (Join-Path $cand "superset-frontend\package.json"))) {
             $SupersetPath = (Resolve-Path $cand).Path
-            Write-Color "[INFO] Trovata installazione Superset automatica: $SupersetPath" "Green"
+            Write-Color "[INFO] Superset installation found automatically: $SupersetPath" "Green"
             break
         }
     }
@@ -132,7 +132,7 @@ if (-not $SupersetPath) {
     if ($Force) {
         $SupersetPath = $DefaultCandidate
     } else {
-        Write-Color "Inserisci il percorso della cartella radice di Apache Superset" "Yellow"
+        Write-Color "Enter the path of the Apache Superset root folder" "Yellow"
         Write-Color "[Default: $DefaultCandidate]:" "Gray"
         $InputPath = Read-Host "Percorso Superset"
         if ([string]::IsNullOrWhiteSpace($InputPath)) {
@@ -144,8 +144,8 @@ if (-not $SupersetPath) {
 }
 
 if (-not (Test-Path $SupersetPath)) {
-    Write-Color "[ERRORE] Il percorso specificato '$SupersetPath' non esiste!" "Red"
-    Write-Color "Verifica che il percorso punti alla radice di Apache Superset contenente 'superset-frontend'." "Yellow"
+    Write-Color "[ERROR] The specified path '$SupersetPath' does not exist!" "Red"
+    Write-Color "Check that the path points to the Apache Superset root containing 'superset-frontend'." "Yellow"
     exit 1
 }
 
@@ -153,23 +153,23 @@ $ResolvedSupersetPath = (Resolve-Path $SupersetPath).Path
 $FrontendDir = Join-Path $ResolvedSupersetPath "superset-frontend"
 
 if (-not (Test-Path (Join-Path $FrontendDir "package.json"))) {
-    Write-Color "[ERRORE] 'superset-frontend\package.json' non trovato in '$ResolvedSupersetPath'!" "Red"
-    Write-Color "Assicurati di selezionare la cartella principale del repository Superset." "Yellow"
+    Write-Color "[ERROR] 'superset-frontend\package.json' not found in '$ResolvedSupersetPath'!" "Red"
+    Write-Color "Make sure you select the main folder of the Superset repository." "Yellow"
     exit 1
 }
-Write-Color "[INFO] Cartella Target Superset: $ResolvedSupersetPath" "Green"
-Write-Color "[INFO] Cartella superset-frontend: $FrontendDir" "Gray"
+Write-Color "[INFO] Superset target folder: $ResolvedSupersetPath" "Green"
+Write-Color "[INFO] superset-frontend folder: $FrontendDir" "Gray"
 Write-Color ""
 
 $DistDir = Join-Path $PackageSrcDir "dist"
 if (Test-Path $DistDir) {
-    Write-Color "`n=== FASE 1: Bundle Pre-compilato 'dist' Rilevato ===" "Cyan"
-    Write-Color "[OK] File compilati gia' pronti in dist/. Installazione istantanea senza download dipendenze." "Green"
+    Write-Color "`n=== STEP 1: Prebuilt 'dist' bundle found ===" "Cyan"
+    Write-Color "[OK] Compiled files already in dist/. Instant install, no dependency download." "Green"
 } elseif (Test-Path (Join-Path $PackageSrcDir "src\index.ts")) {
-    Write-Color "`n=== FASE 1: Sorgenti 'src/' Rilevati ===" "Cyan"
-    Write-Color "[OK] Sorgenti TypeScript pronti. Superset li compilera' direttamente tramite Webpack." "Green"
+    Write-Color "`n=== STEP 1: 'src/' sources found ===" "Cyan"
+    Write-Color "[OK] TypeScript sources ready. Superset will compile them directly through Webpack." "Green"
 } elseif (-not $SkipBuild) {
-    Write-Color "=== FASE 1: Compilazione TypeScript del Plugin ===" "Cyan"
+    Write-Color "=== STEP 1: TypeScript build of the plugin ===" "Cyan"
     $NpmCmd = Get-Command "npm" -ErrorAction SilentlyContinue
     if ($NpmCmd) {
         $RootNodeModules = Join-Path $ResolvedPluginPath "node_modules"
@@ -181,7 +181,7 @@ if (Test-Path $DistDir) {
                 Set-Location $ResolvedPluginPath
                 & $NpmCmd.Source install --legacy-peer-deps
             } catch {
-                Write-Color "[WARN] Avviso durante npm install: $_" "Yellow"
+                Write-Color "[WARN] Warning during npm install: $_" "Yellow"
             } finally {
                 Set-Location $OrigLoc
             }
@@ -193,17 +193,17 @@ if (Test-Path $DistDir) {
             Set-Location $PackageSrcDir
             & $NpmCmd.Source run build
             if ($LASTEXITCODE -eq 0) {
-                Write-Color "[SUCCESS] Compilazione TypeScript completata con successo." "Green"
+                Write-Color "[SUCCESS] TypeScript build completed successfully." "Green"
             } else {
-                Write-Color "[WARN] 'npm run build' ha restituito codice $LASTEXITCODE. Si prosegue con i file presenti." "Yellow"
+                Write-Color "[WARN] 'npm run build' returned code $LASTEXITCODE. Continuing with the existing files." "Yellow"
             }
         } catch {
-            Write-Color "[WARN] Avviso durante compilazione npm: $_" "Yellow"
+            Write-Color "[WARN] Warning during npm build: $_" "Yellow"
         } finally {
             Set-Location $OrigLoc
         }
     } else {
-        Write-Color "[INFO] 'npm' non rilevato nel PATH. Si prosegue usando dist/src preesistenti." "Gray"
+        Write-Color "[INFO] 'npm' not found in PATH. Continuing with the existing dist/src." "Gray"
     }
     Write-Color ""
 }
@@ -211,7 +211,7 @@ if (Test-Path $DistDir) {
 # -------------------------------------------------------------
 # 4. Copy/Sync Plugin to superset-frontend/plugins
 # -------------------------------------------------------------
-Write-Color "=== FASE 2: Copia e Sincronizzazione Plugin ===" "Cyan"
+Write-Color "=== STEP 2: Copy and sync the plugin ===" "Cyan"
 $PluginsTargetRoot = Join-Path $FrontendDir "plugins"
 if (-not (Test-Path $PluginsTargetRoot)) {
     New-Item -ItemType Directory -Path $PluginsTargetRoot -Force | Out-Null
@@ -219,7 +219,7 @@ if (-not (Test-Path $PluginsTargetRoot)) {
 
 $DestPluginDir = Join-Path $PluginsTargetRoot "superset-plugin-chart-hierarchical-table"
 if (Test-Path $DestPluginDir) {
-    Write-Color "[INFO] Pulizia versione precedente in '$DestPluginDir'..." "Yellow"
+    Write-Color "[INFO] Cleaning the previous version in '$DestPluginDir'..." "Yellow"
     try {
         Remove-Item -Recurse -Force $DestPluginDir -ErrorAction Stop
     } catch {
@@ -238,20 +238,20 @@ foreach ($item in $ItemsToCopy) {
         $isDir = (Get-Item $srcItem) -is [System.IO.DirectoryInfo]
         if ($isDir) {
             Copy-Item -Path $srcItem -Destination $DestPluginDir -Recurse -Force
-            Write-Color "  [+] Copiata cartella: $item" "Gray"
+            Write-Color "  [+] Copied folder:    $item" "Gray"
         } else {
             Copy-Item -Path $srcItem -Destination $destItem -Force
-            Write-Color "  [+] Copiato file:     $item" "Gray"
+            Write-Color "  [+] Copied file:      $item" "Gray"
         }
     }
 }
-Write-Color "[SUCCESS] Plugin copiato con successo in '$DestPluginDir'" "Green"
+Write-Color "[SUCCESS] Plugin copied successfully to '$DestPluginDir'" "Green"
 Write-Color ""
 
 # -------------------------------------------------------------
 # 5. Safely parse and update MainPreset.ts / MainPreset.js
 # -------------------------------------------------------------
-Write-Color "=== FASE 3: Registrazione in MainPreset.ts ===" "Cyan"
+Write-Color "=== STEP 3: Registration in MainPreset.ts ===" "Cyan"
 
 $PresetCandidates = @(
     (Join-Path $FrontendDir "src\visualizations\presets\MainPreset.ts"),
@@ -273,18 +273,18 @@ if (-not $PresetFile) {
     exit 1
 }
 
-Write-Color "[INFO] File preset individuato: $PresetFile" "Gray"
+Write-Color "[INFO] Preset file found: $PresetFile" "Gray"
 
-# 5.1 Backup di sicurezza
+# 5.1 Safety backup
 $BackupFile = "$PresetFile.bak"
 if (-not (Test-Path $BackupFile)) {
     Copy-Item -Path $PresetFile -Destination $BackupFile -Force
-    Write-Color "[SUCCESS] Creato backup di sicurezza: $(Split-Path -Leaf $BackupFile)" "Green"
+    Write-Color "[SUCCESS] Safety backup created: $(Split-Path -Leaf $BackupFile)" "Green"
 } else {
-    Write-Color "[INFO] Backup di sicurezza preesistente mantenuto: $(Split-Path -Leaf $BackupFile)" "Gray"
+    Write-Color "[INFO] Existing safety backup kept: $(Split-Path -Leaf $BackupFile)" "Gray"
 }
 
-# 5.2 Lettura e parsing
+# 5.2 Reading and parsing
 $RawContent = [System.IO.File]::ReadAllText($PresetFile, [System.Text.Encoding]::UTF8)
 $NL = if ($RawContent.Contains("`r`n")) { "`r`n" } else { "`n" }
 
@@ -301,9 +301,9 @@ $importCount = ([regex]::Matches($RawContent, "from\s*['`"][^'`"]*superset-plugi
 $registerCount = ([regex]::Matches($RawContent, "new\s+HierarchicalTableChartPlugin")).Count
 
 if (-not $CleanReinstall -and $hasExactImport -and $hasExactRegister -and ($importCount -eq 1) -and ($registerCount -eq 1)) {
-    Write-Color "[INFO] MainPreset.ts e' gia' registrato correttamente (idempotente - nessuna modifica necessaria)." "Green"
+    Write-Color "[INFO] MainPreset.ts is already registered correctly (idempotent, no change needed)." "Green"
 } else {
-    Write-Color "[INFO] Aggiornamento import e registrazione in corso..." "Yellow"
+    Write-Color "[INFO] Updating the import and registration..." "Yellow"
 
     # Step A: Rimozione import obsoleti o duplicati
     $lines = [System.Collections.Generic.List[string]]($RawContent -split "\r?\n")
@@ -355,8 +355,8 @@ if (-not $CleanReinstall -and $hasExactImport -and $hasExactRegister -and ($impo
     $Utf8NoBom = [System.Text.UTF8Encoding]::new($false)
     [System.IO.File]::WriteAllText($PresetFile, $NewContent, $Utf8NoBom)
 
-    Write-Color "[SUCCESS] Aggiunto import:       $TargetImport" "Green"
-    Write-Color "[SUCCESS] Aggiunta registrazione: $TargetRegister" "Green"
+    Write-Color "[SUCCESS] Added import:       $TargetImport" "Green"
+    Write-Color "[SUCCESS] Added registration: $TargetRegister" "Green"
     Write-Color "[SUCCESS] File $(Split-Path -Leaf $PresetFile) aggiornato e salvato con successo." "Green"
 }
 Write-Color ""
@@ -365,7 +365,7 @@ Write-Color ""
 # 6. Safety Cache Cleanup
 # -------------------------------------------------------------
 if (-not $SkipCleanCache) {
-    Write-Color "=== FASE 4: Pulizia Cache Frontend Webpack ===" "Cyan"
+    Write-Color "=== STEP 4: Clearing the Webpack frontend cache ===" "Cyan"
     $CacheItems = @(
         (Join-Path $FrontendDir "node_modules\.cache"),
         (Join-Path $FrontendDir ".temp_cache"),

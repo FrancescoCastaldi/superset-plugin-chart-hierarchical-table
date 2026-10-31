@@ -31,7 +31,7 @@ describe('transformPipeline: Table Calculations integration', () => {
 
     const calcCol = props.columns.find(c => c.key === 'sales___calc_pct_of_total');
     expect(calcCol).toBeDefined();
-    expect(calcCol?.title).toBe('% Totale (sales)');
+    expect(calcCol?.title).toBe('% Total (sales)');
     expect(calcCol?.calculationType).toBe('pct_of_total');
 
     // Total sales = 60 + 40 + 100 = 200

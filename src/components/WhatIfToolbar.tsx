@@ -111,7 +111,7 @@ export const WhatIfToolbar: React.FC<WhatIfToolbarProps> = ({
             type="button"
             className={`whatif-title-btn ${isExpanded ? 'active' : ''}`}
             onClick={handleToggle}
-            title="Apri o chiudi il pannello What-If"
+            title="Open or close the What-If panel"
           >
             <span>🪄 What-If Simulation</span>
             <span>{isExpanded ? '▲' : '▼'}</span>
@@ -119,7 +119,7 @@ export const WhatIfToolbar: React.FC<WhatIfToolbarProps> = ({
 
           {activeAdjustmentsCount > 0 && (
             <span className="whatif-badge-active">
-              ● {activeScenarioName ? activeScenarioName : `Simulazione attiva (${activeAdjustmentsCount} metriche)`}
+              ● {activeScenarioName ? activeScenarioName : `Simulation active (${activeAdjustmentsCount} metrics)`}
             </span>
           )}
         </div>
@@ -130,7 +130,7 @@ export const WhatIfToolbar: React.FC<WhatIfToolbarProps> = ({
               type="button"
               className="whatif-btn whatif-btn-reset"
               onClick={onReset}
-              title="Azzera tutte le variazioni simulate e ripristina i dati storici"
+              title="Reset all simulated changes and restore the historical data"
             >
               ✕ Reset Baseline
             </button>
@@ -141,7 +141,7 @@ export const WhatIfToolbar: React.FC<WhatIfToolbarProps> = ({
               type="button"
               className="whatif-btn"
               onClick={onExportWithSimulation}
-              title="Scarica CSV con colonne base, simulate e delta %"
+              title="Download CSV with base, simulated and delta % columns"
             >
               📥 Esporta CSV Simulato
             </button>
@@ -203,7 +203,7 @@ export const WhatIfToolbar: React.FC<WhatIfToolbarProps> = ({
                       className="whatif-btn whatif-btn-primary"
                       onClick={() => setIsSavingInline(true)}
                       disabled={activeAdjustmentsCount === 0}
-                      title="Salva la configurazione attuale come preset nominato"
+                      title="Save the current configuration as a named preset"
                     >
                       💾 Salva Scenario
                     </button>
@@ -212,7 +212,7 @@ export const WhatIfToolbar: React.FC<WhatIfToolbarProps> = ({
                       <input
                         type="text"
                         className="whatif-save-input"
-                        placeholder="Nome scenario (es. Ottimistico +10%)..."
+                        placeholder="Scenario name (e.g. Optimistic +10%)..."
                         value={newScenarioName}
                         onChange={e => setNewScenarioName(e.target.value)}
                         autoFocus

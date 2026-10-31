@@ -22,7 +22,7 @@ export function defaultCalculationTitle(config: TableCalculationConfig): string 
   if (config.customTitle) return config.customTitle;
   switch (config.type) {
     case 'pct_of_total':
-      return `% Totale (${config.metric})`;
+      return `% Total (${config.metric})`;
     case 'pct_of_parent':
       return `% Padre (${config.metric})`;
     case 'running_total':

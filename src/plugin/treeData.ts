@@ -28,7 +28,7 @@ export function applyVarianceDelta(treeData: TreeNode[], metrics: string[]): str
   computeTreeTimeComparison(treeData, metrics);
   const withDeltas = [...metrics];
   for (const m of metrics) {
-    if (!m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione')) {
+    if (!m.toLowerCase().includes('delta') && !(m.toLowerCase().includes('variazione') || m.toLowerCase().includes('change'))) {
       withDeltas.push(`${m}___delta`);
     }
   }

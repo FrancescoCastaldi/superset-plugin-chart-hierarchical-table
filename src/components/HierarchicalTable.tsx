@@ -366,7 +366,7 @@ const HierarchicalTableRow = React.memo(function HierarchicalTableRow({
           cellVarianceDelta !== null ? (
             <span
               className={classNames('delta-badge', deltaClassName(cellVarianceDelta, col?.polarity))}
-              title={`Variazione: ${cellVarianceDelta > 0 ? '+' : ''}${cellVarianceDelta.toFixed(1)}%`}
+              title={`Change: ${cellVarianceDelta > 0 ? '+' : ''}${cellVarianceDelta.toFixed(1)}%`}
             >
               {cellVarianceDelta > 0 ? '▲ +' : cellVarianceDelta < 0 ? '▼ ' : ''}
               {Math.abs(cellVarianceDelta).toFixed(1)}%
@@ -740,7 +740,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
         className="col-resize-handle"
         role="separator"
         aria-orientation="vertical"
-        title="Trascina per ridimensionare, doppio clic per ripristinare"
+        title="Drag to resize, double-click to restore"
         onMouseDown={e =>
           columnLayout.startResize(
             e,
@@ -1197,7 +1197,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
           gtVarianceDelta !== null ? (
             <span
               className={classNames('delta-badge', deltaClassName(gtVarianceDelta, col?.polarity))}
-              title={`Variazione Totale: ${gtVarianceDelta > 0 ? '+' : ''}${gtVarianceDelta.toFixed(1)}%`}
+              title={`Total change: ${gtVarianceDelta > 0 ? '+' : ''}${gtVarianceDelta.toFixed(1)}%`}
             >
               {gtVarianceDelta > 0 ? '▲ +' : gtVarianceDelta < 0 ? '▼ ' : ''}
               {Math.abs(gtVarianceDelta).toFixed(1)}%
@@ -1225,7 +1225,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
             gtWhatIfBadge = (
               <span
                 className={classNames('whatif-delta-badge', badgeClass)}
-                title={`Totale Simulato: ${formattedCurrent} (Base: ${formattedBase}, Scostamento: ${delta.pct > 0 ? '+' : ''}${delta.pct.toFixed(1)}%)`}
+                title={`Simulated total: ${formattedCurrent} (Base: ${formattedBase}, Scostamento: ${delta.pct > 0 ? '+' : ''}${delta.pct.toFixed(1)}%)`}
               >
                 {arrow}{Math.abs(delta.pct).toFixed(1)}%
               </span>
@@ -1248,7 +1248,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               col?.key?.endsWith('___delta') ? (
                 <span
                   className={classNames('delta-badge', deltaClassName(val, col?.polarity))}
-                  title={`Delta % Totale: ${val > 0 ? '+' : ''}${val.toFixed(1)}%`}
+                  title={`Total delta %: ${val > 0 ? '+' : ''}${val.toFixed(1)}%`}
                 >
                   {val > 0 ? '▲ +' : val < 0 ? '▼ ' : ''}
                   {Math.abs(val).toFixed(1)}%
@@ -1350,16 +1350,16 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
 
         <div className="table-toolbar-right">
           <div className="toolbar-display-mode-selector">
-            <span className="toolbar-label">Valori:</span>
+            <span className="toolbar-label">Values:</span>
             <select
               value={activeDisplayMode}
               onChange={e => setActiveDisplayMode(e.target.value as HierarchyValueDisplayMode)}
               className="toolbar-select"
-              aria-label="Modalità visualizzazione valori metriche"
+              aria-label="Metric value display mode"
             >
-              <option value="all">Tutti i livelli</option>
-              <option value="leaves_only">Solo foglie</option>
-              <option value="parents_only">Solo padri</option>
+              <option value="all">All levels</option>
+              <option value="leaves_only">Leaves only</option>
+              <option value="parents_only">Parents only</option>
             </select>
           </div>
           {columnLayout.customized && (
@@ -1367,7 +1367,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
               type="button"
               className="toolbar-btn"
               onClick={columnLayout.reset}
-              title="Ripristina larghezze e ordine delle colonne"
+              title="Restore column widths and order"
             >
               Ripristina colonne
             </button>
@@ -1520,7 +1520,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                       >
                         <span>
                           {isGroupDraggable && (
-                            <span className="drag-handle-icon" title="Trascina metrica">
+                            <span className="drag-handle-icon" title="Drag metric">
                               ⠿
                             </span>
                           )}
@@ -1591,7 +1591,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                       >
                         <span>
                           {isSubDraggable && props.combineMetric && (
-                            <span className="drag-handle-icon" title="Trascina metrica">
+                            <span className="drag-handle-icon" title="Drag metric">
                               ⠿
                             </span>
                           )}
@@ -1703,7 +1703,7 @@ export default function HierarchicalTable(props: HierarchicalTableTransformedPro
                     >
                       <span>
                         {isFlatDraggable && (
-                          <span className="drag-handle-icon" title="Trascina metrica">
+                          <span className="drag-handle-icon" title="Drag metric">
                             ⠿
                           </span>
                         )}

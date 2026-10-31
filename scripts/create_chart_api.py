@@ -22,7 +22,7 @@ PROTECTED_DASHBOARDS = [2, 3, 4, 5]
 
 DEFAULT_HEALTHCARE_CONFIG = {
     "hierarchyType": "multi_dimension",
-    "groupby": ["regione", "asl", "ospedale", "reparto"],
+    "groupby": ["region", "district", "site", "department"],
     "metrics": ["ricoveri", "tasso_occupazione"],
     "hierarchyHeaderLabel": "Struttura Sanitaria",
     "theme": "stratum-warm",
@@ -198,7 +198,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Crea un chart Hierarchical Table su Apache Superset tramite REST API (POST /api/v1/chart/)."
     )
-    parser.add_argument("--url", default="http://localhost:8088", help="URL base di Apache Superset (default: http://localhost:8088)")
+    parser.add_argument("--url", default="http://localhost:8088", help="Base URL of Apache Superset (default: http://localhost:8088)")
     parser.add_argument("--username", default="admin", help="Username per il login Superset (default: admin)")
     parser.add_argument("--password", default=None, help="Password per il login Superset")
     parser.add_argument("--token", default=None, help="Bearer token JWT alternativo al login con password")
@@ -209,14 +209,14 @@ def main():
     parser.add_argument("--preset", choices=["healthcare", "sales"], default="healthcare", help="Preset di configurazione (healthcare o sales)")
     parser.add_argument("--config-file", help="File JSON opzionale contenente parametri formData personalizzati")
     parser.add_argument("--dashboard-id", type=int, help="ID opzionale della dashboard a cui agganciare il chart")
-    parser.add_argument("--force-protected-dashboard", action="store_true", help="Forza l'associazione anche su dashboard protette (2, 3, 4, 5)")
+    parser.add_argument("--force-protected-dashboard", action="store_true", help="Force the association even on protected dashboards (2, 3, 4, 5)")
     parser.add_argument("--dry-run", action="store_true", help="Stampa il payload JSON a terminale senza inviare la richiesta API")
 
     args = parser.parse_args()
 
-    # Controllo dashboard protette
+    # Protected dashboard check
     if args.dashboard_id and args.dashboard_id in PROTECTED_DASHBOARDS and not args.force_protected_dashboard:
-        print(f"[ERRORE DI SICUREZZA] La dashboard ID {args.dashboard_id} e protetta. Non e consentito agganciare chart a questa dashboard.")
+        print(f"[SECURITY ERROR] Dashboard ID {args.dashboard_id} is protected. Charts cannot be attached to it.")
         print("Specifica un altro ID dashboard o rimuovi il parametro --dashboard-id.")
         sys.exit(2)
 

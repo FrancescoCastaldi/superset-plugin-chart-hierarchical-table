@@ -122,7 +122,7 @@ const config: ControlPanelConfig = {
             name: 'columns',
             config: {
               ...sharedControls.groupby,
-              label: t('Pivot Columns (Horizontal Matrix)'),
+              label: t('Pivot columns (horizontal matrix)'),
               description: t('Optional: group metrics horizontally by one or more dimensions (e.g. RegimeErogazione).'),
               clearable: true,
               validators: [],
@@ -136,11 +136,11 @@ const config: ControlPanelConfig = {
             name: 'combineMetric',
             config: {
               type: 'CheckboxControl',
-              label: t('Combine Metrics by Column (Affianca Metriche per Colonna Pivot)'),
+              label: t('Combine metrics by column (side by side for each pivot column)'),
               renderTrigger: true,
               default: true,
               description: t(
-                'Display all metrics side-by-side under each pivot column value (e.g., [Ott 2026 > Totale | Delta]) instead of separating metrics into distinct column groups.',
+                'Display all metrics side by side under each pivot column value (e.g., [Oct 2026 > Total | Delta]) instead of separating metrics into distinct column groups.',
               ),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension' &&
@@ -151,11 +151,11 @@ const config: ControlPanelConfig = {
             name: 'pivotSortOrder',
             config: {
               type: 'SelectControl',
-              label: t('Pivot Columns Order (Ordinamento Colonne Pivot)'),
+              label: t('Pivot columns order'),
               default: 'desc',
               renderTrigger: true,
               choices: [
-                ['desc', t('Descending / Più recente prima (e.g. Ott 2026 -> Gen 2026)')],
+                ['desc', t('Descending / most recent first (e.g. Oct 2026 -> Jan 2026)')],
                 ['asc', t('Ascending / Cronologico (e.g. Gen 2026 -> Ott 2026)')],
                 ['none', t('Appearance / Query Order')],
               ],
@@ -171,16 +171,16 @@ const config: ControlPanelConfig = {
             name: 'pivotRowTotalsPosition',
             config: {
               type: 'SelectControl',
-              label: t('Pivot Row Totals (Totali Orizzontali di Riga)'),
+              label: t('Pivot row totals (horizontal row totals)'),
               default: 'none',
               renderTrigger: true,
               choices: [
-                ['none', t('None (Nessun totale orizzontale)')],
-                ['left', t('Sinistra / Inizio (Stile Qlik Sense - Prima delle colonne pivot)')],
+                ['none', t('None (no horizontal total)')],
+                ['left', t('Left / start (Qlik Sense style, before the pivot columns)')],
                 ['right', t('Destra / Fine (Stile Classico / Excel - In fondo alla tabella)')],
               ],
               description: t(
-                'Posiziona la macro-colonna dei totali orizzontali di riga a sinistra (stile Qlik Sense) o a destra.',
+                'Places the row totals macro-column on the left (Qlik Sense style) or on the right.',
               ),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension' &&
@@ -191,11 +191,11 @@ const config: ControlPanelConfig = {
             name: 'pivotRowTotalsLabel',
             config: {
               type: 'TextControl',
-              label: t('Pivot Row Totals Label (Etichetta Intestazione Totali)'),
+              label: t('Pivot row totals label'),
               default: 'Totals',
               renderTrigger: true,
               description: t(
-                'Testo visualizzato nell intestazione della colonna dei totali orizzontali (es. Totals, Totale Complessivo, Consuntivo).',
+                'Text shown in the header of the horizontal totals column (e.g. Totals, Grand total, Actuals).',
               ),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension' &&
@@ -210,11 +210,11 @@ const config: ControlPanelConfig = {
             name: 'showPivotColumnSubtotals',
             config: {
               type: 'CheckboxControl',
-              label: t('Show Pivot Column Subtotals (Subtotale Colonne Pivot)'),
+              label: t('Show pivot column subtotals'),
               renderTrigger: true,
               default: true,
               description: t(
-                'Mostra la colonna subtotale per ciascun gruppo pivot di primo livello (e nel blocco Totals) affiancata ai singoli valori della seconda dimensione pivot.',
+                'Shows the subtotal column for each first-level pivot group (and in the Totals block), next to the values of the second pivot dimension.',
               ),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension' &&
@@ -225,11 +225,11 @@ const config: ControlPanelConfig = {
             name: 'pivotColumnSubtotalLabel',
             config: {
               type: 'TextControl',
-              label: t('Pivot Column Subtotal Label (Etichetta Subtotale Colonne)'),
-              default: 'Totale',
+              label: t('Pivot column subtotal label'),
+              default: 'Total',
               renderTrigger: true,
               description: t(
-                'Testo per la colonna del subtotale di colonna (es. Totale, Subtotale, Somma).',
+                'Text for the column subtotal column (e.g. Total, Subtotal, Sum).',
               ),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension' &&
@@ -243,17 +243,17 @@ const config: ControlPanelConfig = {
             name: 'pivotTimeDeltaMode',
             config: {
               type: 'SelectControl',
-              label: t('Automatic Pivot Delta Mode (Calcolo Delta Nativato Colonne Pivot)'),
+              label: t('Automatic pivot delta mode'),
               default: 'none',
               renderTrigger: true,
               choices: [
-                ['none', t('None (Nessun delta automatico)')],
-                ['absolute', t('Delta Assoluto (Δ = Valore - Periodo Prec.)')],
-                ['percentage', t('Delta Percentuale (Δ% = (Valore - Periodo Prec.) / Periodo Prec.)')],
-                ['both', t('Entrambi (Δ Assoluto + Δ% Percentuale)')],
+                ['none', t('None (no automatic delta)')],
+                ['absolute', t('Absolute delta (Δ = value - previous period)')],
+                ['percentage', t('Percentage delta (Δ% = (value - previous period) / previous period)')],
+                ['both', t('Both (absolute Δ + percentage Δ%)')],
               ],
               description: t(
-                'Calcola automaticamente il delta temporale rispetto al periodo precedente lungo le colonne pivot senza window functions SQL.',
+                'Calculates the time delta against the previous period along the pivot columns, without SQL window functions.',
               ),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension' &&
@@ -264,16 +264,16 @@ const config: ControlPanelConfig = {
             name: 'pivotTimeDeltaLag',
             config: {
               type: 'SelectControl',
-              label: t('Delta Comparison Lag / Offset (Passo Temporale di Confronto)'),
+              label: t('Delta comparison lag / offset (comparison step)'),
               default: 1,
               renderTrigger: true,
               choices: [
-                [1, t('1 Periodo (Es. Mese precedente / MoM, Anno precedente / YoY)')],
+                [1, t('1 period (e.g. previous month / MoM, previous year / YoY)')],
                 [2, t('2 Periodi')],
-                [3, t('3 Periodi (Es. Trimestre precedente / QoQ)')],
-                [12, t('12 Periodi (Es. Stesso mese anno precedente / MoM-YoY)')],
+                [3, t('3 periods (e.g. previous quarter / QoQ)')],
+                [12, t('12 periods (e.g. same month of the previous year / MoM-YoY)')],
               ],
-              description: t('Numero di periodi indietro da usare come confronto per il delta.'),
+              description: t('Number of periods back to use as the delta comparison.'),
               visibility: ({ controls }: { controls: any }) =>
                 controls?.hierarchyType?.value === 'multi_dimension' &&
                 Boolean(controls?.columns?.value && controls.columns.value.length > 0) &&
@@ -370,8 +370,8 @@ const config: ControlPanelConfig = {
               renderTrigger: true,
               choices: [
                 ['all', t('All Levels (Default)')],
-                ['leaves_only', t('Leaves Only (Solo foglie)')],
-                ['parents_only', t('Parents Only (Solo padri / subtotali)')],
+                ['leaves_only', t('Leaves only')],
+                ['parents_only', t('Parents only (parents / subtotals)')],
               ],
               description: t(
                 'Choose whether to display metric values on all levels, leaf nodes only, or parent totals only.',
@@ -440,11 +440,11 @@ const config: ControlPanelConfig = {
             name: 'wrapHeaderLabels',
             config: {
               type: 'CheckboxControl',
-              label: t('Testi a capo automatico (intestazioni ed etichette lunghe)'),
+              label: t('Automatic line wrap (long headers and labels)'),
               renderTrigger: true,
               default: false,
               description: t(
-                'Le intestazioni e le etichette di riga troppo lunghe vanno a capo invece di essere tagliate o di allargare la tabella.',
+                'Long headers and row labels wrap instead of being cut off or widening the table.',
               ),
             },
           },
@@ -452,11 +452,11 @@ const config: ControlPanelConfig = {
             name: 'resizableColumns',
             config: {
               type: 'CheckboxControl',
-              label: t('Colonne ridimensionabili (trascina il bordo dell\'intestazione)'),
+              label: t('Resizable columns (drag the header border)'),
               renderTrigger: true,
               default: false,
               description: t(
-                'Permette di allargare o stringere ogni colonna trascinando il bordo destro della sua intestazione; doppio clic sul bordo per ripristinarla. Le larghezze restano memorizzate nel browser.',
+                'Widen or narrow each column by dragging the right border of its header; double-click the border to restore it. Widths are kept in the browser.',
               ),
             },
           },
@@ -466,11 +466,11 @@ const config: ControlPanelConfig = {
             name: 'reorderColumnsByDrag',
             config: {
               type: 'CheckboxControl',
-              label: t('Colonne spostabili con il trascinamento'),
+              label: t('Drag-to-reorder columns'),
               renderTrigger: true,
               default: false,
               description: t(
-                'Permette di trascinare le intestazioni delle metriche per cambiarne l\'ordine, senza passare dal pannello. Vale per le tabelle senza colonne pivot; l\'ordine resta memorizzato nel browser.',
+                'Drag the metric headers to change their order, without going through the panel. Applies to tables without pivot columns; the order is kept in the browser.',
               ),
             },
           },
@@ -746,7 +746,7 @@ const config: ControlPanelConfig = {
             name: 'showVarianceBadges',
             config: {
               type: 'CheckboxControl',
-              label: t('Show the Δ % badges next to the values (Etichette Δ %)'),
+              label: t('Show the Δ % badges next to the values (Δ % labels)'),
               renderTrigger: true,
               default: true,
               description: t(
@@ -771,11 +771,11 @@ const config: ControlPanelConfig = {
             name: 'periodLabelsFromFilters',
             config: {
               type: 'CheckboxControl',
-              label: t('Periodo di riferimento e di confronto nelle intestazioni'),
+              label: t('Reference and comparison period in the headers'),
               renderTrigger: true,
               default: false,
               description: t(
-                'Aggiunge alle intestazioni dei valori correnti il mese di riferimento, a quelle dei valori di confronto il mese di confronto e alle variazioni entrambi, per esempio "Richieste (Corrente) · ott 2026". I periodi sono quelli su cui gira davvero la query, quindi seguono i filtri della dashboard e, se non ne è applicato nessuno, i valori predefiniti del dataset. Serve un dataset con le colonne anno e mese del periodo.',
+                'Adds the reference month to the headers of the current values, the comparison month to the comparison values and to the deltas, for example "Requests (Current) · Oct 2026". The periods are the ones the query really runs on, so they follow the dashboard filters and, when none is applied, the dataset defaults. Requires a dataset with year and month columns for the period.',
               ),
             },
           },
@@ -783,10 +783,10 @@ const config: ControlPanelConfig = {
             name: 'periodReferenceYearColumn',
             config: {
               type: 'TextControl',
-              label: t('Colonna anno di riferimento'),
+              label: t('Reference year column'),
               renderTrigger: true,
               default: 'ANNO_CORRENTE',
-              description: t('Colonna del dataset con questa parte del periodo; vale solo con il periodo nelle intestazioni acceso.'),
+              description: t('Dataset column with this part of the period; only applies when the period in the headers is on.'),
               visibility: ({ controls }: { controls: any }) => Boolean(controls?.periodLabelsFromFilters?.value),
             },
           },
@@ -794,10 +794,10 @@ const config: ControlPanelConfig = {
             name: 'periodReferenceMonthColumn',
             config: {
               type: 'TextControl',
-              label: t('Colonna mese di riferimento'),
+              label: t('Reference month column'),
               renderTrigger: true,
               default: 'MESE_CORRENTE',
-              description: t('Colonna del dataset con questa parte del periodo; vale solo con il periodo nelle intestazioni acceso.'),
+              description: t('Dataset column with this part of the period; only applies when the period in the headers is on.'),
               visibility: ({ controls }: { controls: any }) => Boolean(controls?.periodLabelsFromFilters?.value),
             },
           },
@@ -805,10 +805,10 @@ const config: ControlPanelConfig = {
             name: 'periodComparisonYearColumn',
             config: {
               type: 'TextControl',
-              label: t('Colonna anno di confronto'),
+              label: t('Comparison year column'),
               renderTrigger: true,
               default: 'ANNO_CONFRONTO',
-              description: t('Colonna del dataset con questa parte del periodo; vale solo con il periodo nelle intestazioni acceso.'),
+              description: t('Dataset column with this part of the period; only applies when the period in the headers is on.'),
               visibility: ({ controls }: { controls: any }) => Boolean(controls?.periodLabelsFromFilters?.value),
             },
           },
@@ -816,10 +816,10 @@ const config: ControlPanelConfig = {
             name: 'periodComparisonMonthColumn',
             config: {
               type: 'TextControl',
-              label: t('Colonna mese di confronto'),
+              label: t('Comparison month column'),
               renderTrigger: true,
               default: 'MESE_CONFRONTO',
-              description: t('Colonna del dataset con questa parte del periodo; vale solo con il periodo nelle intestazioni acceso.'),
+              description: t('Dataset column with this part of the period; only applies when the period in the headers is on.'),
               visibility: ({ controls }: { controls: any }) => Boolean(controls?.periodLabelsFromFilters?.value),
             },
           },
@@ -850,12 +850,12 @@ const config: ControlPanelConfig = {
             name: 'referencePeriod',
             config: {
               type: 'SelectControl',
-              label: t('Reference Period (Periodo di Riferimento)'),
+              label: t('Reference period'),
               default: 'current',
               renderTrigger: true,
               choices: [
-                ['current', t('Current Active Period (Periodo Corrente)')],
-                ['previous', t('Previous Completed Period (Periodo Precedente)')],
+                ['current', t('Current active period')],
+                ['previous', t('Previous completed period')],
                 ['ytd', t('Year-to-Date (YTD)')],
               ],
               description: t(
@@ -870,12 +870,12 @@ const config: ControlPanelConfig = {
             name: 'comparisonType',
             config: {
               type: 'SelectControl',
-              label: t('Comparison Baseline (Periodo di Confronto)'),
+              label: t('Comparison baseline'),
               default: 'prev_period',
               renderTrigger: true,
               choices: [
                 ['prev_period', t('Immediately Preceding Period (DoD / WoW / MoM / YoY)')],
-                ['prev_year_same_period', t('Same Period in Prior Year (Stesso Periodo Anno Scorso)')],
+                ['prev_year_same_period', t('Same period in the prior year')],
                 ['budget_target', t('Budget / Target Baseline (Target Pianificato)')],
               ],
               description: t(
@@ -1088,7 +1088,7 @@ const config: ControlPanelConfig = {
               renderTrigger: true,
               default: false,
               description: t(
-                'Quando si seleziona una riga, il cross-filter si applica anche alla tabella stessa, che mostra solo quanto selezionato (con i totali ricalcolati). Togliendo la selezione torna tutto.',
+                'When a row is selected, the cross-filter also applies to the table itself, which then shows only the selection (with the totals recalculated). Clearing the selection restores everything.',
               ),
               visibility: ({ controls }: { controls: any }) => controls?.emit_filter?.value !== false,
             },

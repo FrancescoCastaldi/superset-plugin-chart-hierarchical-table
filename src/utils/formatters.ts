@@ -55,7 +55,7 @@ export function formatMetricValue(
 
   // 1. Delta Acceptance / Percentage Points in p.p.
   if (
-    (mName.includes('delta') || mName.includes('variazione') || hasDiffToken(mName) || mName.includes('punti %') || mName.includes('p.p.')) &&
+    (mName.includes('delta') || (mName.includes('variazione') || mName.includes('change')) || hasDiffToken(mName) || mName.includes('punti %') || mName.includes('p.p.')) &&
     (mName.includes('accettazione') || mName.includes('p.p.') || mName.includes('punti') || /\bacc\b/.test(mName) || mName.includes('acc_')) &&
     !mName.includes('accesso')
   ) {
@@ -68,7 +68,7 @@ export function formatMetricValue(
     mName.includes('acc_corr') ||
     mName.includes('acc_conf') ||
     (mName.includes('accettazione') &&
-      !mName.includes('totale') &&
+      !(mName.includes('totale') || mName.includes('total')) &&
       !mName.includes('numero') &&
       !mName.includes('conteggio'))
   ) {
@@ -78,7 +78,7 @@ export function formatMetricValue(
   // 3. Delta Lead Time in days (gg)
   if (
     !formatterString?.startsWith('DURATION') &&
-    (mName.includes('delta') || mName.includes('variazione') || hasDiffToken(mName)) &&
+    (mName.includes('delta') || (mName.includes('variazione') || mName.includes('change')) || hasDiffToken(mName)) &&
     (mName.includes('lt_off') || mName.includes('lead') || (mName.includes('giorni') && !mName.includes('settimana')) || /\blt\b/.test(mName) || mName.includes(' gg') || mName.includes('_gg'))
   ) {
     const sign = value > 0 ? '+' : '';
@@ -99,7 +99,7 @@ export function formatMetricValue(
     mName.includes('δ') ||
     (metricName || '').includes('Δ') ||
     mName.includes('delta %') ||
-    ((mName.includes('delta') || mName.includes('variazione') || hasDiffToken(mName)) &&
+    ((mName.includes('delta') || (mName.includes('variazione') || mName.includes('change')) || hasDiffToken(mName)) &&
       (mName.includes('%') || mName.includes('pct') || mName.includes('percent')))
   ) {
     const sign = value > 0 ? '+' : '';
@@ -112,7 +112,7 @@ export function formatMetricValue(
   }
 
   // 7. General delta with sign
-  if (mName.startsWith('delta') || mName.includes('delta_') || mName.includes('variazione') || hasDiffToken(mName)) {
+  if (mName.startsWith('delta') || mName.includes('delta_') || (mName.includes('variazione') || mName.includes('change')) || hasDiffToken(mName)) {
     const sign = value > 0 ? '+' : '';
     return `${sign}${DELTA_FORMAT.format(value)}`;
   }

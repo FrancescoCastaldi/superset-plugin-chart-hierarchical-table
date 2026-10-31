@@ -357,7 +357,7 @@ export function computeTreeTimeDeltaByStrategy(
   const index = buildPeriodIndex(periodKeys, config.timeGrain);
   if (!index) return false;
   const baseMetrics = metrics.filter(
-    m => !m.toLowerCase().includes('delta') && !m.toLowerCase().includes('variazione'),
+    m => !m.toLowerCase().includes('delta') && !(m.toLowerCase().includes('variazione') || m.toLowerCase().includes('change')),
   );
 
   const visit = (node: TreeNode) => {
@@ -400,7 +400,7 @@ export function computePivotTimeDelta(
 
   function processNode(node: TreeNode) {
     for (const m of baseMetrics) {
-      if (m.toLowerCase().includes('delta') || m.toLowerCase().includes('variazione')) {
+      if (m.toLowerCase().includes('delta') || (m.toLowerCase().includes('variazione') || m.toLowerCase().includes('change'))) {
         continue;
       }
 
@@ -501,7 +501,7 @@ function compareNodes(currentNode: TreeNode, prevNode: TreeNode | undefined, bas
   // Compute deltas for this node
   for (const m of baseMetrics) {
     // Skip if it's already a delta metric or non-numeric
-    if (m.toLowerCase().includes('delta') || m.toLowerCase().includes('variazione')) {
+    if (m.toLowerCase().includes('delta') || (m.toLowerCase().includes('variazione') || m.toLowerCase().includes('change'))) {
       continue;
     }
     

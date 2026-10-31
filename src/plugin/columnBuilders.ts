@@ -49,9 +49,9 @@ export interface ColumnLayout {
 export function isComparisonOperandMetric(metric: string): boolean {
   const m = metric.toLowerCase();
   return (
-    (m.includes('confronto') || m.includes('conf')) &&
+    ((m.includes('confronto') || m.includes('comparison')) || m.includes('conf')) &&
     !m.includes('delta') &&
-    !m.includes('variazione')
+    !(m.includes('variazione') || m.includes('change'))
   );
 }
 
@@ -204,7 +204,7 @@ export function buildFlatColumns(metrics: string[], format: ValueFormat, records
       });
       columns.push({
         key: `${m}___comp`,
-        title: `${m} (Confronto)`,
+        title: `${m} (Comparison)`,
         dataIndex: `${m}___comp`,
         isMetric: true,
         align: 'right',
